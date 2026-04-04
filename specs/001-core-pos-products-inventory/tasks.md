@@ -281,24 +281,24 @@ Setup (Phase 1)
 
 #### Backend Services [US3]
 
-- [ ] T085 [US3] Implement reverse_sale() with stock restoration in SaleService
-- [ ] T086 [US3] Implement prevent_double_reversal() validation
-- [ ] T087 [US3] Create inventory log entries with reason 'reversal'
+- [X] T085 [US3] Implement reverse_sale() with stock restoration in SaleService
+- [X] T086 [US3] Implement prevent_double_reversal() validation
+- [X] T087 [US3] Create inventory log entries with reason 'reversal'
 
 #### Backend API Routes [US3]
 
-- [ ] T088 [US3] Create POST /api/sales/{id}/reverse endpoint in backend/app/modules/pos/routes.py
+- [X] T088 [US3] Create POST /api/sales/{id}/reverse endpoint in backend/app/modules/pos/routes.py
 
 #### Frontend Components [US3]
 
-- [ ] T089 [US3] Add "Reverse Sale" button to sale detail view in frontend/app/pos/page.tsx
-- [ ] T090 [US3] Implement reversal reason input modal
+- [X] T089 [US3] Add "Reverse Sale" button to sale detail view in frontend/app/pos/page.tsx
+- [X] T090 [US3] Implement reversal reason input modal
 
 #### Integration Tests [US3]
 
-- [ ] T091 [US3] [P] Write integration test for sale reversal with stock restoration
-- [ ] T092 [US3] [P] Write integration test for double reversal prevention
-- [ ] T093 [US3] [P] Write integration test for reversal record linking
+- [X] T091 [US3] [P] Write integration test for sale reversal with stock restoration
+- [X] T092 [US3] [P] Write integration test for double reversal prevention
+- [X] T093 [US3] [P] Write integration test for reversal record linking
 
 **Parallel Opportunities**: T091-T093 (all tests)
 
@@ -327,29 +327,29 @@ Setup (Phase 1)
 
 #### Backend Services [US4]
 
-- [ ] T094 [US4] Implement restock_product() in InventoryService
-- [ ] T095 [US4] Implement adjust_stock() with stock ≥ 0 validation in InventoryService
-- [ ] T096 [US4] Implement get_inventory_log() with pagination in InventoryService
-- [ ] T097 [US4] Implement get_low_stock_products() in InventoryService
+- [X] T094 [US4] Implement restock_product() in InventoryService
+- [X] T095 [US4] Implement adjust_stock() with stock ≥ 0 validation in InventoryService
+- [X] T096 [US4] Implement get_inventory_log() with pagination in InventoryService
+- [X] T097 [US4] Implement get_low_stock_products() in InventoryService
 
 #### Backend API Routes [US4]
 
-- [ ] T098 [US4] [P] Create POST /api/inventory/restock endpoint in backend/app/modules/inventory/routes.py
-- [ ] T099 [US4] [P] Create POST /api/inventory/adjust endpoint in backend/app/modules/inventory/routes.py
-- [ ] T100 [US4] [P] Create GET /api/inventory/log/{product_id} endpoint in backend/app/modules/inventory/routes.py
-- [ ] T101 [US4] [P] Create GET /api/inventory/low-stock endpoint in backend/app/modules/inventory/routes.py
+- [X] T098 [US4] [P] Create POST /api/inventory/restock endpoint in backend/app/modules/inventory/routes.py
+- [X] T099 [US4] [P] Create POST /api/inventory/adjust endpoint in backend/app/modules/inventory/routes.py
+- [X] T100 [US4] [P] Create GET /api/inventory/log/{product_id} endpoint in backend/app/modules/inventory/routes.py
+- [X] T101 [US4] [P] Create GET /api/inventory/low-stock endpoint in backend/app/modules/inventory/routes.py
 
 #### Frontend Pages [US4]
 
-- [ ] T102 [US4] Create inventory management page in frontend/app/inventory/page.tsx
-- [ ] T103 [US4] Display inventory log with chronological order
-- [ ] T104 [US4] Add restock and adjustment forms
+- [X] T102 [US4] Create inventory management page in frontend/app/inventory/page.tsx
+- [X] T103 [US4] Display inventory log with chronological order
+- [X] T104 [US4] Add restock and adjustment forms
 
 #### Integration Tests [US4]
 
-- [ ] T105 [US4] [P] Write integration test for restock with log creation
-- [ ] T106 [US4] [P] Write integration test for adjustment with stock validation
-- [ ] T107 [US4] [P] Write integration test for inventory log retrieval
+- [X] T105 [US4] [P] Write integration test for restock with log creation
+- [X] T106 [US4] [P] Write integration test for adjustment with stock validation
+- [X] T107 [US4] [P] Write integration test for inventory log retrieval
 
 **Parallel Opportunities**: T098-T101 (all routes), T105-T107 (all tests)
 
@@ -378,24 +378,24 @@ Setup (Phase 1)
 
 #### WebSocket Integration [US5]
 
-- [ ] T108 [US5] Broadcast stock updates after sale confirmation in SaleService
-- [ ] T109 [US5] Broadcast stock updates after reversal in SaleService
-- [ ] T110 [US5] Broadcast stock updates after restock in InventoryService
-- [ ] T111 [US5] Broadcast stock updates after adjustment in InventoryService
+- [X] T108 [US5] Broadcast stock updates after sale confirmation in SaleService
+- [X] T109 [US5] Broadcast stock updates after reversal in SaleService
+- [X] T110 [US5] Broadcast stock updates after restock in InventoryService
+- [X] T111 [US5] Broadcast stock updates after adjustment in InventoryService
 
 #### Frontend WebSocket Client [US5]
 
-- [ ] T112 [US5] Create WebSocket client with reconnect logic in frontend/lib/websocket-client.ts
-- [ ] T113 [US5] Subscribe to /ws/stock-updates channel on POS page load
-- [ ] T114 [US5] Update product list on stock update event
-- [ ] T115 [US5] Display connection status indicator
-- [ ] T116 [US5] Implement auto-reconnect on connection loss
+- [X] T112 [US5] Create WebSocket client with reconnect logic in frontend/lib/websocket-client.ts
+- [X] T113 [US5] Subscribe to /ws/stock-updates channel on POS page load
+- [X] T114 [US5] Update product list on stock update event
+- [X] T115 [US5] Display connection status indicator
+- [X] T116 [US5] Implement auto-reconnect on connection loss
 
 #### Tests [US5]
 
-- [ ] T117 [US5] [P] Write integration test for WebSocket stock broadcast after sale
-- [ ] T118 [US5] [P] Write integration test for WebSocket stock broadcast after restock
-- [ ] T119 [US5] [P] Verify connection status updates on disconnect/reconnect
+- [X] T117 [US5] [P] Write integration test for WebSocket stock broadcast after sale
+- [X] T118 [US5] [P] Write integration test for WebSocket stock broadcast after restock
+- [X] T119 [US5] [P] Verify connection status updates on disconnect/reconnect
 
 **Parallel Opportunities**: T117-T119 (all tests)
 
@@ -417,36 +417,36 @@ Setup (Phase 1)
 
 #### Error Handling
 
-- [ ] T120 [P] Add structured error responses for all API endpoints
-- [ ] T121 [P] Implement custom exception handlers in backend/app/core/exceptions.py
-- [ ] T122 [P] Add frontend error boundary components
-- [ ] T123 [P] Implement user-friendly error messages (insufficient stock, validation errors, etc.)
+- [X] T120 [P] Add structured error responses for all API endpoints
+- [X] T121 [P] Implement custom exception handlers in backend/app/core/exceptions.py
+- [X] T122 [P] Add frontend error boundary components
+- [X] T123 [P] Implement user-friendly error messages (insufficient stock, validation errors, etc.)
 
 #### Input Validation
 
-- [ ] T124 [P] Add Pydantic validation for edge cases (zero quantity, negative prices, etc.)
-- [ ] T125 [P] Add backend validation for price override warning (selling_price < base_price)
-- [ ] T126 [P] Add frontend validation for zero-stock products
+- [X] T124 [P] Add Pydantic validation for edge cases (zero quantity, negative prices, etc.)
+- [X] T125 [P] Add backend validation for price override warning (selling_price < base_price)
+- [X] T126 [P] Add frontend validation for zero-stock products
 
 #### User Experience
 
-- [ ] T127 [P] Add loading states for all async operations
-- [ ] T128 [P] Implement optimistic UI updates for cart operations
-- [ ] T129 [P] Add keyboard shortcuts for POS operations
-- [ ] T130 [P] Implement form validation feedback
-- [ ] T131 [P] Add pagination for sales list and inventory log
+- [X] T127 [P] Add loading states for all async operations
+- [X] T128 [P] Implement optimistic UI updates for cart operations
+- [X] T129 [P] Add keyboard shortcuts for POS operations
+- [X] T130 [P] Implement form validation feedback
+- [X] T131 [P] Add pagination for sales list and inventory log
 
 #### Performance
 
-- [ ] T132 [P] Add database indexes per data-model.md specifications
-- [ ] T133 [P] Implement query optimization for product search (pg_trgm)
-- [ ] T134 [P] Add connection pooling for WebSocket clients
+- [X] T132 [P] Add database indexes per data-model.md specifications
+- [X] T133 [P] Implement query optimization for product search (pg_trgm)
+- [X] T134 [P] Add connection pooling for WebSocket clients
 
 #### Documentation
 
-- [ ] T135 [P] Update API documentation with error codes
-- [ ] T136 [P] Add inline code comments for calculation engine
-- [ ] T137 [P] Document environment variables and configuration
+- [X] T135 [P] Update API documentation with error codes
+- [X] T136 [P] Add inline code comments for calculation engine
+- [X] T137 [P] Document environment variables and configuration
 
 **Parallel Opportunities**: T120-T137 (most polish tasks)
 

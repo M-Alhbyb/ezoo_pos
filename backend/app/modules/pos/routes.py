@@ -17,6 +17,8 @@ from app.schemas.sale import (
     SaleResponse,
     SaleListFilter,
     SaleListResponse,
+    SaleReversalResponse,
+    SaleReversalCreate,
 )
 
 router = APIRouter(prefix="/api/sales", tags=["sales"])
@@ -234,6 +236,80 @@ async def get_sale(
         )
 
     return await _prepare_sale_response(sale)
+
+
+@router.post(
+    "/{sale_id}/reverse",
+    response_model=SaleReversalResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Reverse a sale",
+    description="Creates a reversal record and restores stock",
+)
+async def reverse_sale(
+    sale_id: UUID,
+    reversal_data: SaleReversalCreate,
+    service: SaleService = Depends(get_sale_service),
+):
+    """
+    Reverse a sale.
+
+    Constitution IV: Creates separate correction record, original sale unchanged.
+
+    Args:
+        sale_id: Sale UUID to reverse
+        reversal_data: Reason for reversal
+        service: Injected SaleService
+
+    Returns:
+        Reversal record
+
+    Raises:
+        HTTPException 404: Sale not found
+        HTTPException 400: Sale already reversed
+    """
+    # SaleReversalResponse is imported at top level
+
+    try:
+        reversal = await service.reverse_sale(sale_id, reversal_data.reason)
+
+        return SaleReversalResponse(
+            id=reversal.id,
+            original_sale_id=reversal.original_sale_id,
+            reason=reversal.reason,
+            created_at=reversal.created_at,
+        )
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "NOT_FOUND",
+                        "message": error_msg,
+                    }
+                },
+            )
+        elif "already reversed" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "ALREADY_REVERSED",
+                        "message": error_msg,
+                    }
+                },
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": error_msg,
+                    }
+                },
+            )
 
 
 async def _prepare_sale_response(sale) -> dict:

@@ -4,10 +4,11 @@ Inventory Service - Business logic for inventory management.
 Implements inventory tracking and stock updates.
 """
 
-from typing import Optional
+from typing import Optional, List, Tuple
 from uuid import UUID
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product import Product
@@ -20,6 +21,7 @@ class InventoryService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.manager = manager
 
     async def deduct_stock(
         self,
@@ -127,6 +129,184 @@ class InventoryService:
 
         return log
 
+    async def restock_product(
+        self,
+        product_id: UUID,
+        quantity: int,
+        user_id: Optional[UUID] = None,
+    ) -> InventoryLog:
+        """
+        Restock product with inventory log.
+
+        Args:
+            product_id: Product UUID
+            quantity: Quantity to add
+            user_id: User performing restock (for audit)
+
+        Returns:
+            InventoryLog instance
+
+        Raises:
+            ValueError: If invalid product or quantity
+        """
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        # Lock product row for update
+        product = await self._get_product_for_update(product_id)
+
+        if not product:
+            raise ValueError(f"Product {product_id} not found")
+
+        # Update stock
+        product.stock_quantity += quantity
+        balance_after = product.stock_quantity
+
+        # Create inventory log
+        log = InventoryLog(
+            product_id=product_id,
+            delta=quantity,
+            reason="restock",
+            balance_after=balance_after,
+        )
+
+        if user_id:
+            log.user_id = user_id
+
+        self.db.add(log)
+        await self.db.commit()
+        await self.db.refresh(log)
+
+        # Emit WebSocket update
+        await self.emit_stock_update(product_id, balance_after)
+
+        return log
+
+    async def adjust_stock(
+        self,
+        product_id: UUID,
+        adjustment: int,
+        reason: str,
+        user_id: Optional[UUID] = None,
+    ) -> InventoryLog:
+        """
+        Adjust stock (positive or negative) with validation.
+
+        Args:
+            product_id: Product UUID
+            adjustment: Stock adjustment (+/-)
+            reason: Reason for adjustment
+            user_id: User performing adjustment (for audit)
+
+        Returns:
+            InventoryLog instance
+
+        Raises:
+            ValueError: If invalid product or adjustment would make stock negative
+        """
+        # Lock product row for update
+        product = await self._get_product_for_update(product_id)
+
+        if not product:
+            raise ValueError(f"Product {product_id} not found")
+
+        new_balance = product.stock_quantity + adjustment
+
+        if new_balance < 0:
+            raise ValueError(
+                f"Adjustment would make stock negative: "
+                f"current {product.stock_quantity}, adjustment {adjustment}"
+            )
+
+        # Update stock
+        product.stock_quantity = new_balance
+
+        # Create inventory log
+        log = InventoryLog(
+            product_id=product_id,
+            delta=adjustment,
+            reason="adjustment",
+            balance_after=new_balance,
+        )
+
+        if user_id:
+            log.user_id = user_id
+
+        self.db.add(log)
+        await self.db.commit()
+        await self.db.refresh(log)
+
+        # Emit WebSocket update
+        await self.emit_stock_update(product_id, new_balance)
+
+        return log
+
+    async def get_inventory_log(
+        self,
+        product_id: UUID,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> Tuple[List[InventoryLog], int]:
+        """
+        Get inventory log for a product with pagination.
+
+        Args:
+            product_id: Product UUID
+            page: Page number (1-indexed)
+            page_size: Items per page (max100)
+
+        Returns:
+            Tuple of (logs list, total count)
+        """
+        page_size = min(page_size, 100)
+
+        # Count total logs
+        count_query = select(InventoryLog).where(InventoryLog.product_id == product_id)
+        total_result = await self.db.execute(count_query)
+        total = len(total_result.all())
+
+        # Get paginated logs
+        offset = (page - 1) * page_size
+        query = (
+            select(InventoryLog)
+            .where(InventoryLog.product_id == product_id)
+            .order_by(InventoryLog.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+
+        result = await self.db.execute(query)
+        logs = result.scalars().all()
+
+        return list(logs), total
+
+    async def get_low_stock_products(
+        self,
+        threshold: int = 10,
+    ) -> List[Product]:
+        """
+        Get products with stock below threshold.
+
+        Args:
+            threshold: Stock level threshold (default10)
+
+        Returns:
+            List of low-stock products
+        """
+        query = (
+            select(Product)
+            .where(
+                and_(
+                    Product.is_active == True,
+                    Product.stock_quantity <= threshold,
+                )
+            )
+            .order_by(Product.stock_quantity.asc())
+        )
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
     async def emit_stock_update(self, product_id: UUID, new_quantity: int) -> None:
         """
         Emit real-time stock update via WebSocket.
@@ -136,7 +316,7 @@ class InventoryService:
             new_quantity: New stock quantity
         """
         # Broadcast to all connected clients
-        await manager.broadcast(
+        await self.manager.broadcast(
             {
                 "event": "stock_updated",
                 "data": {"product_id": str(product_id), "stock_quantity": new_quantity},

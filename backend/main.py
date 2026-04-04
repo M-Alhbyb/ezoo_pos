@@ -1,10 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.core.exceptions import setup_exception_handlers
 from app.websocket.manager import manager
 from app.modules.products.routes import router as products_router
 from app.modules.categories.routes import router as categories_router
 from app.modules.pos.routes import router as pos_router
+from app.modules.inventory.routes import router as inventory_router
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +16,9 @@ app = FastAPI(
     version=settings.app_version,
     description=settings.app_description,
 )
+
+# Setup exception handlers
+setup_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +31,7 @@ app.add_middleware(
 app.include_router(products_router)
 app.include_router(categories_router)
 app.include_router(pos_router)
+app.include_router(inventory_router)
 
 
 @app.get("/")

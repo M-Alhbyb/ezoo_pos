@@ -375,3 +375,61 @@ class SaleService:
             return Decimal("16.00")  # Default 16%
 
         return Decimal(setting.value)
+
+    async def reverse_sale(self, sale_id: UUID, reason: str) -> SaleReversal:
+        """
+        Reverse a sale and restore stock.
+
+        Constitution IV (Immutable Financial Records):
+        - Original sale remains unchanged
+        - Reversal creates separate correction record
+        - Stock restored with inventory log
+
+        Args:
+            sale_id: UUID of sale to reverse
+            reason: Reason for reversal (required)
+
+        Returns:
+            SaleReversal instance
+
+        Raises:
+            ValueError: If sale not found or already reversed
+        """
+        # Get sale with items
+        sale = await self.get_sale_detail(sale_id)
+        if not sale:
+            raise ValueError(f"Sale {sale_id} not found")
+
+        # Check if already reversed
+        existing_reversal = await self._get_reversal_by_sale_id(sale_id)
+        if existing_reversal:
+            raise ValueError(f"Sale {sale_id} has already been reversed")
+
+        # Create reversal record
+        reversal = SaleReversal(
+            original_sale_id=sale_id,
+            reason=reason,
+        )
+
+        self.db.add(reversal)
+        await self.db.flush()  # Get reversal ID
+
+        # Restore stock for each item
+        for item in sale.items:
+            await self.inventory_service.restore_stock(
+                product_id=item.product_id,
+                quantity=item.quantity,
+                reason="reversal",
+                reference_id=reversal.id,
+            )
+
+        await self.db.commit()
+        await self.db.refresh(reversal)
+
+        return reversal
+
+    async def _get_reversal_by_sale_id(self, sale_id: UUID) -> Optional[SaleReversal]:
+        """Check if sale has been reversed."""
+        query = select(SaleReversal).where(SaleReversal.original_sale_id == sale_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
