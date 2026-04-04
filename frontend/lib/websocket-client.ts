@@ -8,14 +8,14 @@
 export interface StockUpdateEvent {
   event: "stock_updated" | "stock_updated_batch";
   data:
-    | {
-        product_id: string;
-        stock_quantity: number;
-      }
-    | Array<{
-        product_id: string;
-        stock_quantity: number;
-      }>;
+  | {
+    product_id: string;
+    stock_quantity: number;
+  }
+  | Array<{
+    product_id: string;
+    stock_quantity: number;
+  }>;
 }
 
 export type StockUpdateCallback = (productId: string, quantity: number) => void;
@@ -153,7 +153,7 @@ export class WebSocketClient {
    * Notify all stock update callbacks.
    */
   private notifyStockUpdate(productId: string, quantity: number): void {
-    for (const callback of this.stockUpdateCallbacks) {
+    for (const callback of Array.from(this.stockUpdateCallbacks)) {
       try {
         callback(productId, quantity);
       } catch (error) {
@@ -166,7 +166,7 @@ export class WebSocketClient {
    * Notify all connection status callbacks.
    */
   private notifyConnectionStatus(connected: boolean): void {
-    for (const callback of this.connectionStatusCallbacks) {
+    for (const callback of Array.from(this.connectionStatusCallbacks)) {
       try {
         callback(connected);
       } catch (error) {

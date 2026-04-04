@@ -1,5 +1,7 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.database import get_db
 from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
 from app.websocket.manager import manager
@@ -42,6 +44,17 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.get("/api/payment-methods")
+async def get_payment_methods(db: AsyncSession = Depends(get_db)):
+    """Get all active payment methods."""
+    from sqlalchemy import select
+    from app.models.payment_method import PaymentMethod
+    
+    result = await db.execute(select(PaymentMethod).where(PaymentMethod.is_active == True))
+    methods = result.scalars().all()
+    return {"items": [m.to_dict() for m in methods]}
 
 
 @app.websocket("/ws/stock-updates")

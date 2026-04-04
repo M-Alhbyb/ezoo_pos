@@ -1,7 +1,7 @@
 "use client";
-
 import { useState, useEffect } from "react";
 
+// ... Interfaces
 interface Product {
   id: string;
   name: string;
@@ -23,6 +23,7 @@ interface Category {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,6 +35,7 @@ export default function ProductsPage() {
   const fetchProducts = async (categoryId?: string, search?: string) => {
     try {
       setLoading(true);
+      setActiveCategoryId(categoryId || null);
       const params = new URLSearchParams();
       if (categoryId) params.append("category_id", categoryId);
       if (search) params.append("search", search);
@@ -77,86 +79,116 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Products</h1>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+    <div className="space-y-6">
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">Products Catalog</h1>
+          <p className="text-slate-500 mt-1">Manage your inventory and pricing.</p>
+        </div>
+        <button className="flex items-center px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200">
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
           Add Product
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
-          {error}
+        <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-4 border border-rose-200 animate-slide-up flex items-center shadow-sm">
+          <svg className="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      <div className="flex gap-6">
-        <aside className="w-64">
-          <div className="border rounded p-4">
-            <h2 className="font-medium mb-2">Filter by Category</h2>
-            {categories.map(cat => (
+      <div className="flex flex-col md:flex-row gap-6">
+        <aside className="w-full md:w-64 shrink-0">
+          <div className="glass p-5 rounded-2xl sticky top-24">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by Category</h2>
+            <div className="space-y-1">
               <button
-                key={cat.id}
-                className="block w-full text-left px-2 py-1 hover:bg-gray-100 rounded"
-                onClick={() => fetchProducts(cat.id)}
+                className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === null ? 'bg-slate-100 text-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
+                onClick={() => fetchProducts()}
               >
-                {cat.name} ({cat.product_count})
+                All Categories
               </button>
-            ))}
-            <button
-              className="block w-full text-left px-2 py-1 hover:bg-gray-100 rounded mt-2 font-medium"
-              onClick={() => fetchProducts()}
-            >
-              All Categories
-            </button>
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === cat.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => fetchProducts(cat.id)}
+                >
+                  <span className="truncate pr-2">{cat.name}</span>
+                  <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-xs font-semibold">{cat.product_count}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </aside>
 
-        <main className="flex-1">
-          {loading ? (
-            <div className="text-center py-8">Loading products...</div>
-          ) : (
-            <div className="border rounded">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-4 py-2">Name</th>
-                    <th className="text-left px-4 py-2">SKU</th>
-                    <th className="text-left px-4 py-2">Category</th>
-                    <th className="text-left px-4 py-2">Price</th>
-                    <th className="text-left px-4 py-2">Stock</th>
-                    <th className="text-left px-4 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map(product => (
-                    <tr key={product.id} className="border-t">
-                      <td className="px-4 py-2">{product.name}</td>
-                      <td className="px-4 py-2">{product.sku || "-"}</td>
-                      <td className="px-4 py-2">{product.category_name}</td>
-                      <td className="px-4 py-2">${product.selling_price}</td>
-                      <td className="px-4 py-2">{product.stock_quantity}</td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </td>
+        <main className="flex-1 min-w-0">
+          <div className="glass rounded-2xl overflow-hidden shadow-sm">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <svg className="animate-spin w-8 h-8 mb-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="font-medium">Loading catalog...</span>
+              </div>
+            ) : products.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse animate-fade-in">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-200">
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Info</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Price</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Stock</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              {products.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No products found
-                </div>
-              )}
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white/50">
+                    {products.map((product) => (
+                      <tr key={product.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-800">{product.name}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{product.category_name}</div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600 font-mono text-sm">{product.sku || <span className="text-slate-400 italic">None</span>}</td>
+                        <td className="px-6 py-4 text-right font-medium text-slate-800">${parseFloat(product.selling_price).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${product.stock_quantity > 10 ? 'bg-emerald-100 text-emerald-800' : product.stock_quantity > 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+                            {product.stock_quantity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {product.is_active ? (
+                            <span className="flex items-center text-sm text-slate-600"><div className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></div>Active</span>
+                          ) : (
+                            <span className="flex items-center text-sm text-slate-400"><div className="w-2 h-2 rounded-full bg-slate-300 mr-2"></div>Inactive</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Delete Product"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-slate-400 animate-fade-in">
+                <svg className="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <div className="text-lg font-medium text-slate-600 mb-1">No products found</div>
+                <p className="text-sm">Get started by adding your first product catalog.</p>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </div>
