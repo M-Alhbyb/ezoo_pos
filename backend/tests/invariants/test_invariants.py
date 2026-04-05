@@ -42,6 +42,7 @@ async def test_sale_reversal(async_client):
 
     # reverse
     res = await async_client.post(f"/api/sales/{sale['id']}/reverse")
+    print("\nREVERSAL REPONSE:", res.json())
     assert res.status_code == 200
 
     # stock restored

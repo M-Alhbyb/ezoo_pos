@@ -128,3 +128,11 @@ class FeePresetsListResponse(BaseModel):
     class Config:
         from_attributes = True
         json_encoders = {Decimal: float}
+
+
+class VATSettingsUpdate(BaseModel):
+    """Schema for updating VAT settings."""
+
+    enabled: bool
+    type: str = Field(..., description="VAT type (fixed or percent)")
+    value: Decimal = Field(..., description="VAT value")

@@ -222,6 +222,7 @@ class TestDoubleReversalPrevention:
 
         assert second_reversal.status_code == 400
         data = second_reversal.json()
+        print("SECOND REVERSAL ERROR:", data)
         assert data["detail"]["error"]["code"] == "ALREADY_REVERSED"
         assert "already reversed" in data["detail"]["error"]["message"].lower()
 

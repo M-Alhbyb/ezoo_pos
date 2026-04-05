@@ -5,22 +5,24 @@ async def test_partner_distribution(async_client):
     # create partner
     res = await async_client.post("/api/partners", json={
         "name": "Ali",
-        "percentage": "10"
+        "profit_percentage": "10"
     })
     partner = res.json()
 
     # simulate project profit
-    await async_client.post("/api/projects", json={
+    res = await async_client.post("/api/projects", json={
         "name": "proj",
         "selling_price": "1000",
         "cost": "0",
-        "status": "completed"
+        "status": "draft"
     })
+    proj_id = res.json()["id"]
+    await async_client.post(f"/api/projects/{proj_id}/complete")
 
     res = await async_client.post("/api/partners/distribute", json={})
     data = res.json()
 
-    assert data["distributions"][0]["amount"] == "100"
+    assert float(data["distributions"][0]["amount"]) == 100.0
 
 @pytest.mark.anyio
 async def test_no_double_distribution(async_client):

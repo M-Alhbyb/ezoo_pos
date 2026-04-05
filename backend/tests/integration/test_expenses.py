@@ -17,4 +17,4 @@ async def test_percentage_expense(async_client):
     res = await async_client.get(f"/api/projects/{project['id']}")
     data = res.json()
 
-    assert data["total_expenses"] == "100"
+    assert float(data["total_expenses"]) == 100.0

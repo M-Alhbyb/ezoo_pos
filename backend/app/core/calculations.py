@@ -193,15 +193,21 @@ def calculate_sale_total(
             'total': Decimal('382.80')
         }
     """
+    # Validate items
+    if not items:
+        raise ValueError("Sale must have at least one item")
+
     # Calculate subtotal from line items
     subtotal = sum(
-        calculate_line_total(item["quantity"], item["unit_price"]) for item in items
+        (calculate_line_total(item["quantity"], Decimal(str(item["unit_price"]))) for item in items),
+        Decimal("0.00")
     )
 
     # Calculate fees total
     fees_total = sum(
-        calculate_fee_amount(fee["fee_value"], fee["fee_value_type"], subtotal)
-        for fee in fees
+        (calculate_fee_amount(Decimal(str(fee["fee_value"])), fee["fee_value_type"], subtotal)
+        for fee in fees),
+        Decimal("0.00")
     )
 
     # Calculate VAT

@@ -20,6 +20,7 @@ from app.modules.settings.schemas import (
     FeePresetsUpdate,
     FeePresetsResponse,
     FeePresetsListResponse,
+    VATSettingsUpdate,
 )
 from app.websocket.manager import manager
 
@@ -185,6 +186,22 @@ async def update_setting(
             detail=f"Setting with key {key} not found",
         )
     return setting
+
+
+@router.post(
+    "/vat",
+    status_code=status.HTTP_200_OK,
+    summary="Update VAT settings",
+)
+async def update_vat_settings(
+    data: VATSettingsUpdate,
+    service: SettingsService = Depends(get_settings_service),
+):
+    """Batch update VAT-related settings."""
+    await service.update_vat_settings(
+        enabled=data.enabled, vat_type=data.type, value=data.value
+    )
+    return {"message": "VAT settings updated"}
 
 
 # Fee Presets

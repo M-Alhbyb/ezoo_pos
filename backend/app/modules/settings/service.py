@@ -106,6 +106,36 @@ class SettingsService:
         await self.db.refresh(setting)
         return setting
 
+    async def update_vat_settings(
+        self, enabled: bool, vat_type: str, value: Decimal
+    ) -> None:
+        """Update VAT enabled, type and rate in a single call."""
+        # vat_enabled
+        enabled_setting = await self.get_setting_by_key("vat_enabled")
+        if not enabled_setting:
+            enabled_setting = Settings(key="vat_enabled", value=str(enabled).lower())
+            self.db.add(enabled_setting)
+        else:
+            enabled_setting.value = str(enabled).lower()
+
+        # vat_type
+        type_setting = await self.get_setting_by_key("vat_type")
+        if not type_setting:
+            type_setting = Settings(key="vat_type", value=vat_type)
+            self.db.add(type_setting)
+        else:
+            type_setting.value = vat_type
+
+        # vat_rate
+        rate_setting = await self.get_setting_by_key("vat_rate")
+        if not rate_setting:
+            rate_setting = Settings(key="vat_rate", value=str(value))
+            self.db.add(rate_setting)
+        else:
+            rate_setting.value = str(value)
+
+        await self.db.commit()
+
     # Fee Presets
 
     async def get_fee_presets(self, location_id: int) -> dict[str, list[Decimal]]:

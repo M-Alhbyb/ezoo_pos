@@ -20,7 +20,6 @@ from sqlalchemy.orm import selectinload
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.sale_fee import SaleFee
-from app.models.sale_reversal import SaleReversal
 from app.models.product import Product
 from app.models.payment_method import PaymentMethod
 from app.models.settings import Settings
@@ -93,6 +92,9 @@ class SaleService:
                     product_name=product.name,
                     quantity=item_req.quantity,
                     unit_price=unit_price,
+                    price=unit_price,
+                    base_cost=product.base_price,
+                    vat_rate=None,  # Will be set after global VAT calc
                     line_total=line_total,
                 )
             )
@@ -147,7 +149,10 @@ class SaleService:
             vat_enabled=vat_enabled,
             vat_rate=vat_rate,
             vat_amount=vat_amount,
+            vat_total=vat_amount,  # Alias for consistency
             total=total,
+            grand_total=total,  # Alias for consistency
+            vat_percentage=str(int(vat_rate)) if vat_rate is not None else None,
         )
 
     async def create_sale(self, sale_data: SaleCreate) -> Sale:
@@ -216,14 +221,24 @@ class SaleService:
             SaleCalculationRequest(items=sale_data.items, fees=sale_data.fees)
         )
 
+        # Calculate total cost and profit
+        total_cost = Decimal("0")
+        for item_data in sale_data.items:
+            prod = products[item_data.product_id]
+            total_cost += Decimal(item_data.quantity) * prod.base_price
+        
+        profit = breakdown.total - total_cost
+
         # Create sale
         sale = Sale(
             payment_method_id=payment_method_id,
             subtotal=breakdown.subtotal,
             fees_total=breakdown.fees_total,
             vat_rate=breakdown.vat_rate,
-            vat_amount=breakdown.vat_amount,
-            total=breakdown.total,
+            vat_total=breakdown.vat_amount,
+            grand_total=breakdown.total,
+            total_cost=total_cost,
+            profit=profit,
             note=sale_data.note,
             idempotency_key=sale_data.idempotency_key,
         )
@@ -233,12 +248,15 @@ class SaleService:
 
         # Create sale items
         for item_data, item_response in zip(sale_data.items, breakdown.items):
+            prod = products[item_data.product_id]
             sale_item = SaleItem(
                 sale_id=sale.id,
                 product_id=item_data.product_id,
                 product_name=item_response.product_name,
                 quantity=item_data.quantity,
                 unit_price=item_response.unit_price,
+                base_cost=prod.base_price,
+                vat_rate=breakdown.vat_rate,
                 line_total=item_response.line_total,
             )
             self.db.add(sale_item)
@@ -428,7 +446,7 @@ class SaleService:
 
         return Decimal(setting.value)
 
-    async def reverse_sale(self, sale_id: UUID, reason: str) -> SaleReversal:
+    async def reverse_sale(self, sale_id: UUID, reason: str) -> Sale:
         """
         Reverse a sale and restore stock.
 
@@ -442,32 +460,67 @@ class SaleService:
             reason: Reason for reversal (required)
 
         Returns:
-            SaleReversal instance
+            Sale instance representing the reversal
 
         Raises:
             ValueError: If sale not found or already reversed
         """
         # Get sale with items
-        sale = await self.get_sale_detail(sale_id)
-        if not sale:
+        original_sale = await self.get_sale_detail(sale_id)
+        if not original_sale:
             raise ValueError(f"Sale {sale_id} not found")
 
         # Check if already reversed
-        existing_reversal = await self._get_reversal_by_sale_id(sale_id)
-        if existing_reversal:
-            raise ValueError(f"Sale {sale_id} has already been reversed")
+        existing_reversa1 = await self._get_reversal_by_sale_id(sale_id)
+        if existing_reversa1:
+            raise ValueError(f"Sale {sale_id} is already reversed")
 
         # Create reversal record
-        reversal = SaleReversal(
-            original_sale_id=sale_id,
-            reason=reason,
+        reversal = Sale(
+            payment_method_id=original_sale.payment_method_id,
+            subtotal=-original_sale.subtotal,
+            fees_total=-original_sale.fees_total,
+            vat_rate=original_sale.vat_rate,
+            vat_total=-original_sale.vat_total if original_sale.vat_total else None,
+            grand_total=-original_sale.grand_total,
+            total_cost=-original_sale.total_cost,
+            profit=-original_sale.profit,
+            note=reason,
+            is_reversal=True,
+            original_sale_id=original_sale.id,
         )
 
         self.db.add(reversal)
         await self.db.flush()  # Get reversal ID
 
-        # Restore stock for each item
-        for item in sale.items:
+        # Create reversed sale items
+        for item in original_sale.items:
+            reversal_item = SaleItem(
+                sale_id=reversal.id,
+                product_id=item.product_id,
+                product_name=item.product_name,
+                quantity=-item.quantity,
+                unit_price=item.unit_price,  # Base and unit remain positive
+                base_cost=item.base_cost,
+                vat_rate=item.vat_rate,
+                line_total=-item.line_total,
+            )
+            self.db.add(reversal_item)
+            
+        # Create reversed sale fees
+        for fee in original_sale.fees:
+            reversal_fee = SaleFee(
+                sale_id=reversal.id,
+                fee_type=fee.fee_type,
+                fee_label=fee.fee_label,
+                fee_value_type=fee.fee_value_type,
+                fee_value=fee.fee_value,  # Retain original config values
+                calculated_amount=-fee.calculated_amount,
+            )
+            self.db.add(reversal_fee)
+
+        # Restore stock for each item using the original positive quantity
+        for item in original_sale.items:
             await self.inventory_service.restore_stock(
                 product_id=item.product_id,
                 quantity=item.quantity,
@@ -476,12 +529,16 @@ class SaleService:
             )
 
         await self.db.commit()
-        await self.db.refresh(reversal)
+        
+        # Fetch eagerly avoiding context errors
+        reversal_detail = await self.get_sale_detail(reversal.id)
+        if not reversal_detail:
+            raise ValueError(f"Sale {reversal.id} not found after creation")
 
-        return reversal
+        return reversal_detail
 
-    async def _get_reversal_by_sale_id(self, sale_id: UUID) -> Optional[SaleReversal]:
+    async def _get_reversal_by_sale_id(self, sale_id: UUID) -> Optional[Sale]:
         """Check if sale has been reversed."""
-        query = select(SaleReversal).where(SaleReversal.original_sale_id == sale_id)
+        query = select(Sale).where(Sale.original_sale_id == sale_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()

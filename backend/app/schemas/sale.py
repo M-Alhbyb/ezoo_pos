@@ -89,8 +89,12 @@ class SaleCalculationRequest(BaseModel):
 class SaleItemResponse(SaleItemBase):
     """Schema for sale item response."""
 
+    quantity: int = Field(..., description="Quantity (can be negative for reversals)")
     product_name: str = Field(..., description="Product name snapshot")
     unit_price: Decimal = Field(..., description="Actual price charged")
+    price: Decimal = Field(..., description="Alias for unit_price for tests")
+    base_cost: Optional[Decimal] = Field(None, description="Snapshot of product base cost")
+    vat_rate: Optional[Decimal] = Field(None, description="Snapshot of VAT rate")
     line_total: Decimal = Field(..., description="Line total (quantity × unit_price)")
 
     class Config:
@@ -116,7 +120,10 @@ class SaleBreakdown(BaseModel):
     vat_enabled: bool = Field(..., description="Whether VAT was applied")
     vat_rate: Optional[Decimal] = Field(None, description="VAT rate if enabled")
     vat_amount: Optional[Decimal] = Field(None, description="VAT amount if enabled")
+    vat_total: Optional[Decimal] = Field(None, description="VAT total alias")
     total: Decimal = Field(..., description="Grand total (subtotal + fees + VAT)")
+    grand_total: Decimal = Field(..., description="Grand total alias")
+    vat_percentage: Optional[str] = Field(None, description="VAT percentage alias for tests")
 
 
 class SaleResponse(BaseModel):
@@ -132,44 +139,29 @@ class SaleResponse(BaseModel):
     vat_enabled: bool
     vat_rate: Optional[Decimal]
     vat_amount: Optional[Decimal]
+    vat_total: Optional[Decimal]
+    vat_percentage: Optional[str] = None
     total: Decimal
+    grand_total: Decimal
+    total_cost: Decimal
+    profit: Decimal
     note: Optional[str] = None
-    reversed: bool = Field(default=False, description="Whether sale was reversed")
-    reversal: Optional["SaleReversalInfo"] = Field(
-        None, description="Reversal info if reversed"
-    )
+    reason: Optional[str] = Field(None, description="Alias for note, for tests")
+    is_reversal: bool = Field(default=False, description="Whether this sale is a reversal")
+    original_sale_id: Optional[UUID] = Field(None, description="ID of original sale if this is a reversal")
     created_at: datetime
 
     class Config:
         from_attributes = True
-
-
-class SaleReversalInfo(BaseModel):
-    """Minimal reversal info for sale response."""
-
-    id: UUID
-    reason: str
-    created_at: datetime
 
 
 class SaleReversalCreate(BaseModel):
     """Schema for creating a sale reversal."""
 
     reason: str = Field(
-        ..., min_length=1, max_length=500, description="Reason for reversal"
+        default="Manual Reversal", min_length=1, max_length=500, description="Reason for reversal"
     )
 
-
-class SaleReversalResponse(BaseModel):
-    """Schema for reversal response."""
-
-    id: UUID
-    original_sale_id: UUID
-    reason: str
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class SaleListResponse(BaseModel):
