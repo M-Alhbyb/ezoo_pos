@@ -154,10 +154,8 @@ class SaleService:
         """
         Create a confirmed sale with atomic stock deduction and idempotency support.
         """
-        print("====== create_sale started ======")
         # 1. IDEMPOTENCY CHECK
         if sale_data.idempotency_key:
-            print("checking idempotency:", sale_data.idempotency_key)
             query = (
                 select(Sale)
                 .options(
@@ -172,10 +170,9 @@ class SaleService:
             if existing_sale:
                 return existing_sale
 
-        print("Resolving Payment Method")
+        # Resolve Payment Method safely
         payment_method_id = sale_data.payment_method_id
         if not payment_method_id:
-            print("Auto-provision fallback payment method")
             pm_query = select(PaymentMethod).where(PaymentMethod.is_active == True)
             pm_result = await self.db.execute(pm_query)
             payment_method = pm_result.scalars().first()
@@ -191,23 +188,20 @@ class SaleService:
             if not payment_method.is_active:
                 raise ValueError(f"Payment method {payment_method_id} is inactive")
 
-        # 2. Start Explicit Nested Transaction for Safety
-        print("Sorting product_ids")
+        # ROW-LEVEL LOCKING against deadlocks
+        # Sort product IDs first
         product_ids = sorted(list(set(item.product_id for item in sale_data.items)))
         
         products = {}
-        print("Locking products:", product_ids)
         for pid in product_ids:
-            print(f"locking {pid}")
+            # Lock row with SELECT FOR UPDATE
             prod = await self.inventory_service._get_product_for_update(pid)
-            print(f"locked {pid}")
             if not prod:
                 raise ValueError(f"Product {pid} not found")
             if not prod.is_active:
                 raise ValueError(f"Product {prod.name} is inactive")
             products[pid] = prod
         
-        print("Checking stock")
         # 4. STOCK VALIDATION
         for item in sale_data.items:
             prod = products[item.product_id]

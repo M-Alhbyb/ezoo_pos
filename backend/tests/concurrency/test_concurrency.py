@@ -19,8 +19,8 @@ async def test_overselling_stock(async_client):
 
     results = await asyncio.gather(buy(), buy())
 
-    success = [r for r in results if r.status_code == 200]
-    failure = [r for r in results if r.status_code != 200]
+    success = [r for r in results if r.status_code == 201]
+    failure = [r for r in results if r.status_code != 201]
 
     assert len(success) == 1
     assert len(failure) == 1
@@ -44,8 +44,8 @@ async def test_double_click_sale(async_client):
     res1 = await async_client.post("/api/sales", json=payload)
     res2 = await async_client.post("/api/sales", json=payload)
 
-    assert res1.status_code == 200
-    assert res2.status_code == 200
+    assert res1.status_code == 201
+    assert res2.status_code == 201
 
     # ensure only one sale exists
     res = await async_client.get("/api/sales")
