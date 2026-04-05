@@ -1,10 +1,12 @@
 # ezoo_pos Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-05
+Auto-generated from all feature plans. Last updated: 2026-04-06
 
 ## Active Technologies
 - Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI 0.109, SQLAlchemy async 2.0, Pydantic 2.5, React 18, TailwindCSS 3.4 (002-quick-fee-buttons)
 - PostgreSQL (sole source of truth per constitution) (002-quick-fee-buttons)
+- Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI 0.109, SQLAlchemy async 2.0, Pydantic 2.5, React 18, TailwindCSS 3.4, pandas (CSV/XLSX), WeasyPrint or ReportLab (PDF), Recharts (frontend charts) (003-export-visualization-dashboards)
+- PostgreSQL (via existing SQLAlchemy async models) (003-export-visualization-dashboards)
 
 - Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI (backend), Next.js 14 App Router (frontend), SQLAlchemy async (ORM), Alembic (migrations), Pydantic (validation), WebSocket (real-time updates) (001-core-pos-products-inventory)
 
@@ -24,6 +26,7 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.11 (backend), TypeScript/Next.js 14 (frontend): Follow standard conventions
 
 ## Recent Changes
+- 003-export-visualization-dashboards: Added Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI 0.109, SQLAlchemy async 2.0, Pydantic 2.5, React 18, TailwindCSS 3.4, pandas (CSV/XLSX), WeasyPrint or ReportLab (PDF), Recharts (frontend charts)
 - 002-quick-fee-buttons: Added Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI 0.109, SQLAlchemy async 2.0, Pydantic 2.5, React 18, TailwindCSS 3.4
 
 - 001-core-pos-products-inventory: Added Python 3.11 (backend), TypeScript/Next.js 14 (frontend) + FastAPI (backend), Next.js 14 App Router (frontend), SQLAlchemy async (ORM), Alembic (migrations), Pydantic (validation), WebSocket (real-time updates)
