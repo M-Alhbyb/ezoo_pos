@@ -37,7 +37,7 @@ async def db_engine():
     """Create a test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
-        echo=False,
+        echo=True,
     )
 
     async with engine.begin() as conn:
@@ -68,7 +68,7 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create a test HTTP client."""
 
     async def override_get_db():
@@ -80,6 +80,10 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
     app.dependency_overrides.clear()
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 
 # Test utilities

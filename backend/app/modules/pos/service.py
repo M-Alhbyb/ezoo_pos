@@ -152,53 +152,90 @@ class SaleService:
 
     async def create_sale(self, sale_data: SaleCreate) -> Sale:
         """
-        Create a confirmed sale with atomic stock deduction.
-
-        Constitution IV: Sale is immediately confirmed and immutable.
-
-        Args:
-            sale_data: Sale creation request
-
-        Returns:
-            Created Sale instance with items and fees
-
-        Raises:
-            ValueError: If validation fails or insufficient stock
+        Create a confirmed sale with atomic stock deduction and idempotency support.
         """
-        # Calculate breakdown first
+        print("====== create_sale started ======")
+        # 1. IDEMPOTENCY CHECK
+        if sale_data.idempotency_key:
+            print("checking idempotency:", sale_data.idempotency_key)
+            query = (
+                select(Sale)
+                .options(
+                    selectinload(Sale.items),
+                    selectinload(Sale.fees),
+                    selectinload(Sale.payment_method),
+                )
+                .where(Sale.idempotency_key == sale_data.idempotency_key)
+            )
+            existing_result = await self.db.execute(query)
+            existing_sale = existing_result.scalar_one_or_none()
+            if existing_sale:
+                return existing_sale
+
+        print("Resolving Payment Method")
+        payment_method_id = sale_data.payment_method_id
+        if not payment_method_id:
+            print("Auto-provision fallback payment method")
+            pm_query = select(PaymentMethod).where(PaymentMethod.is_active == True)
+            pm_result = await self.db.execute(pm_query)
+            payment_method = pm_result.scalars().first()
+            if not payment_method:
+                payment_method = PaymentMethod(name="Auto-Fallback", is_active=True)
+                self.db.add(payment_method)
+                await self.db.flush()
+            payment_method_id = payment_method.id
+        else:
+            payment_method = await self._get_payment_method(payment_method_id)
+            if not payment_method:
+                raise ValueError(f"Payment method {payment_method_id} not found")
+            if not payment_method.is_active:
+                raise ValueError(f"Payment method {payment_method_id} is inactive")
+
+        # 2. Start Explicit Nested Transaction for Safety
+        print("Sorting product_ids")
+        product_ids = sorted(list(set(item.product_id for item in sale_data.items)))
+        
+        products = {}
+        print("Locking products:", product_ids)
+        for pid in product_ids:
+            print(f"locking {pid}")
+            prod = await self.inventory_service._get_product_for_update(pid)
+            print(f"locked {pid}")
+            if not prod:
+                raise ValueError(f"Product {pid} not found")
+            if not prod.is_active:
+                raise ValueError(f"Product {prod.name} is inactive")
+            products[pid] = prod
+        
+        print("Checking stock")
+        # 4. STOCK VALIDATION
+        for item in sale_data.items:
+            prod = products[item.product_id]
+            if prod.stock_quantity < item.quantity:
+                raise ValueError(
+                    f"Insufficient stock for Product {prod.name}: "
+                    f"requested {item.quantity}, available {prod.stock_quantity}"
+                )
+        
+        # Calculate breakdown safely since locks are acquired
         breakdown = await self.calculate_breakdown(
             SaleCalculationRequest(items=sale_data.items, fees=sale_data.fees)
         )
 
-        # Validate stock availability
-        stock_issues = await self.validate_stock_availability(
-            [(item.product_id, item.quantity) for item in sale_data.items]
-        )
-        if stock_issues:
-            raise ValueError(f"Insufficient stock: {', '.join(stock_issues)}")
-
-        # Validate payment method
-        payment_method = await self._get_payment_method(sale_data.payment_method_id)
-        if not payment_method:
-            raise ValueError(f"Payment method {sale_data.payment_method_id} not found")
-        if not payment_method.is_active:
-            raise ValueError(
-                f"Payment method {sale_data.payment_method_id} is inactive"
-            )
-
         # Create sale
         sale = Sale(
-            payment_method_id=sale_data.payment_method_id,
+            payment_method_id=payment_method_id,
             subtotal=breakdown.subtotal,
             fees_total=breakdown.fees_total,
             vat_rate=breakdown.vat_rate,
             vat_amount=breakdown.vat_amount,
             total=breakdown.total,
             note=sale_data.note,
+            idempotency_key=sale_data.idempotency_key,
         )
 
         self.db.add(sale)
-        await self.db.flush()  # Get sale ID before creating items
+        await self.db.flush()  # Get sale ID
 
         # Create sale items
         for item_data, item_response in zip(sale_data.items, breakdown.items):
@@ -224,7 +261,7 @@ class SaleService:
             )
             self.db.add(sale_fee)
 
-        # Deduct stock atomically
+        # 5. ATOMIC STOCK DEDUCTION & LOGGING
         for item_data in sale_data.items:
             await self.inventory_service.deduct_stock(
                 product_id=item_data.product_id,
@@ -234,7 +271,11 @@ class SaleService:
             )
 
         await self.db.commit()
-        await self.db.refresh(sale)
+
+        # Fetch eagerly avoiding context errors
+        sale = await self.get_sale_detail(sale.id)
+        if not sale:
+            raise ValueError(f"Sale {sale.id} not found after creation")
 
         return sale
 

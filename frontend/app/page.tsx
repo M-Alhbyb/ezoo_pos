@@ -6,7 +6,7 @@ export default function HomePage() {
       <div className="flex justify-between items-end mb-8">
         <div>
           <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">Overview</h1>
-          <p className="text-slate-500 mt-1">Welcome back to EZOO POS. Here is what is happening today.</p>
+          <p className="text-slate-500 mt-1">Welcome back to RAYON energy. Here is what is happening today.</p>
         </div>
         <div className="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

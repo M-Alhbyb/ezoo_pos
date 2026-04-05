@@ -19,7 +19,7 @@ class ProductBase(BaseModel):
     sku: Optional[str] = Field(
         None, max_length=50, description="Stock Keeping Unit (optional)"
     )
-    category_id: UUID = Field(..., description="Category ID")
+    category_id: Optional[UUID] = Field(None, description="Optional Category ID")
     base_price: Decimal = Field(..., ge=0, description="Cost to acquire")
     selling_price: Decimal = Field(..., ge=0, description="Price to customers")
     stock_quantity: int = Field(default=0, ge=0, description="Current stock level")

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
-  title: "EZOO POS | Premium Sales Suite",
+  title: "RAYON energy | Premium Sales Suite",
   description: "Next-Generation Point of Sale System",
 };
 
@@ -22,12 +23,10 @@ export default function RootLayout({
         <div className="flex min-h-screen bg-slate-50">
           {/* Glassmorphic Sidebar */}
           <aside className="w-64 glass hidden md:flex flex-col border-r border-slate-200">
-            <div className="p-6">
-              <h1 className="text-2xl font-bold font-heading text-gradient tracking-tight">
-                EZOO POS
-              </h1>
+            <div className="p-8 flex justify-center">
+              <Image src="/logo.png" alt="RAYON energy Logo" width={120} height={120} className="rounded-2xl shadow-lg hover:scale-105 transition-transform duration-300" />
             </div>
-            
+
             <nav className="flex-1 px-4 space-y-2 mt-4 text-slate-600 font-medium tracking-wide">
               <Link href="/" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -53,7 +52,7 @@ export default function RootLayout({
 
             <div className="p-4 border-t border-slate-200">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 shadow-inner"></div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#073053] to-[#F69826] shadow-inner"></div>
                 <div className="ml-3">
                   <p className="text-sm font-semibold text-slate-800">Admin User</p>
                   <p className="text-xs text-slate-500">Store Manager</p>
@@ -66,12 +65,15 @@ export default function RootLayout({
           <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {/* Topbar Mobile */}
             <div className="md:hidden glass p-4 flex justify-between items-center sticky top-0 z-20">
-              <h1 className="text-xl font-bold text-gradient font-heading">EZOO POS</h1>
+              <div className="flex items-center gap-2">
+                <Image src="/logo.png" alt="RAYON energy Logo" width={32} height={32} className="rounded-md shadow-sm" />
+                <h1 className="text-xl font-bold text-gradient font-heading">RAYON energy</h1>
+              </div>
               <button className="p-2 text-slate-600 rounded bg-slate-100">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </button>
             </div>
-            
+
             <div className="p-4 md:p-8 animate-fade-in max-w-7xl mx-auto">
               {children}
             </div>

@@ -118,8 +118,13 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
   }, []);
 
   const handleAddFee = () => {
-    if (newFee.fee_label && newFee.fee_value > 0) {
-      onFeesChange([...fees, newFee]);
+    if (newFee.fee_value > 0) {
+      const finalLabel = newFee.fee_label.trim() || 
+        (FEE_TYPES.find(t => t.value === newFee.fee_type)?.label || newFee.fee_type);
+      
+      const feeToAdd = { ...newFee, fee_label: finalLabel };
+      
+      onFeesChange([...fees, feeToAdd]);
       setNewFee({
         fee_type: "shipping",
         fee_label: "",
@@ -226,12 +231,12 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Label</label>
+            <label className="block text-sm font-medium mb-1">Label (Optional)</label>
             <input
               type="text"
               value={newFee.fee_label}
               onChange={(e) => setNewFee({ ...newFee, fee_label: e.target.value })}
-              placeholder="e.g., Express Shipping"
+              placeholder={`e.g., Express ${FEE_TYPES.find(t => t.value === newFee.fee_type)?.label || 'Shipping'}`}
               className="border rounded px-3 py-2 w-full"
             />
           </div>

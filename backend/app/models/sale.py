@@ -37,7 +37,10 @@ class Sale(BaseModel):
     vat_rate = Column(Numeric(5, 2), nullable=True)  # e.g., 16.00 for 16%
     vat_amount = Column(Numeric(12, 2), nullable=True)
     total = Column(Numeric(12, 2), nullable=False)
-    note = Column(Text, nullable=True)  # Relationships
+    note = Column(Text, nullable=True)
+    idempotency_key = Column(String(255), unique=True, nullable=True, index=True)
+
+    # Relationships
     items = relationship(
         "SaleItem", back_populates="sale", cascade="all, delete-orphan"
     )

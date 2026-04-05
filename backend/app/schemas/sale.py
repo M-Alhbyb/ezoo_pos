@@ -70,8 +70,9 @@ class SaleCreate(BaseModel):
         ..., min_length=1, description="Sale items (at least 1)"
     )
     fees: list[SaleFeeCreate] = Field(default_factory=list, description="Optional fees")
-    payment_method_id: UUID = Field(..., description="Payment method ID")
+    payment_method_id: Optional[UUID] = Field(None, description="Optional Payment method ID")
     note: Optional[str] = Field(None, max_length=1000, description="Optional note")
+    idempotency_key: Optional[str] = Field(None, description="Idempotency key to prevent double sales")
 
 
 class SaleCalculationRequest(BaseModel):
