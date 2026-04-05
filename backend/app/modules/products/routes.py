@@ -1,3 +1,4 @@
+
 """
 Product API Routes - REST endpoints for product catalog management.
 
@@ -219,10 +220,10 @@ async def get_product(
     return _prepare_product_response(product)
 
 
-@router.put(
+@router.patch(
     "/{product_id}",
     response_model=ProductResponse,
-    summary="Update product",
+    summary="Partial update product",
     description="Updates product details (cannot update stock_quantity)",
 )
 async def update_product(

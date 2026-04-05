@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import ProductModal from "@/components/products/ProductModal";
 
 // ... Interfaces
 interface Product {
@@ -26,6 +27,8 @@ export default function ProductsPage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
 
   useEffect(() => {
     fetchProducts();
@@ -65,6 +68,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       const response = await fetch(`/api/products/${productId}`, {
         method: "DELETE",
@@ -78,6 +82,43 @@ export default function ProductsPage() {
     }
   };
 
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleAddProduct = () => {
+    setEditingProduct(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveProduct = async (data: Partial<Product>) => {
+    try {
+      const url = editingProduct 
+        ? `/api/products/${editingProduct.id}` 
+        : "/api/products";
+      const method = editingProduct ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to save product");
+      }
+
+      // Refresh data
+      await fetchProducts(activeCategoryId || undefined);
+      await fetchCategories();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end mb-6">
@@ -85,7 +126,10 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">Products Catalog</h1>
           <p className="text-slate-500 mt-1">Manage your inventory and pricing.</p>
         </div>
-        <button className="flex items-center px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200">
+        <button 
+          onClick={handleAddProduct}
+          className="flex items-center px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200"
+        >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
           Add Product
         </button>
@@ -168,13 +212,22 @@ export default function ProductsPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Delete Product"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                          </button>
+                          <div className="flex justify-end space-x-1">
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Edit Product"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Delete Product"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -191,6 +244,14 @@ export default function ProductsPage() {
           </div>
         </main>
       </div>
+
+      <ProductModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={editingProduct}
+        categories={categories}
+        onSubmit={handleSaveProduct}
+      />
     </div>
   );
 }

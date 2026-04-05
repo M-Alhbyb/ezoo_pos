@@ -36,7 +36,6 @@ from app.core.calculations import (
     calculate_line_total,
     calculate_fee_amount,
     calculate_vat,
-    calculate_sale_total,
     round_currency,
 )
 from app.modules.inventory.service import InventoryService
@@ -125,15 +124,20 @@ class SaleService:
 
         # Calculate VAT
         vat_enabled = await self._get_vat_enabled()
+        vat_type = None
+        vat_value = None
         vat_rate = None
         vat_amount = None
 
         if vat_enabled:
-            vat_rate = await self._get_vat_rate()
-            vat_amount = calculate_vat(subtotal, fees_total, vat_rate)
+            vat_type = await self._get_vat_type()
+            vat_value = await self._get_vat_rate()
+            vat_amount, vat_rate = calculate_vat(
+                subtotal, fees_total, vat_enabled, vat_type, vat_value
+            )
 
         # Calculate total
-        total = calculate_sale_total(subtotal, fees_total, vat_amount)
+        total = round_currency(subtotal + fees_total + (vat_amount or Decimal("0")))
 
         return SaleBreakdown(
             items=items_response,
@@ -167,7 +171,9 @@ class SaleService:
         )
 
         # Validate stock availability
-        stock_issues = await self.validate_stock_availability(sale_data.items)
+        stock_issues = await self.validate_stock_availability(
+            [(item.product_id, item.quantity) for item in sale_data.items]
+        )
         if stock_issues:
             raise ValueError(f"Insufficient stock: {', '.join(stock_issues)}")
 
@@ -364,6 +370,17 @@ class SaleService:
             return False
 
         return setting.value.lower() in ("true", "1", "yes")
+
+    async def _get_vat_type(self) -> str:
+        """Get VAT type from settings (percent or fixed)."""
+        query = select(Settings).where(Settings.key == "vat_type")
+        result = await self.db.execute(query)
+        setting = result.scalar_one_or_none()
+
+        if not setting:
+            return "percent"  # Default to percentage
+
+        return setting.value.lower()
 
     async def _get_vat_rate(self) -> Decimal:
         """Get VAT rate from settings."""

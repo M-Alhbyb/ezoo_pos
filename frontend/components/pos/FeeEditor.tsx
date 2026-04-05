@@ -3,17 +3,25 @@
  * 
  * Add/edit fixed or percentage fees to the sale.
  * Task: T072
+ * Tasks: T020-T030 - Quick-amount preset buttons
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Fee {
   fee_type: "shipping" | "installation" | "custom";
   fee_label: string;
   fee_value_type: "fixed" | "percent";
   fee_value: number;
+}
+
+// T020: TypeScript interface for fee presets configuration
+interface FeePresetsConfig {
+  shipping: number[];
+  installation: number[];
+  custom: number[];
 }
 
 interface FeeEditorProps {
@@ -36,6 +44,79 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
     fee_value: 0,
   });
 
+  // T021: State management for fee presets
+  const [feePresets, setFeePresets] = useState<FeePresetsConfig>({
+    shipping: [],
+    installation: [],
+    custom: [],
+  });
+  const [loadingPresets, setLoadingPresets] = useState(true);
+
+  // T023: WebSocket listener for preset updates
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    // Connect to WebSocket for real-time preset updates
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/stock-updates`;
+      
+      wsRef.current = new WebSocket(wsUrl);
+      
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Handle preset updates
+          if (data.event === 'preset_updated') {
+            const { fee_type, presets } = data.data;
+            setFeePresets((prev) => ({
+              ...prev,
+              [fee_type]: presets,
+            }));
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      wsRef.current.onclose = () => {
+        console.log('WebSocket closed, attempting reconnect...');
+        setTimeout(connectWebSocket, 3000); // Reconnect after 3 seconds
+      };
+    };
+    
+    connectWebSocket();
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  // T022: Fetch presets on component mount
+  useEffect(() => {
+    async function fetchFeePresets() {
+      try {
+        const response = await fetch("/api/settings/fee-presets?location_id=1");
+        if (response.ok) {
+          const data = await response.json();
+          setFeePresets(data.presets_by_fee_type);
+        }
+      } catch (error) {
+        console.error("Failed to load fee presets:", error);
+      } finally {
+        setLoadingPresets(false);
+      }
+    }
+    fetchFeePresets();
+  }, []);
+
   const handleAddFee = () => {
     if (newFee.fee_label && newFee.fee_value > 0) {
       onFeesChange([...fees, newFee]);
@@ -52,6 +133,44 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
   const handleRemoveFee = (index: number) => {
     const newFees = fees.filter((_, i) => i !== index);
     onFeesChange(newFees);
+  };
+
+  // T025: Preset button onClick handler
+  const handlePresetClick = (amount: number) => {
+    setNewFee({ ...newFee, fee_value: amount });
+  };
+
+  // T024: QuickAmountButtons sub-component
+  const QuickAmountButtons = ({ presets, onSelect }: { presets: number[]; onSelect: (amount: number) => void }) => {
+    if (loadingPresets) {
+      return <div className="text-sm text-gray-400 py-2">Loading presets...</div>;
+    }
+
+    if (presets.length === 0) {
+      // T026: Show placeholder when no presets
+      return (
+        <div className="text-sm text-gray-500 italic py-2">
+          Configure presets in settings
+        </div>
+      );
+    }
+
+    return (
+      // T027: TailwindCSS styling with horizontal layout
+      <div className="flex flex-wrap gap-2 py-2">
+        {presets.map((amount) => (
+          <button
+            key={amount}
+            type="button"
+            onClick={() => onSelect(amount)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-100 
+                      hover:bg-slate-200 text-slate-700 transition-colors"
+          >
+            {amount}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -144,6 +263,17 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
               </label>
             </div>
           </div>
+
+          {/* T028: Preset buttons grouped by fee_type */}
+          {newFee.fee_value_type === "fixed" && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Quick Amounts</label>
+              <QuickAmountButtons
+                presets={feePresets[newFee.fee_type]}
+                onSelect={handlePresetClick}
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-1">

@@ -73,7 +73,7 @@ class ProductService:
         await self.db.commit()
         await self.db.refresh(product)
 
-        return product
+        return await self.get_product(product.id)
 
     async def list_products(
         self,
@@ -201,7 +201,7 @@ class ProductService:
         await self.db.commit()
         await self.db.refresh(product)
 
-        return product
+        return await self.get_product(product_id)
 
     async def soft_delete_product(self, product_id: UUID) -> bool:
         """
