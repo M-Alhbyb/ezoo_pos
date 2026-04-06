@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
-import { LineChart, LineConfig } from '../../components/charts/LineChart';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { QuickDateRanges } from '../../components/dashboard/DatePicker';
-import { getSalesDashboard } from '../../lib/api/dashboard';
-import { transformSalesChartData } from '../../lib/utils/chart-utils';
-import { SalesChartData } from '../../lib/api/dashboard';
+import { LineChart, LineConfig } from '@/components/charts/LineChart';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { QuickDateRanges } from '@/components/dashboard/DatePicker';
+import { getSalesDashboard } from '@/lib/api/dashboard';
+import { transformSalesChartData } from '@/lib/utils/chart-utils';
+import { SalesChartData } from '@/lib/api/dashboard';
 
 export default function SalesDashboardPage() {
   const [startDate, setStartDate] = useState<string>('');

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users } from 'lucide-react';
-import { PieChart } from '../../components/charts/PieChart';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { QuickDateRanges } from '../../components/dashboard/DatePicker';
-import { getPartnersDashboard } from '../../lib/api/dashboard';
-import { transformPartnerChartData } from '../../lib/utils/chart-utils';
-import { PartnerChartData } from '../../lib/api/dashboard';
+import { PieChart } from '@/components/charts/PieChart';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { QuickDateRanges } from '@/components/dashboard/DatePicker';
+import { getPartnersDashboard } from '@/lib/api/dashboard';
+import { transformPartnerChartData } from '@/lib/utils/chart-utils';
+import { PartnerChartData } from '@/lib/api/dashboard';
 
 export default function PartnersDashboardPage() {
   const [startDate, setStartDate] = useState<string>('');
@@ -47,7 +47,7 @@ export default function PartnersDashboardPage() {
         const transformedData = transformPartnerChartData(
           response.data.partner_names,
           response.data.dividend_amounts,
-          response.data.percentages,
+          response.data.share_percentages,
           response.data.partner_ids
         );
         

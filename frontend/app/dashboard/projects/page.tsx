@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Briefcase } from 'lucide-react';
-import { BarChart } from '../../components/charts/BarChart';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { QuickDateRanges } from '../../components/dashboard/DatePicker';
-import { getProjectsDashboard } from '../../lib/api/dashboard';
-import { transformProjectChartData } from '../../lib/utils/chart-utils';
-import { ProjectChartData } from '../../lib/api/dashboard';
+import { BarChart } from '@/components/charts/BarChart';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { QuickDateRanges } from '@/components/dashboard/DatePicker';
+import { getProjectsDashboard } from '@/lib/api/dashboard';
+import { transformProjectChartData } from '@/lib/utils/chart-utils';
+import { ProjectChartData } from '@/lib/api/dashboard';
 
 export default function ProjectsDashboardPage() {
   const [startDate, setStartDate] = useState<string>('');

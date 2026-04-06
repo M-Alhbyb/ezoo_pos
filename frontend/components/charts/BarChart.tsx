@@ -15,8 +15,8 @@ import { formatDecimal, formatCurrency, formatPercentage } from '../../lib/utils
 
 export interface BarChartDataPoint {
   name: string;
-  value: number;
-  [key: string]: string | number;
+  value?: number;
+  [key: string]: string | number | undefined;
 }
 
 export interface BarChartProps {

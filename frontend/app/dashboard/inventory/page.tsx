@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Package } from 'lucide-react';
-import { StackedBarChart } from '../../components/charts/StackedBarChart';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { QuickDateRanges } from '../../components/dashboard/DatePicker';
-import { getInventoryDashboard } from '../../lib/api/dashboard';
-import { transformInventoryChartData } from '../../lib/utils/chart-utils';
+import { StackedBarChart } from '@/components/charts/StackedBarChart';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { QuickDateRanges } from '@/components/dashboard/DatePicker';
+import { getInventoryDashboard } from '@/lib/api/dashboard';
+import { transformInventoryChartData } from '@/lib/utils/chart-utils';
 
 export default function InventoryDashboardPage() {
   const [startDate, setStartDate] = useState<string>('');
