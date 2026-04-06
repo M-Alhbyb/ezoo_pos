@@ -82,12 +82,12 @@ export default function ProjectsReportPage() {
         </span>
       )
     },
-    { header: "Budget", accessor: "total_cost", render: (item) => <span className="text-slate-500 font-medium">${item.total_cost.toLocaleString()}</span> },
-    { header: "Sale Price", accessor: "selling_price", render: (item) => <span className="text-indigo-600 font-bold">${item.selling_price.toLocaleString()}</span> },
+    { header: "Budget", accessor: "total_cost", render: (item) => <span className="text-slate-500 font-medium">${item.total_cost?.toLocaleString() || "0"}</span> },
+    { header: "Sale Price", accessor: "selling_price", render: (item) => <span className="text-indigo-600 font-bold">${item.selling_price?.toLocaleString() || "0"}</span> },
     { 
       header: "Net Profit", 
       accessor: "profit", 
-      render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>${item.profit.toLocaleString()}</span> 
+      render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>${item.profit?.toLocaleString() || "0"}</span> 
     },
     { 
       header: "Action", 
@@ -144,7 +144,7 @@ export default function ProjectsReportPage() {
             <Target className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Project Revenue</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_selling_price.toLocaleString() || "0"}</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_selling_price?.toLocaleString() || "0"}</h3>
         </div>
 
         <div className="glass-card p-6 border-b-4 border-b-emerald-600 hover:shadow-xl transition-all duration-300">
@@ -152,7 +152,7 @@ export default function ProjectsReportPage() {
             <BarChart3 className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aggregate Profit</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_profit.toLocaleString() || "0"}</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_profit?.toLocaleString() || "0"}</h3>
         </div>
 
         <div className="glass-card p-6 border-b-4 border-b-rose-500 hover:shadow-xl transition-all duration-300">
@@ -160,7 +160,7 @@ export default function ProjectsReportPage() {
             <TrendingDown className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Cost</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_cost.toLocaleString() || "0"}</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_cost?.toLocaleString() || "0"}</h3>
         </div>
       </div>
 

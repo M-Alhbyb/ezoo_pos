@@ -132,7 +132,7 @@ export default function InventoryReportPage() {
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aggregate Delta</p>
           <h3 className="text-3xl font-extrabold text-slate-900 mt-1">
-             {reportData?.movements_by_reason.reduce((acc, curr) => acc + curr.total_delta, 0) || 0} units
+             {reportData?.movements_by_reason?.reduce((acc, curr) => acc + curr.total_delta, 0) || 0} units
           </h3>
         </div>
 
@@ -141,7 +141,7 @@ export default function InventoryReportPage() {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Reasons Tracked</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.movements_by_reason.length || 0}</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.movements_by_reason?.length || 0}</h3>
         </div>
       </div>
 

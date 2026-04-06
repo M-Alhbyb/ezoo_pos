@@ -66,7 +66,7 @@ export default function PartnersReportPage() {
     { 
       header: "Total Payouts", 
       accessor: "total_payout", 
-      render: (item) => <span className="text-emerald-600 font-bold">${item.total_payout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span> 
+      render: (item) => <span className="text-emerald-600 font-bold">${item.total_payout?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</span> 
     },
     { 
       header: "Activity", 
@@ -113,7 +113,7 @@ export default function PartnersReportPage() {
         <div className="glass-p-6 bg-slate-900 text-white rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
           <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-4">Total Distributed</p>
-          <h3 className="text-4xl font-extrabold tracking-tight">${reportData?.total_payout.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</h3>
+          <h3 className="text-4xl font-extrabold tracking-tight">${reportData?.total_payout?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</h3>
           <div className="mt-8 flex items-center gap-3 text-slate-400 text-sm">
              <Landmark className="w-5 h-5 text-blue-400" />
              <span>Across all active partners</span>
@@ -125,7 +125,7 @@ export default function PartnersReportPage() {
              <Users className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Active Partners</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.payouts_by_partner.length || 0}</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.payouts_by_partner?.length || 0}</h3>
         </div>
 
         <div className="glass-card p-8 hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col justify-center">
@@ -134,7 +134,7 @@ export default function PartnersReportPage() {
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Avg. Payout</p>
           <h3 className="text-3xl font-extrabold text-slate-900 mt-1">
-             ${reportData?.payouts_by_partner.length ? (reportData.total_payout / reportData.payouts_by_partner.length).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
+             ${reportData?.payouts_by_partner?.length ? (reportData.total_payout / reportData.payouts_by_partner.length).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
           </h3>
         </div>
       </div>
