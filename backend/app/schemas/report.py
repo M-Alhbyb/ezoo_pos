@@ -22,6 +22,9 @@ class SalesReport(BaseModel):
     total_profit: Decimal
     sales_count: int
     daily_breakdown: List[SalesSummaryGroup]
+    total: int
+    page: int
+    page_size: int
 
 
 class ProjectSummary(BaseModel):
@@ -43,6 +46,9 @@ class ProjectReport(BaseModel):
     total_expenses: Decimal
     total_profit: Decimal
     project_list: List[ProjectSummary]
+    total: int
+    page: int
+    page_size: int
 
 
 class PartnerPayoutSummary(BaseModel):
@@ -56,6 +62,9 @@ class PartnerReport(BaseModel):
     """Aggregate partner statistics."""
     total_payout: Decimal
     payouts_by_partner: List[PartnerPayoutSummary]
+    total: int
+    page: int
+    page_size: int
 
 
 class InventoryMovement(BaseModel):
@@ -68,3 +77,6 @@ class InventoryReport(BaseModel):
     """Aggregate inventory statistics."""
     total_movements: int
     movements_by_reason: List[InventoryMovement]
+    total: int
+    page: int
+    page_size: int

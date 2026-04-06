@@ -4,7 +4,15 @@ InventoryLog SQLAlchemy model.
 Defines the InventoryLog entity for the EZOO POS system.
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, CheckConstraint
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    DateTime,
+    ForeignKey,
+    CheckConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -27,6 +35,12 @@ class InventoryLog(BaseModel):
     # Primary fields
     product_id = Column(
         UUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        index=True,
     )
     delta = Column(Integer, nullable=False)  # Quantity change (+/-)
     reason = Column(

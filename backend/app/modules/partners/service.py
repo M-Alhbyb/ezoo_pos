@@ -20,7 +20,7 @@ class PartnerService:
         partner = Partner(
             name=data.name,
             investment_amount=data.investment_amount,
-            profit_percentage=data.profit_percentage
+            share_percentage=data.share_percentage
         )
         self.db.add(partner)
         await self.db.commit()
@@ -73,7 +73,7 @@ class PartnerService:
             total_profit += project_profit
             
             for p in partners:
-                payout_amount = project_profit * (p.profit_percentage / Decimal('100'))
+                payout_amount = project_profit * (p.share_percentage / Decimal('100'))
                 distributed_total += payout_amount
                 
                 await self.create_snapshot(p, project, payout_amount)
@@ -81,7 +81,7 @@ class PartnerService:
                 distributions_responses.append({
                     "partner_id": str(p.id),
                     "name": p.name,
-                    "profit_percentage": p.profit_percentage,
+                    "share_percentage": p.share_percentage,
                     "amount": payout_amount
                 })
         
@@ -109,7 +109,7 @@ class PartnerService:
         """
         snapshot = {
             "project_profit": str(project.profit),
-            "partner_profit_percentage": str(partner.profit_percentage),
+            "partner_share_percentage": str(partner.share_percentage),
             "partner_investment_at_time": str(partner.investment_amount)
         }
         

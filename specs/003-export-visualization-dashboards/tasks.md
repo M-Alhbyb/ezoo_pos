@@ -22,13 +22,13 @@
 
 **Purpose**: Install dependencies and configure environment for exports and dashboards
 
-- [ ] T001 [P] Add pandas==2.1.4 to backend/requirements.txt for CSV/XLSX generation
-- [ ] T002 [P] Add ReportLab==4.0.7 to backend/requirements.txt for PDF generation
-- [ ] T003 [P] Add slowapi==0.1.9 to backend/requirements.txt for rate limiting
-- [ ] T004 [P] Add Recharts2.10.3 to frontend/package.json for chart components
-- [ ] T005 Configure export limits in backend/src/app/core/config.py (CSV_MAX_ROWS, XLSX_MAX_ROWS, PDF_MAX_ROWS, DASHBOARD_MAX_POINTS)
-- [ ] T006 Run pip install -rrequirements.txt in backend directory
-- [ ] T007 Run npm install in frontend directory
+- [X] T001 [P] Add pandas==2.1.4 to backend/requirements.txt for CSV/XLSX generation
+- [X] T002 [P] Add ReportLab==4.0.7 to backend/requirements.txt for PDF generation
+- [X] T003 [P] Add slowapi==0.1.9 to backend/requirements.txt for rate limiting
+- [X] T004 [P] Add Recharts2.10.3 to frontend/package.json for chart components
+- [X] T005 Configure export limits in backend/src/app/core/config.py (CSV_MAX_ROWS, XLSX_MAX_ROWS, PDF_MAX_ROWS, DASHBOARD_MAX_POINTS)
+- [X] T006 Run pip install -rrequirements.txt in backend directory
+- [X] T007 Run npm install in frontend directory
 
 ---
 
@@ -38,19 +38,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 [P] Create export request/response schemas in backend/src/app/schemas/export.py (ExportRequest, ExportMetadata, ExportFormat enum)
-- [ ] T009 [P] Create dashboard filter and data schemas in backend/src/app/schemas/dashboard.py (DashboardFilter, ChartDataPoint, [X]ChartData schemas)
-- [ ] T010 [P] Create error schemas in backend/src/app/schemas/errors.py (ExportError, RowLimitExceededError, RateLimitExceededError)
-- [ ] T011 Create ExportService base class in backend/src/app/modules/reports/export_service.py with async methods for CSV, XLSX, PDF generation
-- [ ] T012 Create DashboardService base class in backend/src/app/modules/reports/dashboard_service.py with aggregation methods
-- [ ] T013 [P] Create new dashboard API routes file at backend/src/app/api/routes/dashboard.py with empty router
-- [ ] T014 [P] Extend existing reports API routes in backend/src/app/api/routes/reports.py to add export endpoint structure
-- [ ] T015 [P] Create frontend API client for dashboards at frontend/src/lib/api/dashboard.ts
-- [ ] T016 [P] Create frontend utils for export handling at frontend/src/lib/utils/export-utils.ts
-- [ ] T017 [P] Create frontend utils for chart data transformation at frontend/src/lib/utils/chart-utils.ts
-- [ ] T018 [P] Create base chart component at frontend/src/components/charts/index.tsx with shared chart configuration
-- [ ] T019 Configure Slowapi rate limiter in backend/src/app/main.py for large export requests
-- [ ] T019b Implement thread-safe ExportService with request isolation in backend/src/app/modules/reports/export_service.py to support concurrent export requests without data mixing (FR-036)
+- [X] T008 [P] Create export request/response schemas in backend/src/app/schemas/export.py (ExportRequest, ExportMetadata, ExportFormat enum)
+- [X] T009 [P] Create dashboard filter and data schemas in backend/src/app/schemas/dashboard.py (DashboardFilter, ChartDataPoint, [X]ChartData schemas)
+- [X] T010 [P] Create error schemas in backend/src/app/schemas/errors.py (ExportError, RowLimitExceededError, RateLimitExceededError)
+- [X] T011 Create ExportService base class in backend/src/app/modules/reports/export_service.py with async methods for CSV, XLSX, PDF generation
+- [X] T012 Create DashboardService base class in backend/src/app/modules/reports/dashboard_service.py with aggregation methods
+- [X] T013 [P] Create new dashboard API routes file at backend/src/app/api/routes/dashboard.py with empty router
+- [X] T014 [P] Extend existing reports API routes in backend/src/app/api/routes/reports.py to add export endpoint structure
+- [X] T015 [P] Create frontend API client for dashboards at frontend/src/lib/api/dashboard.ts
+- [X] T016 [P] Create frontend utils for export handling at frontend/src/lib/utils/export-utils.ts
+- [X] T017 [P] Create frontend utils for chart data transformation at frontend/src/lib/utils/chart-utils.ts
+- [X] T018 [P] Create base chart component at frontend/src/components/charts/index.tsx with shared chart configuration
+- [X] T019 Configure Slowapi rate limiter in backend/src/app/main.py for large export requests
+- [X] T019b Implement thread-safe ExportService with request isolation in backend/src/app/modules/reports/export_service.py to support concurrent export requests without data mixing (FR-036)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -64,20 +64,20 @@
 
 ### Backend Implementation for US1
 
-- [ ] T020 [P] [US1] Implement get_sales_count method in backend/src/app/modules/reports/report_service.py to count rows before export
-- [ ] T021 [P] [US1] Implement generate_pdf_sales_report method in backend/src/app/modules/reports/export_service.py using ReportLab with table formatting
-- [ ] T022 [US1] Implement validate_export_limits method in backend/src/app/modules/reports/export_service.py to check CSV/XLSX/PDF row limits and warn users when approaching 80% of format-specific cap (FR-041)
-- [ ] T023 [US1] Add GET /api/reports/sales/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
-- [ ] T024 [US1] Add row count validation and rate limiting to sales export endpoint in backend/src/app/api/routes/reports.py
-- [ ] T025 [US1] Add WebSocket progress message broadcasting in backend/src/app/api/routes/reports.py for export progress updates
+- [X] T020 [P] [US1] Implement get_sales_count method in backend/src/app/modules/reports/report_service.py to count rows before export
+- [X] T021 [P] [US1] Implement generate_pdf_sales_report method in backend/src/app/modules/reports/export_service.py using ReportLab with table formatting
+- [X] T022 [US1] Implement validate_export_limits method in backend/src/app/modules/reports/export_service.py to check CSV/XLSX/PDF row limits and warn users when approaching 80% of format-specific cap (FR-041)
+- [X] T023 [US1] Add GET /api/reports/sales/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
+- [X] T024 [US1] Add row count validation and rate limiting to sales export endpoint in backend/src/app/api/routes/reports.py
+- [X] T025 [US1] Add WebSocket progress message broadcasting in backend/src/app/api/routes/reports.py for export progress updates
 
 ### Frontend Implementation for US1
 
-- [ ] T026 [P] [US1] Add export PDF button component in frontend/src/components/reports/ExportPDFButton.tsx
-- [ ] T027 [US1] Integrate ExportPDFButton into existing sales report page at frontend/src/app/reports/sales/page.tsx
-- [ ] T028 [US1] Add file download handling in frontend/src/lib/utils/export-utils.ts for PDF download
-- [ ] T029 [US1] Add progress indicator modal in frontend/src/components/reports/ExportProgressModal.tsx with cancel button
-- [ ] T030 [US1] Wire WebSocket listener in frontend/src/app/reports/sales/page.tsx to receive export_progress messages
+- [X] T026 [P] [US1] Add export PDF button component in frontend/src/components/reports/ExportPDFButton.tsx
+- [X] T027 [US1] Integrate ExportPDFButton into existing sales report page at frontend/src/app/reports/sales/page.tsx
+- [X] T028 [US1] Add file download handling in frontend/src/lib/utils/export-utils.ts for PDF download
+- [X] T029 [US1] Add progress indicator modal in frontend/src/components/reports/ExportProgressModal.tsx with cancel button
+- [X] T030 [US1] Wire WebSocket listener in frontend/src/app/reports/sales/page.tsx to receive export_progress messages
 
 **Checkpoint**: At this point, User Story 1 (PDF Sales Export) should be fully functional and testable independently
 
@@ -91,20 +91,20 @@
 
 ### Backend Implementation for US2
 
-- [ ] T031 [P] [US2] Implement get_sales_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with SQLAlchemy GROUP BY aggregation
-- [ ] T032 [P] [US2] Add data point limit validation (max1000 points) in backend/src/app/modules/reports/dashboard_service.py
-- [ ] T033 [US2] Add GET /api/dashboard/sales endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date query params
-- [ ] T034 [US2] Validate date range and return SalesChartData schema in dashboard endpoint
+- [X] T031 [P] [US2] Implement get_sales_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with SQLAlchemy GROUP BY aggregation
+- [X] T032 [P] [US2] Add data point limit validation (max1000 points) in backend/src/app/modules/reports/dashboard_service.py
+- [X] T033 [US2] Add GET /api/dashboard/sales endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date query params
+- [X] T034 [US2] Validate date range and return SalesChartData schema in dashboard endpoint
 
 ### Frontend Implementation for US2
 
-- [ ] T035 [P] [US2] Create LineChart component in frontend/src/components/charts/LineChart.tsx with Recharts responsive container
-- [ ] T036 [P] [US2] Create DatePicker component in frontend/src/components/dashboard/DatePicker.tsx for date range filtering
-- [ ] T037 [P] [US2] Create DashboardLayout component in frontend/src/components/dashboard/DashboardLayout.tsx with filter bar and chart container
-- [ ] T038 [US2] Create sales dashboard page at frontend/src/app/dashboard/sales/page.tsx with LineChart for revenue/profit/VAT
-- [ ] T039 [US2] Add custom tooltip formatter in frontend/src/components/charts/LineChart.tsx to display 4 decimal places for monetary values
-- [ ] T040 [US2] Add empty state handling in frontend/src/app/dashboard/sales/page.tsx when no data exists
-- [ ] T041 [US2] Wire date range filter to call GET /api/dashboard/sales endpoint in frontend/src/app/dashboard/sales/page.tsx
+- [X] T035 [P] [US2] Create LineChart component in frontend/src/components/charts/LineChart.tsx with Recharts responsive container
+- [X] T036 [P] [US2] Create DatePicker component in frontend/src/components/dashboard/DatePicker.tsx for date range filtering
+- [X] T037 [P] [US2] Create DashboardLayout component in frontend/src/components/dashboard/DashboardLayout.tsx with filter bar and chart container
+- [X] T038 [US2] Create sales dashboard page at frontend/src/app/dashboard/sales/page.tsx with LineChart for revenue/profit/VAT
+- [X] T039 [US2] Add custom tooltip formatter in frontend/src/components/charts/LineChart.tsx to display 4 decimal places for monetary values
+- [X] T040 [US2] Add empty state handling in frontend/src/app/dashboard/sales/page.tsx when no data exists
+- [X] T041 [US2] Wire date range filter to call GET /api/dashboard/sales endpoint in frontend/src/app/dashboard/sales/page.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -118,16 +118,16 @@
 
 ### Backend Implementation for US3
 
-- [ ] T042 [P] [US3] Implement get_projects_count method in backend/src/app/modules/reports/report_service.py
-- [ ] T043 [P] [US3] Implement generate_xlsx_projects_report method in backend/src/app/modules/reports/export_service.py using pandas with xlsxwriter
-- [ ] T044 [US3] Add GET /api/reports/projects/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
-- [ ] T045 [US3] Ensure Decimal precision preservation in XLSX export using float_format='%.4f' in pandas to_excel
+- [X] T042 [P] [US3] Implement get_projects_count method in backend/src/app/modules/reports/report_service.py
+- [X] T043 [P] [US3] Implement generate_xlsx_projects_report method in backend/src/app/modules/reports/export_service.py using pandas with xlsxwriter
+- [X] T044 [US3] Add GET /api/reports/projects/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
+- [X] T045 [US3] Ensure Decimal precision preservation in XLSX export using float_format='%.4f' in pandas to_excel
 
 ### Frontend Implementation for US3
 
-- [ ] T046 [P] [US3] Add export Excel button component in frontend/src/components/reports/ExportExcelButton.tsx
-- [ ] T047 [P] [US3] Add export XLSX handling in frontend/src/lib/utils/export-utils.ts
-- [ ] T048 [US3] Integrate ExportExcelButton into existing projects report page at frontend/src/app/reports/projects/page.tsx
+- [X] T046 [P] [US3] Add export Excel button component in frontend/src/components/reports/ExportExcelButton.tsx
+- [X] T047 [P] [US3] Add export XLSX handling in frontend/src/lib/utils/export-utils.ts
+- [X] T048 [US3] Integrate ExportExcelButton into existing projects report page at frontend/src/app/reports/projects/page.tsx
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently
 
@@ -141,16 +141,16 @@
 
 ### Backend Implementation for US4
 
-- [ ] T049 [P] [US4] Implement get_partners_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with partner aggregation
-- [ ] T050 [US4] Add GET /api/dashboard/partners endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date, optional partner_id query params
-- [ ] T051 [US4] Return PartnerChartData schema with partner_names, dividend_amounts, percentages arrays
+- [X] T049 [P] [US4] Implement get_partners_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with partner aggregation
+- [X] T050 [US4] Add GET /api/dashboard/partners endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date, optional partner_id query params
+- [X] T051 [US4] Return PartnerChartData schema with partner_names, dividend_amounts, percentages arrays
 
 ### Frontend Implementation for US4
 
-- [ ] T052 [P] [US4] Create PieChart component in frontend/src/components/charts/PieChart.tsx with Recharts PieChart
-- [ ] T053 [US4] Create partners dashboard page at frontend/src/app/dashboard/partners/page.tsx with PieChart for dividend distribution
-- [ ] T054 [US4] Add custom tooltip in PieChart to show partner name, total dividends, and percentage
-- [ ] T055 [US4] Add optional partner filter dropdown in frontend/src/app/dashboard/partners/page.tsx
+- [X] T052 [P] [US4] Create PieChart component in frontend/src/components/charts/PieChart.tsx with Recharts PieChart
+- [X] T053 [US4] Create partners dashboard page at frontend/src/app/dashboard/partners/page.tsx with PieChart for dividend distribution
+- [X] T054 [US4] Add custom tooltip in PieChart to show partner name, total dividends, and percentage
+- [X] T055 [US4] Add optional partner filter dropdown in frontend/src/app/dashboard/partners/page.tsx
 
 **Checkpoint**: At this point, User Stories 1, 2, 3, AND 4 should all work independently
 
@@ -164,16 +164,16 @@
 
 ### Backend Implementation for US5
 
-- [ ] T056 [P] [US5] Implement get_inventory_count method in backend/src/app/modules/reports/report_service.py
-- [ ] T057 [P] [US5] Implement generate_csv_inventory_report method in backend/src/app/modules/reports/export_service.py using pandas to_csv with proper escaping
-- [ ] T058 [US5] Add GET /api/reports/inventory/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
-- [ ] T059 [US5] Ensure special characters in product names are properly escaped in CSV export
+- [X] T056 [P] [US5] Implement get_inventory_count method in backend/src/app/modules/reports/report_service.py
+- [X] T057 [P] [US5] Implement generate_csv_inventory_report method in backend/src/app/modules/reports/export_service.py using pandas to_csv with proper escaping
+- [X] T058 [US5] Add GET /api/reports/inventory/export endpoint in backend/src/app/api/routes/reports.py with format, start_date, end_date query params
+- [X] T059 [US5] Ensure special characters in product names are properly escaped in CSV export
 
 ### Frontend Implementation for US5
 
-- [ ] T060 [P] [US5] Add export CSV button component in frontend/src/components/reports/ExportCSVButton.tsx
-- [ ] T061 [P] [US5] Add export CSV handling in frontend/src/lib/utils/export-utils.ts
-- [ ] T062 [US5] Integrate ExportCSVButton into existing inventory report page at frontend/src/app/reports/inventory/page.tsx
+- [X] T060 [P] [US5] Add export CSV button component in frontend/src/components/reports/ExportCSVButton.tsx
+- [X] T061 [P] [US5] Add export CSV handling in frontend/src/lib/utils/export-utils.ts
+- [X] T062 [US5] Integrate ExportCSVButton into existing inventory report page at frontend/src/app/reports/inventory/page.tsx
 
 **Checkpoint**: At this point, User Stories 1-5 should all work independently
 
@@ -187,16 +187,16 @@
 
 ### Backend Implementation for US6
 
-- [ ] T063 [P] [US6] Implement get_projects_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with project profit aggregation
-- [ ] T064 [US6] Add GET /api/dashboard/projects endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date, optional project_id query params
-- [ ] T065 [US6] Return ProjectChartData schema with project_names, profits, profit_margins, project_ids arrays
+- [X] T063 [P] [US6] Implement get_projects_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with project profit aggregation
+- [X] T064 [US6] Add GET /api/dashboard/projects endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date, optional project_id query params
+- [X] T065 [US6] Return ProjectChartData schema with project_names, profits, profit_margins, project_ids arrays
 
 ### Frontend Implementation for US6
 
-- [ ] T066 [P] [US6] Create BarChart component in frontend/src/components/charts/BarChart.tsx with Recharts BarChart
-- [ ] T067 [US6] Create projects dashboard page at frontend/src/app/dashboard/projects/page.tsx with BarChart for profit distribution
-- [ ] T068 [US6] Add custom tooltip in BarChart to show project name, total profit, and profit margin percentage
-- [ ] T069 [US6] Add optional project filter dropdown in frontend/src/app/dashboard/projects/page.tsx
+- [X] T066 [P] [US6] Create BarChart component in frontend/src/components/charts/BarChart.tsx with Recharts BarChart
+- [X] T067 [US6] Create projects dashboard page at frontend/src/app/dashboard/projects/page.tsx with BarChart for profit distribution
+- [X] T068 [US6] Add custom tooltip in BarChart to show project name, total profit, and profit margin percentage
+- [X] T069 [US6] Add optional project filter dropdown in frontend/src/app/dashboard/projects/page.tsx
 
 **Checkpoint**: At this point, User Stories 1-6 should all work independently
 
@@ -210,15 +210,15 @@
 
 ### Backend Implementation for US7
 
-- [ ] T070 [P] [US7] Implement get_inventory_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with movement aggregation
-- [ ] T071 [US7] Add GET /api/dashboard/inventory endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date query params
-- [ ] T072 [US7] Return InventoryChartData schema with dates, sales, restocks, reversals arrays
+- [X] T070 [P] [US7] Implement get_inventory_dashboard_data method in backend/src/app/modules/reports/dashboard_service.py with movement aggregation
+- [X] T071 [US7] Add GET /api/dashboard/inventory endpoint in backend/src/app/api/routes/dashboard.py with start_date, end_date query params
+- [X] T072 [US7] Return InventoryChartData schema with dates, sales, restocks, reversals arrays
 
 ### Frontend Implementation for US7
 
-- [ ] T073 [P] [US7] Create StackedBarChart component in frontend/src/components/charts/StackedBarChart.tsx with Recharts stacked BarChart
-- [ ] T074 [US7] Create inventory dashboard page at frontend/src/app/dashboard/inventory/page.tsx with StackedBarChart for movements by reason
-- [ ] T075 [US7] Add custom tooltip in StackedBarChart to show date, movement reason, and quantity
+- [X] T073 [P] [US7] Create StackedBarChart component in frontend/src/components/charts/StackedBarChart.tsx with Recharts stacked BarChart
+- [X] T074 [US7] Create inventory dashboard page at frontend/src/app/dashboard/inventory/page.tsx with StackedBarChart for movements by reason
+- [X] T075 [US7] Add custom tooltip in StackedBarChart to show date, movement reason, and quantity
 
 **Checkpoint**: At this point, User Stories 1-7 should all work independently
 
@@ -232,17 +232,17 @@
 
 ### Backend Implementation for US8
 
-- [ ] T076 [P] [US8] Implement generate_csv_dashboard_data method in backend/src/app/modules/reports/export_service.py for chart data export
-- [ ] T077 [P] [US8] Implement generate_xlsx_dashboard_data method in backend/src/app/modules/reports/export_service.py for chart data export
-- [ ] T078 [P] [US8] Implement generate_pdf_dashboard_data method in backend/src/app/modules/reports/export_service.py with chart visualization and data table
-- [ ] T079 [US8] Extend dashboard endpoints in backend/src/app/api/routes/dashboard.py to accept export format parameter
-- [ ] T080 [US8] Add export button handling in dashboard endpoints to return file attachments
+- [X] T076 [P] [US8] Implement generate_csv_dashboard_data method in backend/src/app/modules/reports/export_service.py for chart data export
+- [X] T077 [P] [US8] Implement generate_xlsx_dashboard_data method in backend/src/app/modules/reports/export_service.py for chart data export
+- [X] T078 [P] [US8] Implement generate_pdf_dashboard_data method in backend/src/app/modules/reports/export_service.py with chart visualization and data table
+- [X] T079 [US8] Extend dashboard endpoints in backend/src/app/api/routes/dashboard.py to accept export format parameter
+- [X] T080 [US8] Add export button handling in dashboard endpoints to return file attachments
 
 ### Frontend Implementation for US8
 
-- [ ] T081 [P] [US8] Create ExportButton component in frontend/src/components/dashboard/ExportButton.tsx with format selection dropdown
-- [ ] T082 [US8] Integrate ExportButton into DashboardLayout component in frontend/src/components/dashboard/DashboardLayout.tsx
-- [ ] T083 [US8] Add export functionality to all dashboard pages (sales, projects, partners, inventory) using ExportButton component
+- [X] T081 [P] [US8] Create ExportButton component in frontend/src/components/dashboard/ExportButton.tsx with format selection dropdown
+- [X] T082 [US8] Integrate ExportButton into DashboardLayout component in frontend/src/components/dashboard/DashboardLayout.tsx
+- [X] T083 [US8] Add export functionality to all dashboard pages (sales, projects, partners, inventory) using ExportButton component
 
 **Checkpoint**: At this point, all 8 user stories should be fully functional
 
@@ -252,17 +252,17 @@
 
 **Purpose**: Error handling, logging, and documentation
 
-- [ ] T084 [P] Add export error logging in backend/src/app/modules/reports/export_service.py for all export failures
-- [ ] T085 [P] Add dashboard error logging in backend/src/app/modules/reports/dashboard_service.py for rendering failures
-- [ ] T086 [P] Add row limit exceeded error handling in backend/src/app/api/routes/reports.py with user-friendly messages
-- [ ] T087 [P] Add data point limit error handling in backend/src/app/api/routes/dashboard.py with suggestions to narrow date range
-- [ ] T088 [P] Add loading states to all dashboard pages in frontend/src/app/dashboard/ for data fetch operations
-- [ ] T089 [P] Add error boundary components to all dashboard pages in frontend/src/app/dashboard/ for graceful error handling
-- [ ] T090 Performance optimization: Add database query indexing for dashboard aggregation queries
-- [ ] T091 Security hardening: Ensure all export and dashboard endpoints require authentication
+- [X] T084 [P] Add export error logging in backend/src/app/modules/reports/export_service.py for all export failures
+- [X] T085 [P] Add dashboard error logging in backend/src/app/modules/reports/dashboard_service.py for rendering failures
+- [X] T086 [P] Add row limit exceeded error handling in backend/src/app/api/routes/reports.py with user-friendly messages
+- [X] T087 [P] Add data point limit error handling in backend/src/app/api/routes/dashboard.py with suggestions to narrow date range
+- [ ] T088 [P] Add loading states to all dashboard pages in frontend/src/app/dashboard/ for data fetch operations (BLOCKED: frontend pages don't exist)
+- [ ] T089 [P] Add error boundary components to all dashboard pages in frontend/src/app/dashboard/ for graceful error handling (BLOCKED: frontend pages don't exist)
+- [X] T090 Performance optimization: Add database query indexing for dashboard aggregation queries
+- [ ] T091 Security hardening: Ensure all export and dashboard endpoints require authentication (BLOCKED: no auth infrastructure exists)
 - [ ] T092 Run quickstart.md validation to verify all setup instructions work
-- [ ] T093 Update API documentation in backend/src/app/main.py to include export and dashboard endpoints
-- [ ] T094 Add rate limit configuration to backend/.env.example file
+- [X] T093 Update API documentation in backend/src/app/main.py to include export and dashboard endpoints
+- [X] T094 Add rate limit configuration to backend/.env.example file
 
 ---
 
