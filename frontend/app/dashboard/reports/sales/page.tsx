@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { TrendingUp, ShoppingBag, DollarSign, PieChart as PieIcon, Download, Calendar } from "lucide-react";
+import { TrendingUp, ShoppingBag, DollarSign, PieChart as PieIcon, Calendar } from "lucide-react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 import { DataTable, Column } from "@/components/reports/DataTable";
 import { ExportButtonGroup } from "@/components/reports/ExportButtonGroup";
 
@@ -67,12 +69,12 @@ export default function SalesReportPage() {
   };
 
   const columns: Column<SalesData>[] = [
-    { header: "Date", accessor: "date", className: "font-bold" },
-    { header: "Count", accessor: "count", render: (item) => <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-lg text-xs font-bold">{item.count}</span> },
-    { header: "Revenue", accessor: "revenue", render: (item) => <span className="text-blue-600 font-bold">${item.revenue.toFixed(2)}</span> },
-    { header: "Profit", accessor: "profit", render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>${item.profit.toFixed(2)}</span> },
+    { header: ARABIC.reports.sales.date, accessor: "date", className: "font-bold" },
+    { header: ARABIC.reports.sales.salesCount || 'العدد', accessor: "count", render: (item) => <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-lg text-xs font-bold">{item.count}</span> },
+    { header: ARABIC.reports.sales.totalRevenue, accessor: "revenue", render: (item) => <span className="text-blue-600 font-bold">{formatCurrency(item.revenue)}</span> },
+    { header: ARABIC.reports.sales.netProfit, accessor: "profit", render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{formatCurrency(item.profit)}</span> },
     { 
-      header: "Margin", 
+      header: ARABIC.reports.sales.avgMargin, 
       accessor: "margin", 
       render: (item) => {
         const margin = item.revenue > 0 ? (item.profit / item.revenue) * 100 : 0;
@@ -86,19 +88,19 @@ export default function SalesReportPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold font-heading text-slate-900 tracking-tight">Sales Report</h1>
-          <p className="text-slate-500 mt-2 font-medium">Daily analytics and revenue breakdown per transaction.</p>
+          <h1 className="text-4xl font-extrabold font-heading text-slate-900 tracking-tight">{ARABIC.reports.sales.title}</h1>
+          <p className="text-slate-500 mt-2 font-medium">{ARABIC.reports.sales.subtitle}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-2 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100">
-            <Calendar className="w-4 h-4 text-slate-400 ml-2" />
+            <Calendar className="w-4 h-4 text-slate-400 ms-2" />
             <input 
               type="date" 
               value={startDate} 
               onChange={e => { setStartDate(e.target.value); setPage(1); }}
               className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 cursor-pointer" 
             />
-            <span className="text-slate-300 font-bold">→</span>
+            <span className="text-slate-300 font-bold">←</span>
             <input 
               type="date" 
               value={endDate} 
@@ -116,23 +118,23 @@ export default function SalesReportPage() {
           <div className="p-3 bg-blue-100/50 text-blue-600 rounded-2xl w-fit mb-4">
             <TrendingUp className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Revenue</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_revenue?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</h3>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.totalRevenue}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{formatCurrency(reportData?.total_revenue || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 bg-gradient-to-br from-emerald-50/50 to-white hover:shadow-xl transition-all duration-300 border border-emerald-100/50">
           <div className="p-3 bg-emerald-100/50 text-emerald-600 rounded-2xl w-fit mb-4">
             <DollarSign className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Net Profit</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_profit?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</h3>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.netProfit}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{formatCurrency(reportData?.total_profit || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 bg-gradient-to-br from-indigo-50/50 to-white hover:shadow-xl transition-all duration-300 border border-indigo-100/50">
           <div className="p-3 bg-indigo-100/50 text-indigo-600 rounded-2xl w-fit mb-4">
             <ShoppingBag className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sales count</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.salesCount}</p>
           <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.sales_count || 0}</h3>
         </div>
 
@@ -140,7 +142,7 @@ export default function SalesReportPage() {
           <div className="p-3 bg-purple-100/50 text-purple-600 rounded-2xl w-fit mb-4">
             <PieIcon className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Avg. Margin</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.avgMargin}</p>
           <h3 className="text-3xl font-extrabold text-slate-900 mt-1">
             {reportData?.total_revenue && reportData.total_revenue > 0
               ? ((reportData.total_profit / reportData.total_revenue) * 100).toFixed(1)
@@ -152,7 +154,7 @@ export default function SalesReportPage() {
       {/* Main Table */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
-            <h2 className="text-xl font-bold text-slate-800">Daily Statistics</h2>
+            <h2 className="text-xl font-bold text-slate-800">{ARABIC.reports.sales.dailyStatistics}</h2>
         </div>
         <DataTable 
           columns={columns} 
@@ -162,6 +164,7 @@ export default function SalesReportPage() {
           pageSize={pageSize}
           currentPage={page}
           onPageChange={setPage}
+          emptyMessage={ARABIC.reports.noData || 'لا توجد بيانات'}
         />
       </div>
     </div>

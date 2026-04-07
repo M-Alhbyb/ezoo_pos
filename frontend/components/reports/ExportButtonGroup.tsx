@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { FileText, FileSpreadsheet, FileDown } from 'lucide-react';
+import { ARABIC } from '@/lib/constants/arabic';
 
 export interface ExportButtonGroupProps {
   reportType: 'sales' | 'projects' | 'partners' | 'inventory';
@@ -26,7 +27,7 @@ export function ExportButtonGroup({
 
   const handleExport = async (format: 'pdf' | 'csv' | 'xlsx') => {
     if (!startDate || !endDate) {
-      onExportError?.('Please select a date range');
+      onExportError?.(ARABIC.reports.selectDateRange || 'اختر نطاق التاريخ');
       return;
     }
 
@@ -53,7 +54,7 @@ export function ExportButtonGroup({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Export failed');
+        throw new Error(error.detail || ARABIC.reports.export.exportFailed);
       }
 
       const blob = await response.blob();
@@ -80,7 +81,7 @@ export function ExportButtonGroup({
 
       onExportComplete?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : ARABIC.common.error;
       onExportError?.(errorMessage);
     } finally {
       setExportingFormat(null);
@@ -99,7 +100,7 @@ export function ExportButtonGroup({
         ) : (
           <FileDown className="w-4 h-4" />
         )}
-        <span>Export CSV</span>
+        <span>{ARABIC.reports.export.csv}</span>
       </button>
 
       <button
@@ -112,7 +113,7 @@ export function ExportButtonGroup({
         ) : (
           <FileSpreadsheet className="w-4 h-4" />
         )}
-        <span>Export Excel</span>
+        <span>{ARABIC.reports.export.excel}</span>
       </button>
       
       <button
@@ -125,7 +126,7 @@ export function ExportButtonGroup({
         ) : (
           <FileText className="w-4 h-4" />
         )}
-        <span>Export PDF</span>
+        <span>{ARABIC.reports.export.pdf}</span>
       </button>
     </div>
   );

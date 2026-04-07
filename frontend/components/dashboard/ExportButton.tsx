@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Download, FileText, FileSpreadsheet, File } from 'lucide-react';
 import { ExportFormat } from '../../lib/utils/export-utils';
+import { ARABIC } from '@/lib/constants/arabic';
 
 export interface ExportButtonProps {
   dashboardType: 'sales' | 'projects' | 'partners' | 'inventory';
@@ -28,7 +29,7 @@ export function ExportButton({
 
   const handleExport = async () => {
     if (!startDate || !endDate) {
-      onExportError?.('Please select a date range');
+      onExportError?.('يرجى تحديد نطاق التاريخ');
       return;
     }
 
@@ -55,7 +56,7 @@ export function ExportButton({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Export failed');
+        throw new Error(error.detail || 'فشل التصدير');
       }
 
       const blob = await response.blob();
@@ -80,7 +81,7 @@ export function ExportButton({
 
       onExportComplete?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
       onExportError?.(errorMessage);
     } finally {
       setIsExporting(false);
@@ -101,7 +102,7 @@ export function ExportButton({
         value={selectedFormat}
         onChange={(e) => setSelectedFormat(e.target.value as ExportFormat)}
         disabled={disabled || isExporting}
-        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
       >
         <option value="csv">CSV</option>
         <option value="xlsx">Excel</option>
@@ -111,17 +112,17 @@ export function ExportButton({
       <button
         onClick={handleExport}
         disabled={disabled || isExporting}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
       >
         {isExporting ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span>Exporting...</span>
+            <span>{ARABIC.reports.export.exporting}</span>
           </>
         ) : (
           <>
             <Download className="w-4 h-4" />
-            <span>Export</span>
+            <span>{ARABIC.common.export}</span>
           </>
         )}
       </button>

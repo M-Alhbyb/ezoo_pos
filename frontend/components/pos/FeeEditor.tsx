@@ -9,6 +9,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface Fee {
   fee_type: "shipping" | "installation" | "custom";
@@ -17,7 +19,6 @@ interface Fee {
   fee_value: number;
 }
 
-// T020: TypeScript interface for fee presets configuration
 interface FeePresetsConfig {
   shipping: number[];
   installation: number[];
@@ -30,9 +31,9 @@ interface FeeEditorProps {
 }
 
 const FEE_TYPES = [
-  { value: "shipping", label: "Shipping" },
-  { value: "installation", label: "Installation" },
-  { value: "custom", label: "Custom" },
+  { value: "shipping", label: ARABIC.pos.shipping || 'شحن' },
+  { value: "installation", label: ARABIC.pos.installation || 'تركيب' },
+  { value: "custom", label: ARABIC.pos.custom || 'مخصص' },
 ] as const;
 
 export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
@@ -140,28 +141,24 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
     onFeesChange(newFees);
   };
 
-  // T025: Preset button onClick handler
   const handlePresetClick = (amount: number) => {
     setNewFee({ ...newFee, fee_value: amount });
   };
 
-  // T024: QuickAmountButtons sub-component
   const QuickAmountButtons = ({ presets, onSelect }: { presets: number[]; onSelect: (amount: number) => void }) => {
     if (loadingPresets) {
-      return <div className="text-sm text-gray-400 py-2">Loading presets...</div>;
+      return <div className="text-sm text-slate-400 py-2">{ARABIC.common.loading}</div>;
     }
 
     if (presets.length === 0) {
-      // T026: Show placeholder when no presets
       return (
-        <div className="text-sm text-gray-500 italic py-2">
-          Configure presets in settings
+        <div className="text-sm text-slate-500 italic py-2">
+          {ARABIC.pos.configurePresets || 'تكوين الإعدادات المسبقة في الإعدادات'}
         </div>
       );
     }
 
     return (
-      // T027: TailwindCSS styling with horizontal layout
       <div className="flex flex-wrap gap-2 py-2">
         {presets.map((amount) => (
           <button
@@ -171,7 +168,7 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-100 
                       hover:bg-slate-200 text-slate-700 transition-colors"
           >
-            {amount}
+            {formatCurrency(amount)}
           </button>
         ))}
       </div>
@@ -181,13 +178,13 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-medium">Additional Fees</h3>
+        <h3 className="font-medium">{ARABIC.pos.additionalFees || 'رسوم إضافية'}</h3>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="text-blue-600 hover:text-blue-800 text-sm"
           >
-            + Add Fee
+            + {ARABIC.common.add || 'إضافة'}
           </button>
         )}
       </div>
@@ -198,15 +195,15 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
             <div key={index} className="flex justify-between items-center border rounded p-3">
               <div>
                 <div className="font-medium">{fee.fee_label}</div>
-                <div className="text-sm text-gray-500">
-                  {fee.fee_value_type === "percent" ? `${fee.fee_value}% of subtotal` : `$${fee.fee_value.toFixed(2)} fixed`}
+                <div className="text-sm text-slate-500">
+                  {fee.fee_value_type === "percent" ? `${fee.fee_value}% ${ARABIC.pos.ofSubtotal || 'من المجموع الفرعي'}` : `${formatCurrency(fee.fee_value)} ${ARABIC.pos.fixed || 'ثابت'}`}
                 </div>
               </div>
               <button
                 onClick={() => handleRemoveFee(index)}
                 className="text-red-600 hover:text-red-800 text-sm"
               >
-                Remove
+                {ARABIC.common.delete || 'حذف'}
               </button>
             </div>
           ))}
@@ -216,7 +213,7 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
       {showForm && (
         <div className="border rounded p-4 space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Fee Type</label>
+            <label className="block text-sm font-medium mb-1">{ARABIC.pos.feeType || 'نوع الرسوم'}</label>
             <select
               value={newFee.fee_type}
               onChange={(e) => setNewFee({ ...newFee, fee_type: e.target.value as any })}
@@ -231,18 +228,18 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Label (Optional)</label>
+            <label className="block text-sm font-medium mb-1">{ARABIC.pos.labelOptional || 'التسمية (اختياري)'}</label>
             <input
               type="text"
               value={newFee.fee_label}
               onChange={(e) => setNewFee({ ...newFee, fee_label: e.target.value })}
-              placeholder={`e.g., Express ${FEE_TYPES.find(t => t.value === newFee.fee_type)?.label || 'Shipping'}`}
+              placeholder={ARABIC.pos.expressExample || 'مثال: توصيل سريع'}
               className="border rounded px-3 py-2 w-full"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Value Type</label>
+            <label className="block text-sm font-medium mb-1">{ARABIC.pos.valueType || 'نوع القيمة'}</label>
             <div className="flex space-x-4">
               <label className="flex items-center">
                 <input
@@ -251,9 +248,9 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
                   value="fixed"
                   checked={newFee.fee_value_type === "fixed"}
                   onChange={(e) => setNewFee({ ...newFee, fee_value_type: "fixed" })}
-                  className="mr-2"
+                  className="me-2"
                 />
-                Fixed Amount ($)
+                {ARABIC.pos.fixedAmount || 'مبلغ ثابت'} ({formatCurrency(0)})
               </label>
               <label className="flex items-center">
                 <input
@@ -262,17 +259,16 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
                   value="percent"
                   checked={newFee.fee_value_type === "percent"}
                   onChange={(e) => setNewFee({ ...newFee, fee_value_type: "percent" })}
-                  className="mr-2"
+                  className="me-2"
                 />
-                Percentage (%)
+                {ARABIC.pos.percentage || 'نسبة مئوية'} (%)
               </label>
             </div>
           </div>
 
-          {/* T028: Preset buttons grouped by fee_type */}
           {newFee.fee_value_type === "fixed" && (
             <div>
-              <label className="block text-sm font-medium mb-1">Quick Amounts</label>
+              <label className="block text-sm font-medium mb-1">{ARABIC.pos.quickAmounts || 'مبالغ سريعة'}</label>
               <QuickAmountButtons
                 presets={feePresets[newFee.fee_type]}
                 onSelect={handlePresetClick}
@@ -282,7 +278,7 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              {newFee.fee_value_type === "fixed" ? "Amount ($)" : "Percentage (%)"}
+              {newFee.fee_value_type === "fixed" ? ARABIC.pos.amount || 'المبلغ' : ARABIC.pos.percentage || 'النسبة المئوية'}
             </label>
             <input
               type="number"
@@ -297,15 +293,15 @@ export default function FeeEditor({ fees, onFeesChange }: FeeEditorProps) {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="px-4 py-2 border rounded hover:bg-slate-50"
             >
-              Cancel
+              {ARABIC.common.cancel || 'إلغاء'}
             </button>
             <button
               onClick={handleAddFee}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Add Fee
+              {ARABIC.pos.addFee || 'إضافة الرسوم'}
             </button>
           </div>
         </div>

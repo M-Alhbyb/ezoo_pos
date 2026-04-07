@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProductModal from "@/components/products/ProductModal";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 
-// ... Interfaces
 interface Product {
   id: string;
   name: string;
@@ -68,7 +69,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!confirm(ARABIC.common.confirmDelete)) return;
     try {
       const response = await fetch(`/api/products/${productId}`, {
         method: "DELETE",
@@ -110,7 +111,6 @@ export default function ProductsPage() {
         throw new Error(errorData.detail || "Failed to save product");
       }
 
-      // Refresh data
       await fetchProducts(activeCategoryId || undefined);
       await fetchCategories();
       setIsModalOpen(false);
@@ -123,21 +123,21 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">Products Catalog</h1>
-          <p className="text-slate-500 mt-1">Manage your inventory and pricing.</p>
+          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{ARABIC.products.title}</h1>
+          <p className="text-slate-500 mt-1">{ARABIC.products.subtitle}</p>
         </div>
         <button 
           onClick={handleAddProduct}
           className="flex items-center px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-          Add Product
+          <svg className="w-5 h-5 ms-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          {ARABIC.products.addProduct}
         </button>
       </div>
 
       {error && (
         <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-4 border border-rose-200 animate-slide-up flex items-center shadow-sm">
-          <svg className="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
+          <svg className="w-5 h-5 ms-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
           <span className="font-medium">{error}</span>
         </div>
       )}
@@ -145,21 +145,21 @@ export default function ProductsPage() {
       <div className="flex flex-col md:flex-row gap-6">
         <aside className="w-full md:w-64 shrink-0">
           <div className="glass p-5 rounded-2xl sticky top-24">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by Category</h2>
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">{ARABIC.products.filterByCategory}</h2>
             <div className="space-y-1">
               <button
-                className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === null ? 'bg-slate-100 text-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
+                className={`w-full text-start px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === null ? 'bg-slate-100 text-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
                 onClick={() => fetchProducts()}
               >
-                All Categories
+                {ARABIC.products.allCategories}
               </button>
               {categories.map(cat => (
                 <button
                   key={cat.id}
-                  className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === cat.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                  className={`w-full text-start px-4 py-2.5 rounded-xl transition-all font-medium text-sm flex justify-between items-center ${activeCategoryId === cat.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
                   onClick={() => fetchProducts(cat.id)}
                 >
-                  <span className="truncate pr-2">{cat.name}</span>
+                  <span className="truncate ps-2">{cat.name}</span>
                   <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-xs font-semibold">{cat.product_count}</span>
                 </button>
               ))}
@@ -175,19 +175,19 @@ export default function ProductsPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span className="font-medium">Loading catalog...</span>
+                <span className="font-medium">{ARABIC.common.loading}</span>
               </div>
             ) : products.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse animate-fade-in">
+                <table className="w-full text-start border-collapse animate-fade-in">
                   <thead>
                     <tr className="bg-slate-50/50 border-b border-slate-200">
-                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Product Info</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Price</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Stock</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{ARABIC.products.productName}</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{ARABIC.products.sku}</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-end">{ARABIC.products.sellingPrice}</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">{ARABIC.products.stockQuantity}</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{ARABIC.products.status}</th>
+                      <th className="px-6 py-4 text-end text-xs font-semibold text-slate-500 uppercase tracking-wider">{ARABIC.common.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white/50">
@@ -197,8 +197,8 @@ export default function ProductsPage() {
                           <div className="font-medium text-slate-800">{product.name}</div>
                           <div className="text-xs text-slate-500 mt-0.5">{product.category_name}</div>
                         </td>
-                        <td className="px-6 py-4 text-slate-600 font-mono text-sm">{product.sku || <span className="text-slate-400 italic">None</span>}</td>
-                        <td className="px-6 py-4 text-right font-medium text-slate-800">${parseFloat(product.selling_price).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-slate-600 font-mono text-sm">{product.sku || <span className="text-slate-400 italic">{ARABIC.common.none}</span>}</td>
+                        <td className="px-6 py-4 text-end font-medium text-slate-800">{formatCurrency(product.selling_price)}</td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${product.stock_quantity > 10 ? 'bg-emerald-100 text-emerald-800' : product.stock_quantity > 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
                             {product.stock_quantity}
@@ -206,24 +206,24 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-6 py-4">
                           {product.is_active ? (
-                            <span className="flex items-center text-sm text-slate-600"><div className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></div>Active</span>
+                            <span className="flex items-center text-sm text-slate-600"><div className="w-2 h-2 rounded-full bg-emerald-500 ms-2"></div>{ARABIC.products.active}</span>
                           ) : (
-                            <span className="flex items-center text-sm text-slate-400"><div className="w-2 h-2 rounded-full bg-slate-300 mr-2"></div>Inactive</span>
+                            <span className="flex items-center text-sm text-slate-400"><div className="w-2 h-2 rounded-full bg-slate-300 ms-2"></div>{ARABIC.products.inactive}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="flex justify-end space-x-1">
+                        <td className="px-6 py-4 text-end opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditProduct(product)}
                               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="Edit Product"
+                              title={ARABIC.products.editProduct}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <button
                               onClick={() => handleDelete(product.id)}
                               className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Delete Product"
+                              title={ARABIC.products.deleteProduct}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
@@ -237,8 +237,8 @@ export default function ProductsPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-slate-400 animate-fade-in">
                 <svg className="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                <div className="text-lg font-medium text-slate-600 mb-1">No products found</div>
-                <p className="text-sm">Get started by adding your first product catalog.</p>
+                <div className="text-lg font-medium text-slate-600 mb-1">{ARABIC.products.noProducts}</div>
+                <p className="text-sm">{ARABIC.products.addProductStart}</p>
               </div>
             )}
           </div>

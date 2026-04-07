@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Briefcase, BarChart3, TrendingDown, Target, Download, Calendar, ArrowRight } from "lucide-react";
+import { Briefcase, BarChart3, TrendingDown, Target, Calendar, ArrowLeft } from "lucide-react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 import { DataTable, Column } from "@/components/reports/DataTable";
 import { ExportButtonGroup } from "@/components/reports/ExportButtonGroup";
 
@@ -38,7 +40,7 @@ export default function ProjectsReportPage() {
   useEffect(() => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 365); // Default to a year for projects
+    thirtyDaysAgo.setDate(today.getDate() - 365);
     
     setStartDate(thirtyDaysAgo.toISOString().split("T")[0]);
     setEndDate(today.toISOString().split("T")[0]);
@@ -69,32 +71,40 @@ export default function ProjectsReportPage() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      completed: ARABIC.projects.statusTypes.completed,
+      draft: ARABIC.projects.statusTypes.draft,
+    };
+    return statusMap[status] || status;
+  };
+
   const columns: Column<ProjectData>[] = [
-    { header: "Project Name", accessor: "name", className: "font-bold text-slate-900" },
+    { header: ARABIC.reports.projects.projectName, accessor: "name", className: "font-bold text-slate-900" },
     { 
-      header: "Status", 
+      header: ARABIC.reports.projects.status, 
       accessor: "status",
       render: (item) => (
         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
           item.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
         }`}>
-          {item.status}
+          {getStatusLabel(item.status)}
         </span>
       )
     },
-    { header: "Budget", accessor: "total_cost", render: (item) => <span className="text-slate-500 font-medium">${item.total_cost?.toLocaleString() || "0"}</span> },
-    { header: "Sale Price", accessor: "selling_price", render: (item) => <span className="text-indigo-600 font-bold">${item.selling_price?.toLocaleString() || "0"}</span> },
+    { header: ARABIC.reports.projects.totalCost, accessor: "total_cost", render: (item) => <span className="text-slate-500 font-medium">{formatCurrency(item.total_cost || 0)}</span> },
+    { header: ARABIC.reports.projects.totalSellingPrice, accessor: "selling_price", render: (item) => <span className="text-indigo-600 font-bold">{formatCurrency(item.selling_price || 0)}</span> },
     { 
-      header: "Net Profit", 
+      header: ARABIC.reports.projects.totalProfit, 
       accessor: "profit", 
-      render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>${item.profit?.toLocaleString() || "0"}</span> 
+      render: (item) => <span className={`font-bold ${item.profit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{formatCurrency(item.profit || 0)}</span> 
     },
     { 
-      header: "Action", 
+      header: ARABIC.common.actions, 
       accessor: "id", 
       render: (item) => (
         <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-blue-600">
-           <ArrowRight className="w-5 h-5" />
+           <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
         </button>
       )
     },
@@ -105,19 +115,19 @@ export default function ProjectsReportPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold font-heading text-slate-900 tracking-tight">Project Analytics</h1>
-          <p className="text-slate-500 mt-2 font-medium">Detailed financial health and profitability tracking for custom projects.</p>
+          <h1 className="text-4xl font-extrabold font-heading text-slate-900 tracking-tight">{ARABIC.reports.projects.title}</h1>
+          <p className="text-slate-500 mt-2 font-medium">{ARABIC.reports.projects.subtitle}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-2 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100">
-            <Calendar className="w-4 h-4 text-slate-400 ml-2" />
+            <Calendar className="w-4 h-4 text-slate-400 ms-2" />
             <input 
               type="date" 
               value={startDate} 
               onChange={e => { setStartDate(e.target.value); setPage(1); }}
               className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 cursor-pointer" 
             />
-            <span className="text-slate-300 font-bold">→</span>
+            <span className="text-slate-300 font-bold">←</span>
             <input 
               type="date" 
               value={endDate} 
@@ -135,7 +145,7 @@ export default function ProjectsReportPage() {
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4">
             <Briefcase className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Projects</p>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.projects.totalProjects}</p>
           <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reportData?.total_projects || 0}</h3>
         </div>
 
@@ -143,24 +153,24 @@ export default function ProjectsReportPage() {
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-fit mb-4">
             <Target className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Project Revenue</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_selling_price?.toLocaleString() || "0"}</h3>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.projects.totalSellingPrice}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{formatCurrency(reportData?.total_selling_price || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 border-b-4 border-b-emerald-600 hover:shadow-xl transition-all duration-300">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl w-fit mb-4">
             <BarChart3 className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aggregate Profit</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_profit?.toLocaleString() || "0"}</h3>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.projects.totalProfit}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{formatCurrency(reportData?.total_profit || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 border-b-4 border-b-rose-500 hover:shadow-xl transition-all duration-300">
           <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl w-fit mb-4">
             <TrendingDown className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Cost</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">${reportData?.total_cost?.toLocaleString() || "0"}</h3>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{ARABIC.reports.projects.totalCost}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{formatCurrency(reportData?.total_cost || 0)}</h3>
         </div>
       </div>
 
@@ -174,6 +184,7 @@ export default function ProjectsReportPage() {
           pageSize={pageSize}
           currentPage={page}
           onPageChange={setPage}
+          emptyMessage={ARABIC.reports.noData || 'لا توجد بيانات'}
         />
       </div>
     </div>

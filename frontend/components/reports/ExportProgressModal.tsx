@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
+import { ARABIC } from '../../lib/constants/arabic';
 
 export interface ExportProgressModalProps {
   isOpen: boolean;
@@ -23,15 +24,15 @@ export function ExportProgressModal({
   const getStatusText = () => {
     switch (status) {
       case 'started':
-        return 'Initializing export...';
+        return ARABIC.reports.export.exporting;
       case 'processing':
-        return 'Generating report...';
+        return ARABIC.reports.export.exporting;
       case 'completed':
-        return 'Export complete!';
+        return ARABIC.reports.export.exportSuccess;
       case 'failed':
-        return 'Export failed';
+        return ARABIC.reports.export.exportFailed;
       default:
-        return 'Processing...';
+        return ARABIC.common.loading;
     }
   };
 
@@ -50,11 +51,11 @@ export function ExportProgressModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Export Progress</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{ARABIC.reports.export.exporting}</h2>
           <button
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label="Close"
+            aria-label={ARABIC.common.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,7 +87,7 @@ export function ExportProgressModal({
                 onClick={onCancel}
                 className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
               >
-                Cancel
+                {ARABIC.common.cancel}
               </button>
             )}
             
@@ -95,7 +96,7 @@ export function ExportProgressModal({
                 onClick={onCancel}
                 className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
               >
-                Close
+                {ARABIC.common.close}
               </button>
             )}
           </div>

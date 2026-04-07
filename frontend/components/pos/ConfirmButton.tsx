@@ -7,6 +7,8 @@
 
 "use client";
 
+import { ARABIC } from "@/lib/constants/arabic";
+
 interface ConfirmButtonProps {
   onConfirm: () => Promise<void>;
   disabled: boolean;
@@ -18,7 +20,7 @@ export default function ConfirmButton({ onConfirm, disabled, loading }: ConfirmB
     if (disabled || loading) return;
 
     const confirmed = window.confirm(
-      "Are you sure you want to complete this sale? This action cannot be undone."
+      ARABIC.pos.confirmSaleMessage || 'هل أنت متأكد من إتمام هذا البيع؟ لا يمكن التراجع عن هذا الإجراء.'
     );
 
     if (confirmed) {
@@ -33,12 +35,12 @@ export default function ConfirmButton({ onConfirm, disabled, loading }: ConfirmB
       className={`
         w-full py-4 text-lg font-medium rounded
         ${disabled || loading
-          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-          : "bg-green-600 text-white hover:bg-green-700"
+          ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+          : "bg-emerald-600 text-white hover:bg-emerald-700"
         }
       `}
     >
-      {loading ? "Processing..." : "Confirm Sale"}
+      {loading ? ARABIC.common.loading : ARABIC.pos.completeSale || 'إتمام البيع'}
     </button>
   );
 }

@@ -8,6 +8,8 @@
 "use client";
 
 import { useState } from "react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface CartItem {
   product_id: string;
@@ -34,19 +36,19 @@ export default function POSCart({ items, onQuantityChange, onRemove, onClear }: 
   return (
     <div className="border rounded p-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Cart</h2>
+        <h2 className="text-lg font-medium">{ARABIC.pos.currentCart || 'السلة الحالية'}</h2>
         {items.length > 0 && (
           <button
             onClick={onClear}
             className="text-sm text-red-600 hover:text-red-800"
           >
-            Clear All
+            {ARABIC.pos.clearCart || 'إفراغ السلة'}
           </button>
         )}
       </div>
 
       {items.length === 0 ? (
-        <div className="text-gray-500 text-center py-8">Cart is empty</div>
+        <div className="text-slate-500 text-center py-8">{ARABIC.pos.cartEmpty}</div>
       ) : (
         <div className="space-y-3">
           {lineTotals.map((item) => (
@@ -54,18 +56,18 @@ export default function POSCart({ items, onQuantityChange, onRemove, onClear }: 
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                   <div className="font-medium">{item.product_name}</div>
-                  <div className="text-sm text-gray-500">${item.unit_price.toFixed(2)} each</div>
+                  <div className="text-sm text-slate-500">{formatCurrency(item.unit_price)} {ARABIC.pos.each || 'للوحدة'}</div>
                 </div>
                 <button
                   onClick={() => onRemove(item.product_id)}
                   className="text-red-600 hover:text-red-800 text-sm"
                 >
-                  Remove
+                  {ARABIC.common.delete || 'حذف'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm">Qty:</label>
+                  <label className="text-sm">{ARABIC.pos.quantity || 'الكمية'}:</label>
                   <input
                     type="number"
                     min="1"
@@ -74,15 +76,15 @@ export default function POSCart({ items, onQuantityChange, onRemove, onClear }: 
                     className="border rounded px-2 py-1 w-20 text-sm"
                   />
                 </div>
-                <div className="font-medium">${item.line_total.toFixed(2)}</div>
+                <div className="font-medium">{formatCurrency(item.line_total)}</div>
               </div>
             </div>
           ))}
 
           <div className="border-t pt-3 mt-3">
             <div className="flex justify-between items-center font-medium text-lg">
-              <div>Subtotal:</div>
-              <div>${subtotal.toFixed(2)}</div>
+              <div>{ARABIC.pos.subtotal || 'المجموع الفرعي'}:</div>
+              <div>{formatCurrency(subtotal)}</div>
             </div>
           </div>
         </div>

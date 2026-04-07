@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Decimal } from "decimal.js";
+import { ARABIC } from "@/lib/constants/arabic";
 
 // Components
 import ProductGrid from "@/components/pos/ProductGrid";
@@ -198,21 +199,21 @@ export default function POSPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-end mb-4">
         <div>
-          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">Point of Sale</h1>
-          <p className="text-slate-500 mt-1">Process a new transaction.</p>
+          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{ARABIC.pos.title}</h1>
+          <p className="text-slate-500 mt-1">{ARABIC.pos.subtitle || 'معالجة عملية جديدة'}</p>
         </div>
       </div>
 
       {success && (
         <div className="bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl mb-4 border border-emerald-200 animate-slide-up flex items-center shadow-sm">
-          <svg className="w-5 h-5 mr-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
-          <span className="font-medium">Sale completed successfully!</span>
+          <svg className="w-5 h-5 me-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
+          <span className="font-medium">{ARABIC.pos.saleComplete}</span>
         </div>
       )}
 
       {error && (
         <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-4 border border-rose-200 animate-slide-up flex items-center shadow-sm">
-          <svg className="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
+          <svg className="w-5 h-5 me-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
           <span className="font-medium">{error}</span>
         </div>
       )}
@@ -221,16 +222,16 @@ export default function POSPage() {
         {/* Left/Middle Column (Search & Cart) */}
         <div className="lg:col-span-8 space-y-6">
           <div className="glass p-6 rounded-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 start-0 -mt-20 -ms-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
             
             <div className="relative mb-6">
               <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                <div className="p-2 bg-primary/10 rounded-lg mr-3 text-primary">
+                <div className="p-2 bg-primary/10 rounded-lg me-3 text-primary">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </div>
-                Quick Select
+                {ARABIC.pos.quickSelect || 'الاختيار السريع'}
               </h2>
-              <p className="text-sm text-slate-500 ml-12 mt-0.5">Click a product to add it to your cart.</p>
+              <p className="text-sm text-slate-500 me-12 mt-0.5">{ARABIC.pos.clickToAdd || 'انقر على منتج لإضافته إلى السلة'}</p>
             </div>
 
             <ProductGrid onProductSelect={handleProductSelect} />
@@ -238,11 +239,11 @@ export default function POSPage() {
 
           <div className="glass p-6 rounded-2xl relative overflow-hidden">
              {/* Decorative Background */}
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 start-0 -mt-10 -ms-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl pointer-events-none"></div>
             
             <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-              Current Cart
+              <svg className="w-5 h-5 me-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              {ARABIC.pos.currentCart || 'السلة الحالية'}
             </h2>
             <POSCart
               items={cartItems}
@@ -256,11 +257,11 @@ export default function POSPage() {
         {/* Right Column (Checkout/Breakdown) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="glass p-6 rounded-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 start-0 -mt-10 -ms-10 w-32 h-32 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none"></div>
 
             <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-3 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-              Order Summary
+              <svg className="w-5 h-5 me-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              {ARABIC.pos.orderSummary || 'ملخص الطلب'}
             </h2>
             
             <div className="space-y-5">
@@ -277,7 +278,7 @@ export default function POSPage() {
                 />
               ) : (
                 <div className="py-8 text-center text-slate-400 text-sm">
-                  Cart is empty
+                  {ARABIC.pos.cartEmpty}
                 </div>
               )}
 
@@ -287,12 +288,12 @@ export default function POSPage() {
                 <PaymentMethodSelect value={paymentMethodId} onChange={setPaymentMethodId} />
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Note (optional)</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{ARABIC.pos.note || 'ملاحظة'} (اختياري)</label>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 p-3 h-20 transition-all resize-none shadow-sm"
-                    placeholder="Add a remark..."
+                    placeholder={ARABIC.pos.addRemark || 'أضف ملاحظة...'}
                   />
                 </div>
               </div>
