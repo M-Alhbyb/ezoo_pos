@@ -86,7 +86,7 @@ import { ARABIC } from '@/lib/constants/arabic';
 All formatting functions use `Intl` API with `ar-SA` locale:
 
 ```typescript
-formatCurrency(1234.56)// "١،٢٣٤٫٥٦ ر.س"
+formatCurrency(1234.56)// "١،٢٣٤٫٥٦ ج.س"
 formatDate(new Date())        // "١٥ يناير ٢٠٢٦"
 formatNumber(1234)            // "١،٢٣٤"
 ```
@@ -161,7 +161,7 @@ This feature:
 
 1. All pages render with Arabic text
 2. RTL layout is correctly applied
-3. Currency formatting shows ر.س
+3. Currency formatting shows ج.س
 4. Date formatting shows Arabic month names
 5. Export files contain Arabic content
 6. Charts display Arabic labels

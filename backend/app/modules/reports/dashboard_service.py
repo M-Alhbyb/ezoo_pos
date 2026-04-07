@@ -1,9 +1,10 @@
+
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 import logging
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func, cast, Date, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -16,6 +17,7 @@ from app.schemas.dashboard import (
 )
 from app.models.sale import Sale
 from app.models.project import Project, ProjectStatus
+from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
 from app.models.inventory_log import InventoryLog
 
@@ -51,7 +53,7 @@ class DashboardService:
                     cast(Sale.created_at, Date).label("date"),
                     func.sum(Sale.grand_total).label("revenue"),
                     func.sum(Sale.profit).label("profit"),
-                    func.sum(Sale.vat_amount).label("vat"),
+                    func.coalesce(func.sum(Sale.vat_total), 0).label("vat"),
                 )
                 .where(Sale.created_at >= start_date)
                 .where(Sale.created_at <= end_date)
@@ -74,9 +76,9 @@ class DashboardService:
                 )
 
             dates = [row.date for row in rows]
-            revenue = [Decimal(str(row.revenue)) for row in rows]
-            profit = [Decimal(str(row.profit)) for row in rows]
-            vat = [Decimal(str(row.vat)) for row in rows]
+            revenue = [Decimal(str(row.revenue or 0)) for row in rows]
+            profit = [Decimal(str(row.profit or 0)) for row in rows]
+            vat = [Decimal(str(row.vat or 0)) for row in rows]
 
             logger.info(
                 f"Sales dashboard rendered successfully: {len(rows)} data points"
@@ -111,8 +113,8 @@ class DashboardService:
                     Project.selling_price,
                     Project.profit,
                 )
-                .where(Project.start_date >= start_date)
-                .where(Project.start_date <= end_date)
+                .where(Project.created_at >= start_date)
+                .where(Project.created_at <= end_date)
                 .where(Project.status == ProjectStatus.COMPLETED)
             )
 
@@ -175,13 +177,13 @@ class DashboardService:
                 select(
                     Partner.id,
                     Partner.name,
-                    func.sum(PartnerDistribution.distributed_amount).label(
+                    func.sum(PartnerDistribution.payout_amount).label(
                         "total_dividends"
                     ),
                 )
-                .join(Partner)
-                .where(PartnerDistribution.distribution_date >= start_date)
-                .where(PartnerDistribution.distribution_date <= end_date)
+                .join(Partner, Partner.id == PartnerDistribution.partner_id)
+                .where(PartnerDistribution.created_at >= start_date)
+                .where(PartnerDistribution.created_at <= end_date)
                 .group_by(Partner.id, Partner.name)
             )
 
@@ -242,13 +244,13 @@ class DashboardService:
             stmt = (
                 select(
                     cast(InventoryLog.created_at, Date).label("date"),
-                    InventoryLog.movement_type,
-                    func.sum(InventoryLog.quantity_delta).label("total_quantity"),
+                    InventoryLog.reason,
+                    func.sum(InventoryLog.delta).label("total_quantity"),
                 )
                 .where(InventoryLog.created_at >= start_date)
                 .where(InventoryLog.created_at <= end_date)
                 .group_by(
-                    cast(InventoryLog.created_at, Date), InventoryLog.movement_type
+                    cast(InventoryLog.created_at, Date), InventoryLog.reason
                 )
                 .order_by(cast(InventoryLog.created_at, Date))
             )
@@ -272,7 +274,7 @@ class DashboardService:
                         "reversals": 0,
                     }
 
-                movement_key = movement_types.get(row.movement_type, "sales")
+                movement_key = movement_types.get(row.reason, "sales")
                 date_movement_map[date_key][movement_key] = abs(row.total_quantity)
 
             if len(date_movement_map) > settings.dashboard_max_points:

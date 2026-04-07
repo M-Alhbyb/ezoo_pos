@@ -266,7 +266,7 @@ export const ARABIC = {
     noExpenses: 'لا توجد مصاريف',
   },
 
-partners: {
+  partners: {
     title: 'إدارة الشركاء',
     subtitle: 'تتبع حصص الشركاء وتوزيع الأرباح',
     partnerName: 'اسم الشريك',
@@ -326,7 +326,7 @@ partners: {
       subtitle: 'توزيعات الأرباح وتفاصيل المستثمرين',
       totalPayout: 'إجمالي التوزيعات',
       partnersCount: 'عدد الشركاء',
-partnerName: 'اسم الشريك',
+      partnerName: 'اسم الشريك',
       amount: 'المبلغ',
       partnerCountSubtitle: 'عبر جميع الشركاء النشطين',
       avgPayout: 'متوسط التوزيع',
@@ -494,7 +494,7 @@ partnerName: 'اسم الشريك',
   },
 
   numbers: {
-    currency: 'ر.س',
+    currency: 'ج.س',
     items: 'عناصر',
     page: 'صفحة',
     of: 'من',

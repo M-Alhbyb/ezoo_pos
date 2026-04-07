@@ -11,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-  import { formatDecimal } from '../../lib/utils/chart-utils';
+import { formatDecimal } from '../../lib/utils/chart-utils';
 import { formatCurrency } from '@/lib/utils/format';
 import { ARABIC } from '@/lib/constants/arabic';
 
@@ -51,8 +51,8 @@ export function LineChart({
 }: LineChartProps) {
   if (loading) {
     return (
-      <div 
-        style={{ height }} 
+      <div
+        style={{ height }}
         className="flex items-center justify-center bg-slate-50 rounded-xl"
       >
         <div className="text-center">
@@ -65,22 +65,22 @@ export function LineChart({
 
   if (!data || data.length === 0) {
     return (
-      <div 
-        style={{ height }} 
+      <div
+        style={{ height }}
         className="flex items-center justify-center bg-slate-50 rounded-xl"
       >
         <div className="text-center">
-          <svg 
-            className="mx-auto h-12 w-12 text-slate-400" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            className="mx-auto h-12 w-12 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             />
           </svg>
           <p className="mt-2 text-slate-600">{emptyMessage}</p>
@@ -100,19 +100,19 @@ export function LineChart({
     <ResponsiveContainer width="100%" height={height}>
       <RechartsLineChart data={data} layout="vertical">
         {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />}
-        <XAxis 
+        <XAxis
           type="number"
           tick={{ fontSize: 12 }}
           stroke="#9ca3af"
-          tickFormatter={(value) => isCurrency ? formatCurrency(value).replace('ر.س', '').trim() : formatDecimal(value, 2)}
+          tickFormatter={(value) => isCurrency ? formatCurrency(value).replace('ج.س', '').trim() : formatDecimal(value, 2)}
         />
-        <YAxis 
+        <YAxis
           type="category"
-          dataKey="date" 
+          dataKey="date"
           tick={{ fontSize: 12 }}
           stroke="#9ca3af"
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: number) => formatTooltipValue(value)}
           contentStyle={{
             backgroundColor: '#fff',
@@ -124,7 +124,7 @@ export function LineChart({
           }}
         />
         {showLegend && (
-          <Legend 
+          <Legend
             wrapperStyle={{ paddingTop: '20px', direction: 'rtl' }}
           />
         )}

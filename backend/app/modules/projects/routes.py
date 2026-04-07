@@ -13,6 +13,15 @@ def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
     return ProjectService(db)
 
 
+@router.get("")
+async def list_projects(
+    service: ProjectService = Depends(get_project_service),
+):
+    """List all projects."""
+    projects = await service.get_projects()
+    return {"items": projects}
+
+
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
     data: ProjectCreate,

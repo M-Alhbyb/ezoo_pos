@@ -96,7 +96,7 @@ export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModal
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.partners.investmentAmount} (ر.س)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.partners.investmentAmount} (ج.س)</label>
               <input
                 type="number"
                 required

@@ -15,13 +15,17 @@ import {
   X,
   Plus
 } from "lucide-react";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Cairo } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+const cairo = Cairo({ 
+  subsets: ["arabic", "latin"], 
+  variable: "--font-cairo",
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"]
+});
 
 export default function RootLayout({
   children,
@@ -32,7 +36,7 @@ export default function RootLayout({
 
   return (
     <html lang="ar" dir="rtl">
-      <body className={`${inter.variable} ${outfit.variable} font-sans`}>
+      <body className={`${inter.variable} ${cairo.variable} font-sans`}>
         <div className="flex min-h-screen bg-slate-50 relative overflow-x-hidden">
           {isMobileMenuOpen && (
             <div 

@@ -94,7 +94,7 @@ Setup/Foundation (Phase 1)
 
 **Story Goal**: Arabic-speaking business owner views dashboard with all labels in Arabic, RTL layout, and properly formatted numbers.
 
-**Independent Test**: Open the application, navigate to dashboard, verify all text elements display in Arabic, layout is RTL, charts show Arabic labels, currency displays ر.س.
+**Independent Test**: Open the application, navigate to dashboard, verify all text elements display in Arabic, layout is RTL, charts show Arabic labels, currency displays ج.س.
 
 ### 2.1 Layout Components - RTL
 
@@ -186,7 +186,7 @@ Setup/Foundation (Phase 1)
 
 - [X] T049 [US4] Create Project Detail page at `frontend/app/projects/[projectId]/page.tsx` showing items and expenses breakdown in Arabic
 - [X] T050 [US4] Add project completion confirmation dialog with Arabic text
-- [X] T051 [US4] Display profit breakdown with ر.س formatting in project detail
+- [X] T051 [US4] Display profit breakdown with ج.س formatting in project detail
 
 ---
 
@@ -308,7 +308,7 @@ Setup/Foundation (Phase 1)
 
 ### 9.4 Final Verification
 
-- [x] T100 Verify all currency values display with ر.س symbol and Arabic numerals
+- [x] T100 Verify all currency values display with ج.س symbol and Arabic numerals
 - [x] T101 Verify all dates display with Arabic month names
 - [x] T102 Verify all error messages display in Arabic
 - [x] T103 Verify all success messages display in Arabic
@@ -358,7 +358,7 @@ git checkout -b feature/arabic-inventory
 - [ ] Dashboard displays Arabic labels (إجمالي الإيرادات, المشاريع النشطة, الشركاء, المنتجات المنخفضة)
 - [ ] Charts render with Arabic axis labels and RTL
 - [ ] Sidebar appears on right side
-- [ ] Currency displays with ر.س symbol
+- [ ] Currency displays with ج.س symbol
 
 ### US2 - Point of Sale Transaction
 - [ ] Product grid displays Arabic product names
@@ -377,7 +377,7 @@ git checkout -b feature/arabic-inventory
 - [ ] Projects list displays Arabic status badges
 - [ ] Project detail shows items/expenses breakdown
 - [ ] Completion confirmation dialog in Arabic
-- [ ] Profit displays with ر.س formatting
+- [ ] Profit displays with ج.س formatting
 
 ### US5 - Partner Profit Distribution
 - [ ] Partners list displays Arabic labels

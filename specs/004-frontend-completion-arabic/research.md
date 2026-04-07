@@ -70,7 +70,7 @@ export const ARABIC = {
 - Native browser API - no dependencies
 - Consistent formatting across the application
 - Supports both Western and Arabic-Indic numerals
-- Proper currency formatting with ر.س symbol
+- Proper currency formatting with ج.س symbol
 
 **Alternatives Considered**:
 - numeral.js (rejected - library dependency)

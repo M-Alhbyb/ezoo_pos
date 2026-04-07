@@ -28,32 +28,55 @@ FONT_DIR = "/usr/share/fonts/truetype"  # System fonts directory on Linux
 
 
 def _register_arabic_fonts():
-    """Register Arabic fonts for PDF rendering."""
+    """Register Arabic fonts for PDF rendering, prioritizing Cairo."""
     fonts_registered = False
 
     try:
         import os
 
-        font_paths = [
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-            "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-            "/usr/share/fonts/TTF/DejaVuSans.ttf",
-        ]
+        # Get path to static fonts directory
+        # Current file is in app/modules/reports/export_service.py
+        # app/static/fonts is at ../../../static/fonts relative to this file
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        static_fonts_dir = os.path.join(base_dir, "static", "fonts")
+        
+        cairo_regular = os.path.join(static_fonts_dir, "Cairo-Regular.ttf")
+        cairo_bold = os.path.join(static_fonts_dir, "Cairo-Bold.ttf")
 
-        for font_path in font_paths:
-            if os.path.exists(font_path):
-                try:
-                    pdfmetrics.registerFont(TTFont("ArabicFont", font_path))
-                    fonts_registered = True
-                    logger.info(f"Registered Arabic-capable font: {font_path}")
-                    break
-                except Exception as e:
-                    logger.warning(f"Failed to register font {font_path}: {e}")
+        # Register Cairo if available
+        if os.path.exists(cairo_regular):
+            try:
+                pdfmetrics.registerFont(TTFont("Cairo", cairo_regular))
+                pdfmetrics.registerFont(TTFont("Cairo-Bold", cairo_bold))
+                # Register alias for generic font usage
+                pdfmetrics.registerFont(TTFont("ArabicFont", cairo_regular))
+                fonts_registered = True
+                logger.info(f"Registered Cairo fonts from: {static_fonts_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to register Cairo font: {e}")
+
+        # Fallback to system fonts if Cairo not found
+        if not fonts_registered:
+            font_paths = [
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            ]
+
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        pdfmetrics.registerFont(TTFont("ArabicFont", font_path))
+                        fonts_registered = True
+                        logger.info(f"Registered system Arabic-capable font: {font_path}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Failed to register font {font_path}: {e}")
 
         if not fonts_registered:
             logger.warning(
-                "No Arabic-capable system fonts found, using default Helvetica"
+                "No Arabic-capable fonts found, using default Helvetica"
             )
 
     except Exception as e:
@@ -88,12 +111,12 @@ class ExportService:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.executor, self._generate_csv_sync, data)
 
-def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
+    def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
         """Synchronous CSV generation with UTF-8 BOM for Arabic support."""
         try:
             output = BytesIO()
             # Add UTF-8 BOM for proper Arabic display in Excel/CSV viewers
-            output.write('\ufeff'.encode('utf-8'))
+            output.write("\ufeff".encode("utf-8"))
             df = pd.DataFrame(data)
             df.to_csv(output, index=False, encoding="utf-8", float_format="%.4f")
             output.seek(0)
@@ -145,29 +168,6 @@ def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.executor, self._generate_xlsx_sync, data)
 
-    def _generate_xlsx_sync(self, data: list[dict]) -> BytesIO:
-        """Synchronous XLSX generation."""
-        try:
-            output = BytesIO()
-            df = pd.DataFrame(data)
-
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(
-                    writer, index=False, sheet_name="Report", float_format="%.4f"
-                )
-
-                workbook = writer.book
-                worksheet = writer.sheets["Report"]
-
-                for idx, col in enumerate(df.columns):
-                    max_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
-                    worksheet.set_column(idx, idx, max_len)
-
-            output.seek(0)
-            return output
-        except Exception as e:
-            logger.error(f"XLSX export generation failed: {str(e)}", exc_info=True)
-            raise
 
     async def generate_pdf(
         self,
@@ -217,11 +217,12 @@ def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
 
             styles = getSampleStyleSheet()
 
-            # Try to use Arabic font if registered, otherwise use default
+            # Try to use Arabic font if registered, prioritizing Cairo-Bold for headings
             try:
                 title_style = styles["Heading1"]
-                # Check if Arabic font is available
-                if "ArabicFont" in pdfmetrics.getRegisteredFontNames():
+                if "Cairo-Bold" in pdfmetrics.getRegisteredFontNames():
+                    title_style.fontName = "Cairo-Bold"
+                elif "ArabicFont" in pdfmetrics.getRegisteredFontNames():
                     title_style.fontName = "ArabicFont"
             except Exception:
                 title_style = styles["Heading1"]
@@ -272,12 +273,17 @@ def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
 
                 # Try to use Arabic font for data if available
                 try:
-                    if "ArabicFont" in pdfmetrics.getRegisteredFontNames():
+                    registered_fonts = pdfmetrics.getRegisteredFontNames()
+                    if "ArabicFont" in registered_fonts:
                         # Check if any data contains Arabic
                         has_arabic = any(
                             is_arabic_text(str(v)) for row in data for v in row.values()
                         )
                         if has_arabic:
+                            # Use Cairo-Bold for headers and ArabicFont (Cairo) for body if available
+                            header_font = "Cairo-Bold" if "Cairo-Bold" in registered_fonts else "ArabicFont"
+                            body_font = "ArabicFont"
+                            
                             table.setStyle(
                                 TableStyle(
                                     [
@@ -289,7 +295,8 @@ def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
                                             colors.whitesmoke,
                                         ),
                                         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                                        ("FONTNAME", (0, 0), (-1, -1), "ArabicFont"),
+                                        ("FONTNAME", (0, 0), (-1, 0), header_font),
+                                        ("FONTNAME", (0, 1), (-1, -1), body_font),
                                         ("FONTSIZE", (0, 0), (-1, 0), 10),
                                         ("FONTSIZE", (0, 1), (-1, -1), 8),
                                         ("BOTTOMPADDING", (0, 0), (-1, 0), 12),

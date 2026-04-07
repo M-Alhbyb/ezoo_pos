@@ -177,7 +177,7 @@ npm run dev
 
 ### Arabic Testing Checklist
 - [ ] All labels in Arabic
-- [ ] Currency shows ر.س
+- [ ] Currency shows ج.س
 - [ ] Dates show Arabic month names
 - [ ] Numbers show Arabic numerals (optional)
 - [ ] Error messages in Arabic
@@ -206,7 +206,7 @@ import { formatCurrency } from '@/lib/utils/format';
 
 export function PriceDisplay({ amount }: { amount: number }) {
   return <span>{formatCurrency(amount)}</span>;
-  // Output: "١،٢٣٤٫٥٦ ر.س"
+  // Output: "١،٢٣٤٫٥٦ ج.س"
 }
 ```
 

@@ -22,7 +22,7 @@ An Arabic-speaking business owner opens the EZOO POS web application to view the
 1. **Given** the user opens the application, **When** they view the dashboard, **Then** all summary card labels display in Arabic (e.g.,"إجمالي الإيرادات" instead of "Total Revenue")
 2. **Given** the user views the dashboard, **When** they see chart data, **Then** all chart axes, legends, and tooltips display in Arabic
 3. **Given** the user views any page, **When** they observe the layout, **Then** the sidebar appears on the right, content flows right-to-left, and text is right-aligned
-4. **Given** the user views monetary values, **When** they see currency amounts, **Then** values display with ر.س symbol and proper Arabic numerical formatting
+4. **Given** the user views monetary values, **When** they see currency amounts, **Then** values display with ج.س symbol and proper Arabic numerical formatting
 
 ---
 
@@ -73,7 +73,7 @@ An Arabic-speaking project manager creates a new project, assigns items and expe
 
 1. **Given** the user opens projects page, **When** they view existing projects, **Then** project names, status badges, and financials display in Arabic
 2. **Given** the user creates a new project, **When** they fill the form, **Then** all field labels are in Arabic (اسم المشروع، سعر البيع، المنتجات، المصاريف)
-3. **Given** a project has items and expenses, **When** viewing project details, **Then** the profit breakdown shows all amounts with ر.س formatting
+3. **Given** a project has items and expenses, **When** viewing project details, **Then** the profit breakdown shows all amounts with ج.س formatting
 4. **Given** the user completes a project, **When** they click complete button, **Then** confirmation dialog shows "هل أنت متأكد منإتمام المشروع؟" and status changes to "مكتمل"
 
 ---
@@ -139,7 +139,7 @@ An Arabic-speaking manager views reports (sales, projects, partners, inventory) 
 - **FR-002**: System MUST implement RTL (Right-to-Left) layout throughout the application
 - **FR-003**: System MUST set `lang="ar"` and `dir="rtl"` on the root HTML element
 - **FR-004**: System MUST use CSS logical properties (start/end) instead of physical (left/right) for automatic RTL support
-- **FR-005**: System MUST format all currency values with Arabic numerals and ر.س symbol
+- **FR-005**: System MUST format all currency values with Arabic numerals and ج.س symbol
 - **FR-006**: System MUST format all dates in Arabic format (e.g., ١٥ يناير ٢٠٢٦)
 
 **DASHBOARD:**
@@ -215,7 +215,7 @@ An Arabic-speaking manager views reports (sales, projects, partners, inventory) 
 
 - **ArabicText**: All user-facing text elements that must be translated to Standard Arabic
 - **RTLLayout**: Layout configuration that reverses horizontal flow for Arabic reading direction
-- **CurrencyValue**: Monetary values formatted with Arabic numerals and ر.س symbol
+- **CurrencyValue**: Monetary values formatted with Arabic numerals and ج.س symbol
 - **DateValue**: Date values formatted with Arabic month names and Arabic-Indic numerals
 - **ReportData**: Aggregated data structures for sales, projects, partners, and inventory reports
 - **NavigationItem**: Sidebar/menu items with Arabic labels and RTL-aware icons
@@ -228,7 +228,7 @@ An Arabic-speaking manager views reports (sales, projects, partners, inventory) 
 
 - **SC-001**: All UI elements (100%) display in Arabic with correct RTL layout
 - **SC-002**: All pages load within 3 seconds on standard 4G connection
-- **SC-003**: Currency values display correctly with Arabic numerals (٠-٩) and ر.س symbol
+- **SC-003**: Currency values display correctly with Arabic numerals (٠-٩) and ج.س symbol
 - **SC-004**: Date values display in Arabic format (e.g., ١٥ يناير ٢٠٢٦)
 - **SC-005**: CSV, XLSX, and PDF exports contain properly rendered Arabic content
 - **SC-006**: Charts render correctly in RTL mode with Arabic axis labels and tooltips
@@ -248,7 +248,7 @@ An Arabic-speaking manager views reports (sales, projects, partners, inventory) 
 - Backend API endpoints remain unchanged and return the same data structures
 - No authentication/authorization system changes are required (or handled separately)
 - Arabic content uses Standard Arabic (الفصحى) forall text
-- Currency is Saudi Riyal (SAR) with ر.س symbol
+- Currency is Saudi Riyal (SAR) with ج.س symbol
 - Date format follows Gregorian calendar with Arabic month names
 - All users are Arabic-speaking (no multi-language switching required)
 - RTL support is browser-native (modern browsers support RTL natively)

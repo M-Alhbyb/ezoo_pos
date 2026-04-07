@@ -2,9 +2,9 @@ import { Decimal } from 'decimal.js';
 
 export function formatCurrency(value: number | string | Decimal): string {
   const num = typeof value === 'string' ? parseFloat(value) : typeof value === 'object' ? Number(value) : value;
-  return new Intl.NumberFormat('ar-SA', {
+  return new Intl.NumberFormat('ar-SD', {
     style: 'currency',
-    currency: 'SAR',
+    currency: 'SDG',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num);
@@ -13,9 +13,9 @@ export function formatCurrency(value: number | string | Decimal): string {
 export function formatCurrencyCompact(value: number | string | Decimal): string {
   const num = typeof value === 'string' ? parseFloat(value) : typeof value === 'object' ? Number(value) : value;
   if (num >= 1000000) {
-    return new Intl.NumberFormat('ar-SA', {
+    return new Intl.NumberFormat('ar-SD', {
       style: 'currency',
-      currency: 'SAR',
+      currency: 'SDG',
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(num);
@@ -29,11 +29,11 @@ export function formatDate(date: Date | string, format: 'short' | 'long' = 'long
     format === 'long'
       ? { year: 'numeric', month: 'long', day: 'numeric' }
       : { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Intl.DateTimeFormat('ar-SA', options).format(d);
+  return new Intl.DateTimeFormat('ar-SD', options).format(d);
 }
 
 export function formatDateTime(date: Date | string): string {
-  return new Intl.DateTimeFormat('ar-SA', {
+  return new Intl.DateTimeFormat('ar-SD', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -43,21 +43,21 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatTime(date: Date | string): string {
-  return new Intl.DateTimeFormat('ar-SA', {
+  return new Intl.DateTimeFormat('ar-SD', {
     hour: 'numeric',
     minute: 'numeric',
   }).format(new Date(date));
 }
 
 export function formatNumber(value: number, decimals: number = 0): string {
-  return new Intl.NumberFormat('ar-SA', {
+  return new Intl.NumberFormat('ar-SD', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
 }
 
 export function formatPercentage(value: number, decimals: number = 1): string {
-  return new Intl.NumberFormat('ar-SA', {
+  return new Intl.NumberFormat('ar-SD', {
     style: 'percent',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -65,7 +65,7 @@ export function formatPercentage(value: number, decimals: number = 1): string {
 }
 
 export function formatInteger(value: number): string {
-  return new Intl.NumberFormat('ar-SA').format(Math.round(value));
+  return new Intl.NumberFormat('ar-SD').format(Math.round(value));
 }
 
 export function formatDecimal(value: number | string | Decimal, places: number = 2): string {

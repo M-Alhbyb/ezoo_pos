@@ -35,8 +35,8 @@ def get_export_service(db: AsyncSession = Depends(get_db)) -> ExportService:
 @router.get("/sales", response_model=SalesReport)
 async def get_sales_report(
     service: ReportService = Depends(get_report_service),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
 ):
@@ -49,8 +49,8 @@ async def get_sales_report(
 @router.get("/projects", response_model=ProjectReport)
 async def get_projects_report(
     service: ReportService = Depends(get_report_service),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
 ):
@@ -63,8 +63,8 @@ async def get_projects_report(
 @router.get("/partners", response_model=PartnerReport)
 async def get_partners_report(
     service: ReportService = Depends(get_report_service),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
 ):
@@ -77,8 +77,8 @@ async def get_partners_report(
 @router.get("/inventory", response_model=InventoryReport)
 async def get_inventory_report(
     service: ReportService = Depends(get_report_service),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
 ):

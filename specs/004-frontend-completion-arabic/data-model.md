@@ -350,7 +350,7 @@ export const ARABIC = {
 
   // Numbers
   numbers: {
-    currency: 'ر.س',
+    currency: 'ج.س',
     items: 'عناصر',
     page: 'صفحة',
     of: 'من',

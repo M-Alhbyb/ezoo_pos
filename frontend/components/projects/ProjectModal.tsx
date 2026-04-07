@@ -43,11 +43,11 @@ export default function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModal
         name,
         selling_price: parseFloat(sellingPrice),
       };
-      
+
       if (cost) {
         payload.cost = parseFloat(cost);
       }
-      
+
       await onSubmit(payload);
     } catch (err: any) {
       setError(err.message);
@@ -88,7 +88,7 @@ export default function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModal
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.projects.sellingPrice} (ر.س)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.projects.sellingPrice} (ج.س)</label>
               <input
                 type="number"
                 required
@@ -102,7 +102,7 @@ export default function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModal
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                {ARABIC.projects.explicitCost || 'التكلفة الصريحة'} (ر.س) <span className="text-slate-400 font-normal">({ARABIC.common.optional || 'اختياري'})</span>
+                {ARABIC.projects.explicitCost || 'التكلفة الصريحة'} (ج.س) <span className="text-slate-400 font-normal">({ARABIC.common.optional || 'اختياري'})</span>
               </label>
               <input
                 type="number"

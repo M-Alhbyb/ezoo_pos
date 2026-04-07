@@ -55,10 +55,10 @@ export async function getSalesDashboard(
   startDate: string,
   endDate: string
 ): Promise<DashboardResponse<SalesChartData>> {
-  const response = await api.get('/dashboard/sales', {
+  const response = await api.get('/api/dashboard/sales', {
     params: { start_date: startDate, end_date: endDate }
   });
-  return response.data;
+  return response;
 }
 
 export async function getProjectsDashboard(
@@ -73,8 +73,8 @@ export async function getProjectsDashboard(
   if (projectId !== undefined) {
     params.project_id = projectId;
   }
-  const response = await api.get('/dashboard/projects', { params });
-  return response.data;
+  const response = await api.get('/api/dashboard/projects', { params });
+  return response;
 }
 
 export async function getPartnersDashboard(
@@ -89,16 +89,16 @@ export async function getPartnersDashboard(
   if (partnerId !== undefined) {
     params.partner_id = partnerId;
   }
-  const response = await api.get('/dashboard/partners', { params });
-  return response.data;
+  const response = await api.get('/api/dashboard/partners', { params });
+  return response;
 }
 
 export async function getInventoryDashboard(
   startDate: string,
   endDate: string
 ): Promise<DashboardResponse<InventoryChartData>> {
-  const response = await api.get('/dashboard/inventory', {
+  const response = await api.get('/api/dashboard/inventory', {
     params: { start_date: startDate, end_date: endDate }
   });
-  return response.data;
+  return response;
 }

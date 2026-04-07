@@ -61,6 +61,7 @@ export default function OverviewPage() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
+
       const [sales, projects, partners, inventory] = await Promise.all([
         getSalesDashboard(startDate, endDate),
         getProjectsDashboard(startDate, endDate),
@@ -68,31 +69,40 @@ export default function OverviewPage() {
         getInventoryDashboard(startDate, endDate)
       ]);
 
+
+
       if (sales.success && sales.data) {
+
         setSalesData(transformSalesChartData(sales.data.dates, sales.data.revenue, sales.data.profit, sales.data.vat));
-        const totalRev = sales.data.revenue.reduce((a, b) => a + b, 0);
+        const totalRev = sales.data.revenue.reduce((a: number, b: number) => a + b, 0);
+
         setStats(s => ({ ...s, todayRevenue: totalRev }));
       }
 
       if (projects.success && projects.data) {
+
         const trans = transformProjectChartData(projects.data.project_names, projects.data.profits, projects.data.profit_margins, projects.data.project_ids);
         setProjectsData(trans.map(t => ({ name: t.name, profit: t.profit })));
         setStats(s => ({ ...s, activeProjects: projects.data?.project_ids.length || 0 }));
       }
 
       if (partners.success && partners.data) {
+
         const trans = transformPartnerChartData(partners.data.partner_names, partners.data.dividend_amounts, partners.data.share_percentages, partners.data.partner_ids);
         setPartnersData(trans.map(t => ({ name: t.name, value: t.amount })));
         setStats(s => ({ ...s, totalPartners: partners.data?.partner_ids.length || 0 }));
       }
 
       if (inventory.success && inventory.data) {
+
         setInventoryData(transformInventoryChartData(inventory.data.dates, inventory.data.sales, inventory.data.restocks, inventory.data.reversals));
       }
 
       const lowStockRes = await fetch("/api/inventory/low-stock?threshold=10");
+
       if (lowStockRes.ok) {
         const data = await lowStockRes.json();
+
         setStats(s => ({ ...s, lowStockCount: data.total || 0 }));
       }
 
