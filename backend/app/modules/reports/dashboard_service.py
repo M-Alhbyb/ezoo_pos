@@ -10,13 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.schemas.dashboard import (
     SalesChartData,
-    ProjectChartData,
     PartnerChartData,
     InventoryChartData,
     DashboardFilter,
 )
 from app.models.sale import Sale
-from app.models.project import Project, ProjectStatus
+
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
 from app.models.inventory_log import InventoryLog
@@ -90,73 +89,6 @@ class DashboardService:
             logger.error(f"Sales dashboard rendering failed: {str(e)}", exc_info=True)
             raise ValueError(f"Failed to render sales dashboard: {str(e)}")
 
-    async def get_projects_dashboard_data(
-        self, start_date: date, end_date: date, project_id: Optional[int] = None
-    ) -> ProjectChartData:
-        """
-        Get aggregated project profit data for bar chart visualization.
-
-        Args:
-            start_date: Start of date range
-            end_date: End of date range
-            project_id: Optional specific project filter
-
-        Returns:
-            ProjectChartData with project names, profits, margins, and IDs
-        """
-        try:
-            stmt = (
-                select(
-                    Project.id,
-                    Project.name,
-                    Project.total_cost,
-                    Project.selling_price,
-                    Project.profit,
-                )
-                .where(Project.created_at >= start_date)
-                .where(Project.created_at <= end_date)
-                .where(Project.status == ProjectStatus.COMPLETED)
-            )
-
-            if project_id:
-                stmt = stmt.where(Project.id == project_id)
-
-            stmt = stmt.order_by(Project.profit.desc()).limit(
-                settings.dashboard_max_points
-            )
-
-            result = await self.db.execute(stmt)
-            rows = result.all()
-
-            project_names = [row.name for row in rows]
-            profits = [Decimal(str(row.profit)) for row in rows]
-
-            profit_margins = []
-            for row in rows:
-                if row.selling_price > 0:
-                    margin = (row.profit / row.selling_price) * 100
-                    profit_margins.append(Decimal(str(round(margin, 2))))
-                else:
-                    profit_margins.append(Decimal("0.00"))
-
-            project_ids = [row.id for row in rows]
-
-            logger.info(
-                f"Projects dashboard rendered successfully: {len(rows)} projects"
-            )
-            return ProjectChartData(
-                project_names=project_names,
-                profits=profits,
-                profit_margins=profit_margins,
-                project_ids=project_ids,
-            )
-        except ValueError:
-            raise
-        except Exception as e:
-            logger.error(
-                f"Projects dashboard rendering failed: {str(e)}", exc_info=True
-            )
-            raise ValueError(f"Failed to render projects dashboard: {str(e)}")
 
     async def get_partners_dashboard_data(
         self, start_date: date, end_date: date, partner_id: Optional[int] = None

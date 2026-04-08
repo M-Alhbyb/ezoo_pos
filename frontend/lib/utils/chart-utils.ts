@@ -12,12 +12,6 @@ export interface SalesChartDataPoint {
   vat: number;
 }
 
-export interface ProjectChartDataPoint {
-  name: string;
-  profit: number;
-  margin: number;
-  id: number;
-}
 
 export interface PartnerChartDataPoint {
   name: string;
@@ -59,19 +53,6 @@ export function transformSalesChartData(
   }));
 }
 
-export function transformProjectChartData(
-  project_names: string[],
-  profits: number[],
-  profit_margins: number[],
-  project_ids: number[]
-): ProjectChartDataPoint[] {
-  return project_names.map((name, index) => ({
-    name,
-    profit: profits[index],
-    margin: profit_margins[index],
-    id: project_ids[index]
-  }));
-}
 
 export function transformPartnerChartData(
   partner_names: string[],

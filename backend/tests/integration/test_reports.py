@@ -51,55 +51,25 @@ async def test_sales_report(async_client: AsyncClient):
 
 
 @pytest.mark.anyio
-async def test_projects_report(async_client: AsyncClient):
-    # 1. Create a project
-    await async_client.post("/api/projects", json={
-        "name": "Analytic Project",
-        "selling_price": "500.00",
-        "cost": "200.00",
-        "status": "in_progress"
-    })
-
-    # 2. Call report endpoint
-    res = await async_client.get("/api/reports/projects")
-    assert res.status_code == 200
-    data = res.json()
-
-    assert data["total_projects"] >= 1
-    assert float(data["total_selling_price"]) >= 500.0
-    assert any(p["name"] == "Analytic Project" for p in data["project_list"])
-
-
-@pytest.mark.anyio
 async def test_partners_report(async_client: AsyncClient):
-    # 1. Setup partner and distribution
-    # Create partner
+    # 1. Setup partner
     p_res = await async_client.post("/api/partners", json={
         "name": "Report Partner",
-        "profit_percentage": "20",
+        "share_percentage": "20",
         "investment_amount": "1000"
     })
-    partner_id = p_res.json()["id"]
+    assert p_res.status_code == 201
 
-    # Create completed project with profit
-    proj_res = await async_client.post("/api/projects", json={
-        "name": "Profit Project",
-        "selling_price": "1000.00",
-        "cost": "500.00"
-    })
-    project_id = proj_res.json()["id"]
-    await async_client.post(f"/api/projects/{project_id}/complete")
-
-    # Distribute profit
-    await async_client.post("/api/partners/distribute")
+    # Distribute profit (Generic profit distribution now)
+    await async_client.post("/api/partners/distribute", json={"profit": "1000.00"})
 
     # 2. Call report endpoint
     res = await async_client.get("/api/reports/partners")
     assert res.status_code == 200
     data = res.json()
 
-    # 20% of 500 profit = 100 payout
-    assert float(data["total_payout"]) >= 100.0
+    # 20% of 1000 profit = 200 payout
+    assert float(data["total_payout"]) >= 200.0
     assert any(p["partner_name"] == "Report Partner" for p in data["payouts_by_partner"])
 
 
@@ -147,8 +117,8 @@ async def test_inventory_report(async_client: AsyncClient):
 @pytest.mark.anyio
 async def test_report_date_filtering(async_client: AsyncClient):
     # Future date that should return zero results
-    future_start = (datetime.now() + timedelta(days=10)).isoformat()
-    future_end = (datetime.now() + timedelta(days=11)).isoformat()
+    future_start = (datetime.now() + timedelta(days=10)).date().isoformat()
+    future_end = (datetime.now() + timedelta(days=11)).date().isoformat()
 
     res = await async_client.get(f"/api/reports/sales?start_date={future_start}&end_date={future_end}")
     assert res.status_code == 200

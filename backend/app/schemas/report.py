@@ -27,30 +27,6 @@ class SalesReport(BaseModel):
     page_size: int
 
 
-class ProjectSummary(BaseModel):
-    """Summary of an individual project's financial status."""
-    id: UUID
-    name: str
-    status: str
-    selling_price: Decimal
-    total_cost: Decimal
-    total_expenses: Decimal
-    profit: Decimal
-
-
-class ProjectReport(BaseModel):
-    """Aggregate project statistics."""
-    total_projects: int
-    total_selling_price: Decimal
-    total_cost: Decimal
-    total_expenses: Decimal
-    total_profit: Decimal
-    project_list: List[ProjectSummary]
-    total: int
-    page: int
-    page_size: int
-
-
 class PartnerPayoutSummary(BaseModel):
     """Aggregate distributions per partner."""
     partner_id: UUID

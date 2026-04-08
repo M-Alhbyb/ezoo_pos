@@ -5,9 +5,6 @@ export interface SalesDashboardFilter {
   end_date: string;
 }
 
-export interface ProjectsDashboardFilter extends SalesDashboardFilter {
-  project_id?: number;
-}
 
 export interface PartnersDashboardFilter extends SalesDashboardFilter {
   partner_id?: number;
@@ -30,12 +27,6 @@ export interface SalesChartData {
   vat: number[];
 }
 
-export interface ProjectChartData {
-  project_names: string[];
-  profits: number[];
-  profit_margins: number[];
-  project_ids: number[];
-}
 
 export interface PartnerChartData {
   partner_names: string[];
@@ -61,21 +52,6 @@ export async function getSalesDashboard(
   return response;
 }
 
-export async function getProjectsDashboard(
-  startDate: string,
-  endDate: string,
-  projectId?: number
-): Promise<DashboardResponse<ProjectChartData>> {
-  const params: Record<string, string | number> = {
-    start_date: startDate,
-    end_date: endDate
-  };
-  if (projectId !== undefined) {
-    params.project_id = projectId;
-  }
-  const response = await api.get('/api/dashboard/projects', { params });
-  return response;
-}
 
 export async function getPartnersDashboard(
   startDate: string,

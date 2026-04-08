@@ -13,8 +13,6 @@ from app.modules.categories.routes import router as categories_router
 from app.modules.pos.routes import router as pos_router
 from app.modules.inventory.routes import router as inventory_router
 from app.modules.settings.routes import router as settings_router
-from app.modules.projects.routes import router as projects_router
-from app.modules.expenses.routes import router as expenses_router
 from app.modules.partners.routes import router as partners_router
 from app.modules.reports.routes import router as reports_router
 from app.api.routes.dashboard import router as dashboard_router
@@ -31,12 +29,10 @@ app = FastAPI(
         f"{settings.app_description}\n\n"
         "## Export Endpoints (003-export-visualization-dashboards)\n\n"
         "- `GET /api/reports/sales/export` - Export sales report (CSV, XLSX, PDF)\n"
-        "- `GET /api/reports/projects/export` - Export projects report (CSV, XLSX, PDF)\n"
         "- `GET /api/reports/partners/export` - Export partners report (CSV, XLSX, PDF)\n"
         "- `GET /api/reports/inventory/export` - Export inventory report (CSV, XLSX, PDF)\n\n"
         "## Dashboard Endpoints (003-export-visualization-dashboards)\n\n"
         "- `GET /api/dashboard/sales` - Sales line chart data with date range filter\n"
-        "- `GET /api/dashboard/projects` - Project profit bar chart data\n"
         "- `GET /api/dashboard/partners` - Partner dividends pie chart data\n"
         "- `GET /api/dashboard/inventory` - Inventory stacked bar chart data\n\n"
         "## Limits\n\n"
@@ -66,8 +62,6 @@ app.include_router(categories_router)
 app.include_router(pos_router)
 app.include_router(inventory_router)
 app.include_router(settings_router)
-app.include_router(projects_router)
-app.include_router(expenses_router)
 app.include_router(partners_router)
 app.include_router(reports_router)
 app.include_router(dashboard_router)

@@ -8,15 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.sale import Sale
-from app.models.project import Project, ProjectStatus
 from app.models.partner_distribution import PartnerDistribution
 from app.models.partner import Partner
 from app.models.inventory_log import InventoryLog
 from app.schemas.report import (
     SalesReport,
     SalesSummaryGroup,
-    ProjectReport,
-    ProjectSummary,
     PartnerReport,
     PartnerPayoutSummary,
     InventoryReport,
@@ -42,19 +39,6 @@ class ReportService:
         count = result.scalar()
         return count or 0
 
-    async def get_projects_count(self, start_date: date, end_date: date) -> int:
-        """
-        Count total projects in date range for export validation.
-        """
-        stmt = select(func.count(Project.id))
-        if start_date:
-            stmt = stmt.where(Project.start_date >= start_date)
-        if end_date:
-            stmt = stmt.where(Project.start_date <= end_date)
-
-        result = await self.db.execute(stmt)
-        count = result.scalar()
-        return count or 0
 
     async def get_partners_count(self, start_date: date, end_date: date) -> int:
         """
@@ -159,65 +143,6 @@ class ReportService:
             page_size=page_size
         )
 
-    async def get_projects_report(
-        self, start_date: Optional[datetime], end_date: Optional[datetime], page: int = 1, page_size: int = 50
-    ) -> ProjectReport:
-        """
-        Aggregate project statistics including individual project status.
-        """
-        # Totals for summary cards
-        total_stmt = select(
-            func.count(Project.id).label("count"),
-            func.sum(Project.selling_price).label("total_selling_price"),
-            func.sum(Project.total_cost).label("total_cost"),
-            func.sum(Project.total_expenses).label("total_expenses"),
-            func.sum(Project.profit).label("total_profit")
-        )
-        if start_date:
-            total_stmt = total_stmt.where(Project.created_at >= start_date)
-        if end_date:
-            total_stmt = total_stmt.where(Project.created_at <= end_date)
-
-        total_result = await self.db.execute(total_stmt)
-        total_row = total_result.one()
-
-        # Paginated list
-        stmt = select(Project).order_by(Project.created_at.desc())
-        if start_date:
-            stmt = stmt.where(Project.created_at >= start_date)
-        if end_date:
-            stmt = stmt.where(Project.created_at <= end_date)
-
-        total_count = total_row.count or 0
-        stmt = stmt.limit(page_size).offset((page - 1) * page_size)
-
-        result = await self.db.execute(stmt)
-        projects = list(result.scalars().all())
-
-        project_list = [
-            ProjectSummary(
-                id=p.id,
-                name=p.name,
-                status=p.status,
-                selling_price=p.selling_price,
-                total_cost=p.total_cost,
-                total_expenses=p.total_expenses,
-                profit=p.profit,
-            )
-            for p in projects
-        ]
-
-        return ProjectReport(
-            total_projects=total_count,
-            total_selling_price=total_row.total_selling_price or Decimal("0.00"),
-            total_cost=total_row.total_cost or Decimal("0.00"),
-            total_expenses=total_row.total_expenses or Decimal("0.00"),
-            total_profit=total_row.total_profit or Decimal("0.00"),
-            project_list=project_list,
-            total=total_count,
-            page=page,
-            page_size=page_size
-        )
 
     async def get_partners_report(
         self, start_date: Optional[datetime], end_date: Optional[datetime], page: int = 1, page_size: int = 50

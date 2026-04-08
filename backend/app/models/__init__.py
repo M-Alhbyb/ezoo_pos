@@ -12,9 +12,6 @@ from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.sale_fee import SaleFee
 from app.models.inventory_log import InventoryLog
-from app.models.project import Project
-from app.models.project_item import ProjectItem
-from app.models.expense import Expense
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
 
@@ -27,9 +24,6 @@ __all__ = [
     "SaleItem",
     "SaleFee",
     "InventoryLog",
-    "Project",
-    "ProjectItem",
-    "Expense",
     "Partner",
     "PartnerDistribution",
 ]

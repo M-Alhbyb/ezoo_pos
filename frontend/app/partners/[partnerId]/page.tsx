@@ -8,7 +8,6 @@ import { ArrowRight, User, TrendingUp, Calendar } from "lucide-react";
 
 interface Distribution {
   id: string;
-  project_name: string;
   amount: string;
   distributed_at: string;
 }
@@ -125,7 +124,7 @@ export default function PartnerHistoryPage({ params }: { params: Promise<{ partn
                 <table className="w-full text-start border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50 border-b border-slate-100">
-                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">{ARABIC.projects.projectName || 'المشروع'}</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">{ARABIC.common.status || 'التوزيع'}</th>
                       <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-end">{ARABIC.partners.amountReceived}</th>
                       <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-end">{ARABIC.common.createdAt}</th>
                     </tr>
@@ -133,7 +132,7 @@ export default function PartnerHistoryPage({ params }: { params: Promise<{ partn
                   <tbody className="divide-y divide-slate-100">
                     {partner.distributions.map((dist) => (
                       <tr key={dist.id} className="hover:bg-slate-50/50">
-                        <td className="px-6 py-4 font-medium text-slate-800">{dist.project_name}</td>
+                        <td className="px-6 py-4 font-medium text-slate-800">{ARABIC.status.completed}</td>
                         <td className="px-6 py-4 text-end font-semibold text-emerald-600">{formatCurrency(dist.amount)}</td>
                         <td className="px-6 py-4 text-end text-sm text-slate-500">{formatDateTime(dist.distributed_at)}</td>
                       </tr>

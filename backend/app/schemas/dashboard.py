@@ -13,10 +13,6 @@ class SalesDashboardFilter(DashboardFilter):
     pass
 
 
-class ProjectsDashboardFilter(DashboardFilter):
-    project_id: Optional[int] = None
-
-
 class PartnersDashboardFilter(DashboardFilter):
     partner_id: Optional[int] = None
 
@@ -57,21 +53,6 @@ class SalesChartData(BaseModel):
         json_encoders = {Decimal: float}
 
 
-class ProjectChartData(BaseModel):
-    project_names: list[str]
-    profits: list[Decimal]
-    profit_margins: list[Decimal]
-    project_ids: list[int]
-
-    @field_validator("project_names", "profits", "profit_margins", "project_ids")
-    @classmethod
-    def max_points(cls, v: list) -> list:
-        if len(v) > 1000:
-            raise ValueError("Maximum 1000 projects allowed")
-        return v
-
-    class Config:
-        json_encoders = {Decimal: float}
 
 
 class PartnerChartData(BaseModel):
@@ -115,7 +96,7 @@ class InventoryChartData(BaseModel):
 class DashboardResponse(BaseModel):
     success: bool
     data: Optional[
-        SalesChartData | ProjectChartData | PartnerChartData | InventoryChartData
+        SalesChartData | PartnerChartData | InventoryChartData
     ] = None
     error: Optional[str] = None
     total_points: Optional[int] = None

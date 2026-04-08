@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   TrendingUp, 
-  Briefcase, 
   Users, 
   Package, 
   AlertTriangle,
@@ -16,10 +15,9 @@ import {
 import { LineChart } from "@/components/charts/LineChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { PieChart } from "@/components/charts/PieChart";
-import { getSalesDashboard, getProjectsDashboard, getPartnersDashboard, getInventoryDashboard } from "@/lib/api/dashboard";
+import { getSalesDashboard, getPartnersDashboard, getInventoryDashboard } from "@/lib/api/dashboard";
 import { 
   transformSalesChartData, 
-  transformProjectChartData, 
   transformPartnerChartData, 
   transformInventoryChartData 
 } from "@/lib/utils/chart-utils";
@@ -32,13 +30,11 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   
   const [salesData, setSalesData] = useState<any[]>([]);
-  const [projectsData, setProjectsData] = useState<any[]>([]);
   const [partnersData, setPartnersData] = useState<any[]>([]);
   const [inventoryData, setInventoryData] = useState<any[]>([]);
   
   const [stats, setStats] = useState({
     todayRevenue: 0,
-    activeProjects: 0,
     totalPartners: 0,
     lowStockCount: 0
   });
@@ -62,9 +58,8 @@ export default function OverviewPage() {
     setLoading(true);
     try {
 
-      const [sales, projects, partners, inventory] = await Promise.all([
+      const [sales, partners, inventory] = await Promise.all([
         getSalesDashboard(startDate, endDate),
-        getProjectsDashboard(startDate, endDate),
         getPartnersDashboard(startDate, endDate),
         getInventoryDashboard(startDate, endDate)
       ]);
@@ -79,12 +74,6 @@ export default function OverviewPage() {
         setStats(s => ({ ...s, todayRevenue: totalRev }));
       }
 
-      if (projects.success && projects.data) {
-
-        const trans = transformProjectChartData(projects.data.project_names, projects.data.profits, projects.data.profit_margins, projects.data.project_ids);
-        setProjectsData(trans.map(t => ({ name: t.name, profit: t.profit })));
-        setStats(s => ({ ...s, activeProjects: projects.data?.project_ids.length || 0 }));
-      }
 
       if (partners.success && partners.data) {
 
@@ -151,17 +140,6 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="glass-card group hover:scale-[1.02] transition-all duration-300">
-          <div className="flex justify-between items-start">
-            <div className="p-3 bg-indigo-100/50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-              <Briefcase className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{ARABIC.dashboard.activeProjects}</p>
-            <h3 className="text-3xl font-bold text-slate-900 mt-1">{stats.activeProjects}</h3>
-          </div>
-        </div>
 
         <div className="glass-card group hover:scale-[1.02] transition-all duration-300">
           <div className="flex justify-between items-start">
@@ -211,25 +189,6 @@ export default function OverviewPage() {
           />
         </div>
 
-        <div className="glass p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden relative group">
-          <div className="absolute top-0 start-0 w-32 h-32 bg-indigo-50/50 rounded-full -ms-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800">{ARABIC.dashboard.projectPerformance}</h3>
-            </div>
-            <Link href="/dashboard/reports/projects" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider">{ARABIC.dashboard.viewProjects}</Link>
-          </div>
-          <BarChart 
-            data={projectsData} 
-            bars={[{ dataKey: "profit", color: "#6366F1", name: ARABIC.chart.profit }]} 
-            height={320} 
-            loading={loading}
-            isCurrency={true}
-          />
-        </div>
 
         <div className="glass p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden relative group">
           <div className="absolute top-0 start-0 w-32 h-32 bg-emerald-50/50 rounded-full -ms-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
@@ -300,15 +259,6 @@ export default function OverviewPage() {
               <p className="mt-4 text-slate-400 text-sm leading-relaxed">{ARABIC.dashboard.inventoryDesc}</p>
             </Link>
 
-            <Link href="/projects" className="group p-6 bg-white/5 hover:bg-white/10 rounded-[2rem] border border-white/10 transition-all duration-300">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                  <Briefcase className="w-6 h-6" />
-                </div>
-                <div className="font-bold text-lg">{ARABIC.nav.projects}</div>
-              </div>
-              <p className="mt-4 text-slate-400 text-sm leading-relaxed">{ARABIC.dashboard.projectsDesc}</p>
-            </Link>
 
             <Link href="/partners" className="group p-6 bg-white/5 hover:bg-white/10 rounded-[2rem] border border-white/10 transition-all duration-300">
               <div className="flex items-center gap-4">

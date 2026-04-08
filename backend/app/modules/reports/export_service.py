@@ -428,40 +428,6 @@ class ExportService:
             logger.error(f"Sales PDF report generation failed: {str(e)}", exc_info=True)
             raise
 
-    async def generate_projects_pdf_report(
-        self, projects_data: list, start_date: date, end_date: date, generated_by: str
-    ) -> bytes:
-        """
-        Generate PDF report specifically for projects data.
-        """
-        try:
-            formatted_data = []
-            for project in projects_data:
-                formatted_data.append(
-                    {
-                        "Project": project.get("name", ""),
-                        "Status": project.get("status", ""),
-                        "Start Date": project.get("start_date", ""),
-                        "Total Cost": project.get("total_cost", Decimal("0")),
-                        "Selling Price": project.get("selling_price", Decimal("0")),
-                        "Profit": project.get("profit", Decimal("0")),
-                    }
-                )
-
-            logger.info(f"Generating projects PDF report: {len(projects_data)} records")
-            return await self.generate_pdf(
-                data=formatted_data,
-                title="Projects Report",
-                start_date=start_date,
-                end_date=end_date,
-                generated_by=generated_by,
-            )
-        except Exception as e:
-            logger.error(
-                f"Projects PDF report generation failed: {str(e)}", exc_info=True
-            )
-            raise
-
     async def generate_partners_pdf_report(
         self, partners_data: list, start_date: date, end_date: date, generated_by: str
     ) -> bytes:

@@ -12,7 +12,6 @@ from app.modules.reports.service import ReportService
 from app.modules.reports.export_service import ExportService
 from app.schemas.report import (
     SalesReport,
-    ProjectReport,
     PartnerReport,
     InventoryReport,
 )
@@ -46,18 +45,6 @@ async def get_sales_report(
     return await service.get_sales_report(start_date, end_date, page, page_size)
 
 
-@router.get("/projects", response_model=ProjectReport)
-async def get_projects_report(
-    service: ReportService = Depends(get_report_service),
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
-):
-    """
-    Get aggregate project statistics including individual project status.
-    """
-    return await service.get_projects_report(start_date, end_date, page, page_size)
 
 
 @router.get("/partners", response_model=PartnerReport)
@@ -244,101 +231,6 @@ async def export_sales_report(
         )
 
 
-@router.get("/projects/export")
-async def export_projects_report(
-    format: ExportFormat = Query(..., description="Export format: csv, xlsx, or pdf"),
-    start_date: date = Query(..., description="Start date for the report"),
-    end_date: date = Query(..., description="End date for the report"),
-    service: ReportService = Depends(get_report_service),
-    export_service: ExportService = Depends(get_export_service),
-):
-    """
-    Export projects report in CSV, XLSX, or PDF format.
-    """
-    try:
-        row_count = await service.get_projects_count(start_date, end_date)
-
-        is_valid, error_msg = await export_service.validate_export_limits(
-            row_count, format
-        )
-        if not is_valid:
-            logger.warning(
-                f"Projects export rejected: {error_msg} (row_count={row_count}, format={format.value})"
-            )
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "row_limit_exceeded",
-                    "message": error_msg,
-                    "format": format.value,
-                    "requested_rows": row_count,
-                    "suggestion": "Try a narrower date range.",
-                },
-            )
-
-        projects_data = []
-        projects = await service.get_projects_report(start_date, end_date)
-        for project in projects.projects:
-            projects_data.append(
-                {
-                    "name": project.name,
-                    "status": project.status.value
-                    if hasattr(project.status, "value")
-                    else str(project.status),
-                    "start_date": str(project.start_date),
-                    "total_cost": project.total_cost,
-                    "selling_price": project.selling_price,
-                    "profit": project.profit,
-                }
-            )
-
-        filename_prefix = f"projects_report_{start_date}_{end_date}"
-
-        if format == ExportFormat.CSV:
-            output = await export_service.generate_csv(
-                projects_data, filename_prefix, start_date, end_date
-            )
-            media_type = "text/csv"
-        elif format == ExportFormat.XLSX:
-            output = await export_service.generate_xlsx(
-                projects_data, filename_prefix, start_date, end_date
-            )
-            media_type = (
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-        else:
-            output = await export_service.generate_projects_pdf_report(
-                projects_data, start_date, end_date, "system"
-            )
-            return StreamingResponse(
-                BytesIO(output),
-                media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f'attachment; filename="{filename_prefix}.pdf"'
-                },
-            )
-
-        logger.info(f"Projects export completed: {format.value}, {row_count} rows")
-        return StreamingResponse(
-            output,
-            media_type=media_type,
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename_prefix}.{format.value}"'
-            },
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Projects export failed: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "generation_failed",
-                "message": "Failed to generate export. Please try again later.",
-                "suggestion": "If the problem persists, try with a smaller date range.",
-            },
-        )
 
 
 @router.get("/partners/export")

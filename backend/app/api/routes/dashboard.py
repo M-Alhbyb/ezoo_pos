@@ -11,12 +11,10 @@ from app.modules.reports.dashboard_service import DashboardService
 from app.modules.reports.export_service import ExportService
 from app.schemas.dashboard import (
     SalesDashboardFilter,
-    ProjectsDashboardFilter,
     PartnersDashboardFilter,
     InventoryDashboardFilter,
     DashboardResponse,
     SalesChartData,
-    ProjectChartData,
     PartnerChartData,
     InventoryChartData,
 )
@@ -126,52 +124,6 @@ async def get_sales_dashboard(
         )
 
 
-@router.get("/projects", response_model=DashboardResponse)
-async def get_projects_dashboard(
-    service: DashboardService = Depends(get_dashboard_service),
-    start_date: date = Query(..., description="Start date of the range"),
-    end_date: date = Query(..., description="End date of the range"),
-    project_id: Optional[int] = Query(
-        None, description="Filter by specific project ID"
-    ),
-):
-    """
-    Get aggregated project profit data for bar chart visualization.
-    Displays project names, profits, and profit margins.
-    """
-    try:
-        filter_applied = ProjectsDashboardFilter(
-            start_date=start_date, end_date=end_date, project_id=project_id
-        )
-        data = await service.get_projects_dashboard_data(
-            start_date, end_date, project_id
-        )
-
-        return DashboardResponse(
-            success=True,
-            data=data,
-            total_points=len(data.project_names),
-            filter_applied=filter_applied,
-        )
-    except ValueError as e:
-        error_msg = str(e)
-        logger.warning(f"Projects dashboard error: {error_msg}")
-        return DashboardResponse(
-            success=False,
-            data=None,
-            error=error_msg,
-            total_points=None,
-            filter_applied=None,
-        )
-    except Exception as e:
-        logger.error(f"Projects dashboard failed: {str(e)}", exc_info=True)
-        return DashboardResponse(
-            success=False,
-            data=None,
-            error="Failed to load dashboard data. Please try again later.",
-            total_points=None,
-            filter_applied=None,
-        )
 
 
 @router.get("/partners", response_model=DashboardResponse)

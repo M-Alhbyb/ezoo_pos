@@ -5,9 +5,7 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   Package, 
-  Briefcase, 
   Users, 
-  PieChart, 
   Settings,
   TrendingUp,
   History,
@@ -92,12 +90,6 @@ export default function RootLayout({
                 </div>
                 المخزون
               </Link>
-              <Link href="/projects" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
-                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
-                   <Briefcase className="w-5 h-5" />
-                </div>
-                المشاريع
-              </Link>
               <Link href="/partners" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
                 <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
                    <Users className="w-5 h-5" />
@@ -111,10 +103,6 @@ export default function RootLayout({
               <Link href="/dashboard/reports/sales" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 hover:-translate-x-1 transition-all duration-200">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-400 ms-3"></div>
                 تقارير المبيعات
-              </Link>
-              <Link href="/dashboard/reports/projects" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:-translate-x-1 transition-all duration-200">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 ms-3"></div>
-                تقارير المشاريع
               </Link>
               <Link href="/dashboard/reports/partners" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-emerald-600 hover:-translate-x-1 transition-all duration-200">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 ms-3"></div>

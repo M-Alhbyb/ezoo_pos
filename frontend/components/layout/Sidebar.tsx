@@ -8,12 +8,8 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   Package, 
-  Briefcase, 
   Users, 
-  PieChart,
-  History,
-  Settings,
-  TrendingUp
+  History
 } from 'lucide-react';
 import { ARABIC } from '@/lib/constants/arabic';
 
@@ -27,13 +23,11 @@ const navItems = [
   { href: '/pos', icon: ShoppingCart, label: ARABIC.nav.pos },
   { href: '/products', icon: Package, label: ARABIC.nav.products },
   { href: '/inventory', icon: History, label: ARABIC.nav.inventory },
-  { href: '/projects', icon: Briefcase, label: ARABIC.nav.projects },
   { href: '/partners', icon: Users, label: ARABIC.nav.partners },
 ];
 
 const reportItems = [
   { href: '/dashboard/reports/sales', label: ARABIC.nav.salesReport, color: 'bg-blue-400' },
-  { href: '/dashboard/reports/projects', label: ARABIC.nav.projectsReport, color: 'bg-indigo-400' },
   { href: '/dashboard/reports/partners', label: 'توزيعات الأرباح', color: 'bg-emerald-400' },
   { href: '/dashboard/reports/inventory', label: 'حركة المخزون', color: 'bg-rose-400' },
 ];
