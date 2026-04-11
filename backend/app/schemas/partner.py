@@ -48,6 +48,19 @@ class PartnerDistributionResponse(BaseModel):
         from_attributes = True
 
 
+class PartnerHistoryDistribution(BaseModel):
+    id: UUID
+    amount: Decimal
+    distributed_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PartnerDetailResponse(PartnerResponse):
+    distributions: List[PartnerHistoryDistribution] = []
+
+
 class DistributionRequest(BaseModel):
     profit: Decimal
     memo: Optional[str] = None

@@ -10,6 +10,8 @@ from app.modules.partners.partner_profit_service import PartnerProfitService
 from app.schemas.partner import (
     PartnerCreate,
     PartnerResponse,
+    PartnerDetailResponse,
+    PartnerHistoryDistribution,
     DistributionResponse,
     DistributionRequest,
     PartnerWalletBalanceResponse,
@@ -53,6 +55,39 @@ async def get_partners(
     service: PartnerService = Depends(get_partner_service),
 ):
     return await service.get_partners()
+
+
+@router.get("/{partner_id}", response_model=PartnerDetailResponse)
+async def get_partner(
+    partner_id: UUID,
+    service: PartnerService = Depends(get_partner_service),
+):
+    """
+    Get partner details and distribution history.
+    """
+    partner = await service.get_partner(partner_id)
+    if not partner:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Partner {partner_id} not found",
+        )
+
+    # Fetch distribution history
+    distributions = await service.get_partner_distributions(partner_id)
+
+    # Convert to schema
+    # In Pydantic v2, we use model_validate, but the project uses from_orm or Config compatibility
+    response = PartnerDetailResponse.from_orm(partner)
+    response.distributions = [
+        PartnerHistoryDistribution(
+            id=d.id,
+            amount=d.payout_amount,
+            distributed_at=d.created_at
+        )
+        for d in distributions
+    ]
+
+    return response
 
 
 @router.post("/distribute", response_model=DistributionResponse)
