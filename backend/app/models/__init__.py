@@ -14,6 +14,8 @@ from app.models.sale_fee import SaleFee
 from app.models.inventory_log import InventoryLog
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
+from app.models.product_assignment import ProductAssignment
+from app.models.partner_wallet_transaction import PartnerWalletTransaction
 
 __all__ = [
     "Product",
@@ -26,4 +28,6 @@ __all__ = [
     "InventoryLog",
     "Partner",
     "PartnerDistribution",
+    "ProductAssignment",
+    "PartnerWalletTransaction",
 ]

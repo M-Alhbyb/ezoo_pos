@@ -1,4 +1,3 @@
-
 """
 Product API Routes - REST endpoints for product catalog management.
 
@@ -9,9 +8,12 @@ from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.modules.products.service import ProductService
+from app.models.product_assignment import ProductAssignment
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
@@ -109,9 +111,12 @@ async def list_products(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     service: ProductService = Depends(get_product_service),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     List products with optional filters and pagination.
+
+    Includes active product assignment information for each product.
 
     Args:
         category_id: Filter by category UUID
@@ -120,9 +125,10 @@ async def list_products(
         page: Page number (1-indexed)
         page_size: Items per page (max 100)
         service: Injected ProductService
+        db: Database session
 
     Returns:
-        Paginated list of products
+        Paginated list of products with assignment information
     """
     products, total = await service.list_products(
         category_id=category_id,
@@ -132,8 +138,14 @@ async def list_products(
         page_size=page_size,
     )
 
+    # Fetch assignments for each product
+    product_responses = []
+    for product in products:
+        assignment = await _get_product_assignment(db, product.id)
+        product_responses.append(_prepare_product_response(product, assignment))
+
     return ProductListResponse(
-        items=[_prepare_product_response(p) for p in products],
+        items=product_responses,
         total=total,
         page=page,
         page_size=page_size,
@@ -185,21 +197,25 @@ async def search_by_sku(
     "/{product_id}",
     response_model=ProductResponse,
     summary="Get product by ID",
-    description="Retrieves a single product by ID",
+    description="Retrieves a single product by ID with assignment information",
 )
 async def get_product(
     product_id: UUID,
     service: ProductService = Depends(get_product_service),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get a single product by ID.
 
+    Includes active product assignment information if the product is assigned to a partner.
+
     Args:
         product_id: Product UUID
         service: Injected ProductService
+        db: Database session
 
     Returns:
-        Product details
+        Product details with assignment information
 
     Raises:
         HTTPException 404: Product not found
@@ -217,7 +233,10 @@ async def get_product(
             },
         )
 
-    return _prepare_product_response(product)
+    # Fetch active assignment for this product
+    assignment = await _get_product_assignment(db, product_id)
+
+    return _prepare_product_response(product, assignment)
 
 
 @router.patch(
@@ -331,13 +350,21 @@ async def delete_product(
     return {"message": "Product deactivated successfully"}
 
 
-def _prepare_product_response(product) -> dict:
+def _prepare_product_response(product, assignment=None) -> dict:
     """
     Convert Product instance to response dictionary.
 
     Ensures category_name is included and all values are properly formatted.
+    Optionally includes assignment information if the product has an active assignment.
+
+    Args:
+        product: Product model instance
+        assignment: Optional ProductAssignment instance
+
+    Returns:
+        Dictionary with product data and optional assignment
     """
-    return {
+    response = {
         "id": str(product.id),
         "name": product.name,
         "sku": product.sku,
@@ -350,3 +377,47 @@ def _prepare_product_response(product) -> dict:
         "created_at": product.created_at,
         "updated_at": product.updated_at,
     }
+
+    # Include assignment information if provided
+    if assignment:
+        from app.schemas.product_assignment import ProductAssignmentResponse
+
+        response["assignment"] = {
+            "id": str(assignment.id),
+            "partner_id": str(assignment.partner_id),
+            "partner_name": "Partner",  # TODO: Fetch from relationship
+            "product_id": str(assignment.product_id),
+            "product_name": product.name,
+            "assigned_quantity": assignment.assigned_quantity,
+            "remaining_quantity": assignment.remaining_quantity,
+            "share_percentage": float(assignment.share_percentage),
+            "status": assignment.status,
+            "created_at": assignment.created_at,
+            "updated_at": assignment.updated_at,
+            "fulfilled_at": assignment.fulfilled_at,
+        }
+    else:
+        response["assignment"] = None
+
+    return response
+
+
+async def _get_product_assignment(
+    db: AsyncSession, product_id: UUID
+) -> Optional[ProductAssignment]:
+    """
+    Fetch the active assignment for a product if it exists.
+
+    Args:
+        db: Database session
+        product_id: Product UUID
+
+    Returns:
+        ProductAssignment or None
+    """
+    query = select(ProductAssignment).where(
+        ProductAssignment.product_id == product_id,
+        ProductAssignment.status == "active",
+    )
+    result = await db.execute(query)
+    return result.scalar_one_or_none()

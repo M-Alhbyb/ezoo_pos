@@ -38,6 +38,7 @@ from app.core.calculations import (
     round_currency,
 )
 from app.modules.inventory.service import InventoryService
+from app.modules.partners.partner_profit_service import PartnerProfitService
 
 
 class SaleService:
@@ -46,6 +47,7 @@ class SaleService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.inventory_service = InventoryService(db)
+        self.partner_profit_service = PartnerProfitService(db)
 
     async def calculate_breakdown(
         self, request: SaleCalculationRequest
@@ -196,7 +198,7 @@ class SaleService:
         # ROW-LEVEL LOCKING against deadlocks
         # Sort product IDs first
         product_ids = sorted(list(set(item.product_id for item in sale_data.items)))
-        
+
         products = {}
         for pid in product_ids:
             # Lock row with SELECT FOR UPDATE
@@ -206,7 +208,7 @@ class SaleService:
             if not prod.is_active:
                 raise ValueError(f"Product {prod.name} is inactive")
             products[pid] = prod
-        
+
         # 4. STOCK VALIDATION
         for item in sale_data.items:
             prod = products[item.product_id]
@@ -215,7 +217,7 @@ class SaleService:
                     f"Insufficient stock for Product {prod.name}: "
                     f"requested {item.quantity}, available {prod.stock_quantity}"
                 )
-        
+
         # Calculate breakdown safely since locks are acquired
         breakdown = await self.calculate_breakdown(
             SaleCalculationRequest(items=sale_data.items, fees=sale_data.fees)
@@ -226,7 +228,7 @@ class SaleService:
         for item_data in sale_data.items:
             prod = products[item_data.product_id]
             total_cost += Decimal(item_data.quantity) * prod.base_price
-        
+
         profit = breakdown.total - total_cost
 
         # Create sale
@@ -281,6 +283,12 @@ class SaleService:
                 reason="sale",
                 reference_id=sale.id,
             )
+
+        # 6. PROCESS PARTNER PROFITS (if any products are assigned)
+        # Constitution VI: Atomic transaction - if profit calculation fails, entire sale rolls back
+        await self.partner_profit_service.process_sale_partner_profits(
+            sale.id, sale.items
+        )
 
         await self.db.commit()
 
@@ -506,7 +514,7 @@ class SaleService:
                 line_total=-item.line_total,
             )
             self.db.add(reversal_item)
-            
+
         # Create reversed sale fees
         for fee in original_sale.fees:
             reversal_fee = SaleFee(
@@ -529,7 +537,7 @@ class SaleService:
             )
 
         await self.db.commit()
-        
+
         # Fetch eagerly avoiding context errors
         reversal_detail = await self.get_sale_detail(reversal.id)
         if not reversal_detail:

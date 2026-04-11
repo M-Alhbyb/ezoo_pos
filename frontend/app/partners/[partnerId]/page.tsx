@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
@@ -21,20 +21,20 @@ interface Partner {
   distributions: Distribution[];
 }
 
-export default function PartnerHistoryPage({ params }: { params: Promise<{ partnerId: string }> }) {
-  const resolvedParams = use(params);
+export default function PartnerHistoryPage({ params }: { params: { partnerId: string } }) {
+  const { partnerId } = params;
   const [partner, setPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchPartner();
-  }, [resolvedParams.partnerId]);
+  }, [partnerId]);
 
   const fetchPartner = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/partners/${resolvedParams.partnerId}`);
+      const response = await fetch(`/api/partners/${partnerId}`);
       
       if (!response.ok) {
         if (response.status === 404) {

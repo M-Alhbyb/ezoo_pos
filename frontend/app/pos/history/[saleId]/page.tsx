@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
@@ -40,20 +40,20 @@ interface SaleDetail {
   created_at: string;
 }
 
-export default function SaleDetailPage({ params }: { params: Promise<{ saleId: string }> }) {
-  const resolvedParams = use(params);
+export default function SaleDetailPage({ params }: { params: { saleId: string } }) {
+  const { saleId } = params;
   const [sale, setSale] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchSaleDetail();
-  }, [resolvedParams.saleId]);
+  }, [saleId]);
 
   const fetchSaleDetail = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/sales/${resolvedParams.saleId}`);
+      const response = await fetch(`/api/sales/${saleId}`);
       
       if (!response.ok) {
         if (response.status === 404) {
