@@ -13,7 +13,6 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.modules.products.service import ProductService
-from app.models.product_assignment import ProductAssignment
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
@@ -60,7 +59,7 @@ async def create_product(
     """
     try:
         product = await service.create_product(product_data)
-        return _prepare_product_response(product)
+        return product
     except ValueError as e:
         error_msg = str(e)
         if "already exists" in error_msg:
@@ -111,7 +110,6 @@ async def list_products(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     service: ProductService = Depends(get_product_service),
-    db: AsyncSession = Depends(get_db),
 ):
     """
     List products with optional filters and pagination.
@@ -125,27 +123,16 @@ async def list_products(
         page: Page number (1-indexed)
         page_size: Items per page (max 100)
         service: Injected ProductService
-        db: Database session
 
     Returns:
         Paginated list of products with assignment information
     """
     products, total = await service.list_products(
-        category_id=category_id,
-        search=search,
-        active_only=active_only,
-        page=page,
-        page_size=page_size,
+        category_id=category_id, search=search, active_only=active_only, page=page, page_size=page_size
     )
 
-    # Fetch assignments for each product
-    product_responses = []
-    for product in products:
-        assignment = await _get_product_assignment(db, product.id)
-        product_responses.append(_prepare_product_response(product, assignment))
-
     return ProductListResponse(
-        items=product_responses,
+        items=products,
         total=total,
         page=page,
         page_size=page_size,
@@ -190,7 +177,7 @@ async def search_by_sku(
             },
         )
 
-    return _prepare_product_response(product)
+    return product
 
 
 @router.get(
@@ -202,7 +189,6 @@ async def search_by_sku(
 async def get_product(
     product_id: UUID,
     service: ProductService = Depends(get_product_service),
-    db: AsyncSession = Depends(get_db),
 ):
     """
     Get a single product by ID.
@@ -212,7 +198,6 @@ async def get_product(
     Args:
         product_id: Product UUID
         service: Injected ProductService
-        db: Database session
 
     Returns:
         Product details with assignment information
@@ -233,10 +218,7 @@ async def get_product(
             },
         )
 
-    # Fetch active assignment for this product
-    assignment = await _get_product_assignment(db, product_id)
-
-    return _prepare_product_response(product, assignment)
+    return product
 
 
 @router.patch(
@@ -282,7 +264,7 @@ async def update_product(
                 },
             )
 
-        return _prepare_product_response(product)
+        return product
     except ValueError as e:
         error_msg = str(e)
         if "already exists" in error_msg:
@@ -348,76 +330,3 @@ async def delete_product(
         )
 
     return {"message": "Product deactivated successfully"}
-
-
-def _prepare_product_response(product, assignment=None) -> dict:
-    """
-    Convert Product instance to response dictionary.
-
-    Ensures category_name is included and all values are properly formatted.
-    Optionally includes assignment information if the product has an active assignment.
-
-    Args:
-        product: Product model instance
-        assignment: Optional ProductAssignment instance
-
-    Returns:
-        Dictionary with product data and optional assignment
-    """
-    response = {
-        "id": str(product.id),
-        "name": product.name,
-        "sku": product.sku,
-        "category_id": str(product.category_id),
-        "category_name": product.category.name if product.category else None,
-        "base_price": str(product.base_price),
-        "selling_price": str(product.selling_price),
-        "stock_quantity": product.stock_quantity,
-        "is_active": product.is_active,
-        "created_at": product.created_at,
-        "updated_at": product.updated_at,
-    }
-
-    # Include assignment information if provided
-    if assignment:
-        from app.schemas.product_assignment import ProductAssignmentResponse
-
-        response["assignment"] = {
-            "id": str(assignment.id),
-            "partner_id": str(assignment.partner_id),
-            "partner_name": "Partner",  # TODO: Fetch from relationship
-            "product_id": str(assignment.product_id),
-            "product_name": product.name,
-            "assigned_quantity": assignment.assigned_quantity,
-            "remaining_quantity": assignment.remaining_quantity,
-            "share_percentage": float(assignment.share_percentage),
-            "status": assignment.status,
-            "created_at": assignment.created_at,
-            "updated_at": assignment.updated_at,
-            "fulfilled_at": assignment.fulfilled_at,
-        }
-    else:
-        response["assignment"] = None
-
-    return response
-
-
-async def _get_product_assignment(
-    db: AsyncSession, product_id: UUID
-) -> Optional[ProductAssignment]:
-    """
-    Fetch the active assignment for a product if it exists.
-
-    Args:
-        db: Database session
-        product_id: Product UUID
-
-    Returns:
-        ProductAssignment or None
-    """
-    query = select(ProductAssignment).where(
-        ProductAssignment.product_id == product_id,
-        ProductAssignment.status == "active",
-    )
-    result = await db.execute(query)
-    return result.scalar_one_or_none()

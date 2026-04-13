@@ -66,6 +66,7 @@ class ProductService:
             base_price=product_data.base_price,
             selling_price=product_data.selling_price,
             stock_quantity=product_data.stock_quantity,
+            partner_id=product_data.partner_id,
             is_active=True,
         )
 
@@ -100,7 +101,10 @@ class ProductService:
 
         query = (
             select(Product)
-            .options(selectinload(Product.category))
+            .options(
+                selectinload(Product.category),
+                selectinload(Product.partner)
+            )
             .order_by(Product.created_at.desc())
         )
 
@@ -143,7 +147,10 @@ class ProductService:
         """
         query = (
             select(Product)
-            .options(selectinload(Product.category))
+            .options(
+                selectinload(Product.category),
+                selectinload(Product.partner)
+            )
             .where(Product.id == product_id)
         )
 
@@ -276,6 +283,8 @@ class ProductService:
             "base_price": str(product.base_price),
             "selling_price": str(product.selling_price),
             "stock_quantity": product.stock_quantity,
+            "partner_id": str(product.partner_id) if product.partner_id else None,
+            "partner_name": product.partner.name if product.partner else None,
             "is_active": product.is_active,
             "created_at": product.created_at.isoformat(),
             "updated_at": product.updated_at.isoformat(),

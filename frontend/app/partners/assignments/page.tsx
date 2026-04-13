@@ -1,13 +1,9 @@
-/**
- * Assignment Management Page
- * 
- * Page for managing product assignments to partners.
- * Task: T047 - Phase 7
- */
-
 "use client";
 
 import { useState, useEffect } from "react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { Plus, ClipboardList, TrendingUp, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import ProductAssignmentForm from "@/components/partners/ProductAssignmentForm";
 import AssignmentList from "@/components/partners/AssignmentList";
 
@@ -45,6 +41,8 @@ export default function AssignmentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
+  const t = ARABIC.partners.assignments;
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -53,24 +51,25 @@ export default function AssignmentsPage() {
     try {
       setLoading(true);
       const [assignmentsRes, partnersRes, productsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/v1/partners/assignments'),
-        fetch('http://localhost:8000/api/v1/partners'),
-        fetch('http://localhost:8000/api/v1/products'),
+        fetch('/api/partners/assignments'),
+        fetch('/api/partners'),
+        fetch('/api/products'),
       ]);
 
       if (!assignmentsRes.ok || !partnersRes.ok || !productsRes.ok) {
-        throw new Error('فشل في جلب البيانات');
+        throw new Error(ARABIC.errors.fetchFailed);
       }
 
       const assignmentsData = await assignmentsRes.json();
       const partnersData = await partnersRes.json();
       const productsData = await productsRes.json();
 
-      setAssignments(assignmentsData || []);
+      // Backend returns ProductAssignmentListResponse with 'assignments' field
+      setAssignments(assignmentsData.assignments || []);
       setPartners(partnersData || []);
       setProducts(productsData || []);
     } catch (err: any) {
-      setError(err.message || 'حدث خطأ');
+      setError(err.message || ARABIC.common.error);
     } finally {
       setLoading(false);
     }
@@ -78,8 +77,8 @@ export default function AssignmentsPage() {
 
   const handleSubmit = async (data: Partial<Assignment>) => {
     const url = editingAssignment
-      ? `http://localhost:8000/api/v1/partners/assignments/${editingAssignment.id}`
-      : 'http://localhost:8000/api/v1/partners/assignments';
+      ? `/api/partners/assignments/${editingAssignment.id}`
+      : '/api/partners/assignments';
     
     const method = editingAssignment ? 'PATCH' : 'POST';
 
@@ -91,7 +90,7 @@ export default function AssignmentsPage() {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.detail || 'فشل في حفظ المهمة');
+      throw new Error(errorData.detail || ARABIC.errors.saveFailed);
     }
 
     setShowForm(false);
@@ -100,60 +99,126 @@ export default function AssignmentsPage() {
   };
 
   const handleDelete = async (assignmentId: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+    if (!confirm(t.confirmDelete)) return;
 
-    const response = await fetch(
-      `http://localhost:8000/api/v1/partners/assignments/${assignmentId}`,
-      { method: 'DELETE' }
-    );
+    try {
+      const response = await fetch(
+        `/api/partners/assignments/${assignmentId}`,
+        { method: 'DELETE' }
+      );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      alert(errorData.detail || 'فشل في حذف المهمة');
-      return;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || ARABIC.errors.deleteFailed);
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message);
     }
-
-    await fetchData();
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-slate-500">جارٍ التحميل...</div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+        <p className="text-slate-500 font-medium">{ARABIC.common.loading}</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">إدارة تخصيصات المنتجات</h1>
-          <p className="text-slate-500 mt-1">تخصيص منتجات للشركاء وتتبع مكاسبهم</p>
+          <Link href="/partners" className="text-sm text-primary hover:text-primary/80 mb-2 inline-flex items-center gap-1">
+            <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+            {ARABIC.partners.title}
+          </Link>
+          <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{t.title}</h1>
+          <p className="text-slate-500 mt-1">{t.subtitle}</p>
         </div>
         <button
           onClick={() => {
             setEditingAssignment(null);
             setShowForm(true);
           }}
-          className="bg-primary text-white px-6 py-2 rounded-xl hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200 font-medium"
         >
-          + مهمة جديدة
+          <Plus className="w-5 h-5" />
+          {t.newAssignment}
         </button>
       </div>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-600 rounded-xl p-4 mb-6">
-          {error}
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-4 flex items-center gap-3 animate-slide-up">
+          <AlertCircle className="w-5 h-5 text-rose-500" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass p-5 rounded-2xl border border-slate-100/50 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+            <ClipboardList className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.statsTotal}</p>
+            <p className="text-2xl font-bold text-slate-800">{assignments.length}</p>
+          </div>
+        </div>
+        
+        <div className="glass p-5 rounded-2xl border border-slate-100/50 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.statsActive}</p>
+            <p className="text-2xl font-bold text-emerald-600">
+              {assignments.filter(a => a.status === 'active').length}
+            </p>
+          </div>
+        </div>
+
+        <div className="glass p-5 rounded-2xl border border-slate-100/50 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-slate-100 rounded-xl text-slate-600">
+            <ClipboardList className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.statsFulfilled}</p>
+            <p className="text-2xl font-bold text-slate-800">
+              {assignments.filter(a => a.status === 'fulfilled').length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main List Container */}
+      <div className="glass rounded-2xl overflow-hidden shadow-sm border border-slate-100/50">
+        <AssignmentList
+          assignments={assignments}
+          onEdit={(assignment) => {
+            if (assignment.status === 'active') {
+              setEditingAssignment(assignment);
+              setShowForm(true);
+            }
+          }}
+          onDelete={handleDelete}
+        />
+      </div>
+
+      {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">
-              {editingAssignment ? 'تعديل المهمة' : 'مهمة جديدة'}
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+            
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 relative">
+              {editingAssignment ? t.editAssignment : t.newAssignment}
             </h2>
+            
             <ProductAssignmentForm
               assignment={editingAssignment}
               partners={partners}
@@ -167,40 +232,6 @@ export default function AssignmentsPage() {
           </div>
         </div>
       )}
-
-      <AssignmentList
-        assignments={assignments}
-        onEdit={(assignment) => {
-          if (assignment.status === 'active') {
-            setEditingAssignment(assignment);
-            setShowForm(true);
-          }
-        }}
-        onDelete={handleDelete}
-        onViewDetails={(assignment) => {
-          alert(`تفاصيل المهمة:\nالمنتج: ${assignment.product_name}\nالشريك: ${assignment.partner_name}\nالكمية: ${assignment.remaining_quantity} / ${assignment.assigned_quantity}\nالنسبة: ${assignment.share_percentage}%`);
-        }}
-      />
-
-      {/* Stats Summary */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-sm text-slate-500">إجمالي المهام</div>
-          <div className="text-2xl font-bold text-slate-800">{assignments.length}</div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-sm text-slate-500">المهام النشطة</div>
-          <div className="text-2xl font-bold text-green-600">
-            {assignments.filter(a => a.status === 'active').length}
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-sm text-slate-500">المهام المكتملة</div>
-          <div className="text-2xl font-bold text-slate-600">
-            {assignments.filter(a => a.status === 'fulfilled').length}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

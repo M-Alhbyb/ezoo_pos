@@ -15,6 +15,8 @@ interface Product {
   selling_price: string;
   stock_quantity: number;
   is_active: boolean;
+  partner_id?: string | null;
+  partner_name?: string | null;
 }
 
 interface Category {
@@ -23,9 +25,16 @@ interface Category {
   product_count: number;
 }
 
+interface Partner {
+  id: string;
+  name: string;
+  share_percentage: string;
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,6 +48,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchPartners();
   }, []);
 
   const fetchProducts = async (categoryId?: string, search?: string) => {
@@ -70,6 +80,17 @@ export default function ProductsPage() {
       setCategories(data.items);
     } catch (err: any) {
       console.error("Failed to fetch categories:", err);
+    }
+  };
+
+  const fetchPartners = async () => {
+    try {
+      const response = await fetch("/api/partners");
+      if (!response.ok) throw new Error("Failed to fetch partners");
+      const data = await response.json();
+      setPartners(data);
+    } catch (err: any) {
+      console.error("Failed to fetch partners:", err);
     }
   };
 
@@ -158,7 +179,7 @@ export default function ProductsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveProduct = async (data: Partial<Product>) => {
+  const handleSaveProduct = async (data: any) => {
     try {
       const url = editingProduct 
         ? `/api/products/${editingProduct.id}` 
@@ -344,6 +365,7 @@ export default function ProductsPage() {
         onClose={() => setIsModalOpen(false)}
         product={editingProduct}
         categories={categories}
+        partners={partners}
         onSubmit={handleSaveProduct}
       />
 

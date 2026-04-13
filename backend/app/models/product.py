@@ -41,6 +41,10 @@ class Product(BaseModel):
 
     # Relationships
     category = relationship("Category", backref="products")
+    partner_id = Column(
+        UUID(as_uuid=True), ForeignKey("partners.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    partner = relationship("Partner", backref="products")
 
     # Extensibility (for future multi-user/multi-branch support)
     # user_id and branch_id inherited from BaseModel
@@ -58,6 +62,16 @@ class Product(BaseModel):
         """Check if product has stock available."""
         return self.stock_quantity > 0
 
+    @property
+    def category_name(self):
+        """Return category name if category is loaded."""
+        return self.category.name if self.category else None
+
+    @property
+    def partner_name(self):
+        """Return partner name if partner is loaded."""
+        return self.partner.name if self.partner else None
+
     def to_dict(self):
         """Convert product to dictionary for API responses."""
         return {
@@ -65,6 +79,7 @@ class Product(BaseModel):
             "name": self.name,
             "sku": self.sku,
             "category_id": str(self.category_id),
+            "partner_id": str(self.partner_id) if self.partner_id else None,
             "base_price": float(self.base_price),
             "selling_price": float(self.selling_price),
             "stock_quantity": self.stock_quantity,

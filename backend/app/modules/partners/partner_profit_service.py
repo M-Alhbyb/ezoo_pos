@@ -19,12 +19,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.partner import Partner
-from app.models.product_assignment import ProductAssignment
+from app.models.product import Product
 from app.models.partner_wallet_transaction import PartnerWalletTransaction
-from app.schemas.product_assignment import (
-    ProductAssignmentCreate,
-    ProductAssignmentUpdate,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -46,235 +42,6 @@ class PartnerProfitService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    # Assignment Management Methods
-
-    async def create_assignment(
-        self, data: ProductAssignmentCreate
-    ) -> ProductAssignment:
-        """
-        Create a new product assignment.
-
-        Business Rules:
-        - Only one active assignment per product
-        - share_percentage defaults to partner's default if not specified
-        - Cannot delete partner or product with existing assignments
-
-        Args:
-            data: ProductAssignmentCreate schema
-
-        Returns:
-            Created ProductAssignment
-
-        Raises:
-            ValueError: If product already has an active assignment
-        """
-        logger.info(
-            f"Creating assignment: product={data.product_id}, partner={data.partner_id}, "
-            f"quantity={data.assigned_quantity}, share={data.share_percentage}"
-        )
-
-        # Check for existing active assignment for this product
-        existing_query = select(ProductAssignment).where(
-            ProductAssignment.product_id == data.product_id,
-            ProductAssignment.status == "active",
-        )
-        result = await self.db.execute(existing_query)
-        existing = result.scalar_one_or_none()
-
-        if existing:
-            logger.warning(
-                f"Assignment creation failed: product {data.product_id} already has "
-                f"active assignment {existing.id}"
-            )
-            raise ValueError(
-                f"Product {data.product_id} already has an active assignment. "
-                "Only one active assignment per product is allowed."
-            )
-
-        # Get partner to use default share_percentage if not specified
-        partner_query = select(Partner).where(Partner.id == data.partner_id)
-        partner_result = await self.db.execute(partner_query)
-        partner = partner_result.scalar_one_or_none()
-
-        if not partner:
-            logger.error(
-                f"Assignment creation failed: partner {data.partner_id} not found"
-            )
-            raise ValueError(f"Partner {data.partner_id} not found")
-
-        # Use provided share_percentage or partner's default
-        share_percentage = (
-            data.share_percentage
-            if data.share_percentage is not None
-            else partner.share_percentage
-        )
-
-        # Create assignment
-        assignment = ProductAssignment(
-            partner_id=data.partner_id,
-            product_id=data.product_id,
-            assigned_quantity=data.assigned_quantity,
-            remaining_quantity=data.assigned_quantity,  # Initially all quantities remain
-            share_percentage=share_percentage,
-            status="active",
-        )
-
-        self.db.add(assignment)
-        await self.db.commit()
-        await self.db.refresh(assignment)
-
-        logger.info(
-            f"Assignment created successfully: id={assignment.id}, "
-            f"product={assignment.product_id}, partner={assignment.partner_id}, "
-            f"quantity={assignment.assigned_quantity}, share={assignment.share_percentage}"
-        )
-
-        return assignment
-
-    async def get_assignment(self, assignment_id: UUID) -> Optional[ProductAssignment]:
-        """
-        Get assignment by ID.
-
-        Args:
-            assignment_id: UUID of the assignment
-
-        Returns:
-            ProductAssignment or None if not found
-        """
-        query = select(ProductAssignment).where(ProductAssignment.id == assignment_id)
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def list_assignments(
-        self,
-        partner_id: Optional[UUID] = None,
-        product_id: Optional[UUID] = None,
-        status: Optional[str] = None,
-    ) -> List[ProductAssignment]:
-        """
-        List assignments with optional filters.
-
-        Args:
-            partner_id: Filter by partner (optional)
-            product_id: Filter by product (optional)
-            status: Filter by status ('active' or 'fulfilled') (optional)
-
-        Returns:
-            List of ProductAssignment objects
-        """
-        query = select(ProductAssignment)
-
-        if partner_id:
-            query = query.where(ProductAssignment.partner_id == partner_id)
-        if product_id:
-            query = query.where(ProductAssignment.product_id == product_id)
-        if status:
-            query = query.where(ProductAssignment.status == status)
-
-        # Order by creation date, newest first
-        query = query.order_by(ProductAssignment.created_at.desc())
-
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
-
-    async def update_assignment(
-        self,
-        assignment_id: UUID,
-        data: ProductAssignmentUpdate,
-    ) -> Optional[ProductAssignment]:
-        """
-        Update assignment.
-
-        Business Rules:
-        - Cannot update fulfilled assignments
-        - Decreasing assigned_quantity cannot go below remaining_quantity already sold
-        - Increasing assigned_quantity increases remaining_quantity by delta
-        - Decreasing assigned_quantity decreases remaining_quantity by delta (must not go below 0)
-
-        Args:
-            assignment_id: UUID of the assignment
-            data: ProductAssignmentUpdate schema
-
-        Returns:
-            Updated ProductAssignment or None if not found
-
-        Raises:
-            ValueError: If assignment is fulfilled or would result in negative remaining_quantity
-        """
-        assignment = await self.get_assignment(assignment_id)
-
-        if not assignment:
-            return None
-
-        # Cannot update fulfilled assignments
-        if assignment.status == "fulfilled":
-            raise ValueError(
-                "Cannot update fulfilled assignment. "
-                "Assignment status is 'fulfilled' and no further changes are allowed."
-            )
-
-        # Update assigned_quantity if provided
-        if data.assigned_quantity is not None:
-            # Calculate delta
-            delta = data.assigned_quantity - assignment.assigned_quantity
-            new_remaining = assignment.remaining_quantity + delta
-
-            if new_remaining < 0:
-                raise ValueError(
-                    f"Cannot decrease assigned_quantity below remaining_quantity. "
-                    f"Current remaining_quantity: {assignment.remaining_quantity}, "
-                    f"Attempted new remaining_quantity: {new_remaining}"
-                )
-
-            assignment.assigned_quantity = data.assigned_quantity
-            assignment.remaining_quantity = new_remaining
-
-        # Update share_percentage if provided
-        if data.share_percentage is not None:
-            assignment.share_percentage = data.share_percentage
-
-        await self.db.commit()
-        await self.db.refresh(assignment)
-
-        return assignment
-
-    async def delete_assignment(self, assignment_id: UUID) -> bool:
-        """
-        Delete assignment.
-
-        Business Rules:
-        - Can only delete assignments with no sales (remaining_quantity == assigned_quantity)
-        - Cannot delete assignments with remaining_quantity < assigned_quantity (has sales)
-
-        Args:
-            assignment_id: UUID of the assignment
-
-        Returns:
-            True if deleted, False if not found
-
-        Raises:
-            ValueError: If assignment has sales (remaining_quantity < assigned_quantity)
-        """
-        assignment = await self.get_assignment(assignment_id)
-
-        if not assignment:
-            return False
-
-        # Check if assignment has sales
-        if assignment.remaining_quantity < assignment.assigned_quantity:
-            raise ValueError(
-                f"Cannot delete assignment with sales. "
-                f"Remaining quantity ({assignment.remaining_quantity}) is less than "
-                f"assigned quantity ({assignment.assigned_quantity}). "
-                "Assignment must be retained for audit trail."
-            )
-
-        # Can only delete if all quantities remain (no sales)
-        await self.db.delete(assignment)
-        await self.db.commit()
-
-        return True
-
     # Profit Calculation Methods
 
     async def get_partner_for_update(self, partner_id: UUID) -> Optional[Partner]:
@@ -293,27 +60,16 @@ class PartnerProfitService:
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_product_assignment_for_update(
+    async def get_product_for_update(
         self,
         product_id: UUID,
-    ) -> Optional[ProductAssignment]:
+    ) -> Optional[Product]:
         """
-        Lock active assignment for product using SELECT FOR UPDATE.
-
-        Constitution VI: Atomic transactions with record locking.
-
-        Args:
-            product_id: UUID of the product
-
-        Returns:
-            Active ProductAssignment or None if not found
+        Lock product row for update using SELECT FOR UPDATE.
         """
         query = (
-            select(ProductAssignment)
-            .where(
-                ProductAssignment.product_id == product_id,
-                ProductAssignment.status == "active",
-            )
+            select(Product)
+            .where(Product.id == product_id)
             .with_for_update()
         )
         result = await self.db.execute(query)
@@ -383,36 +139,23 @@ class PartnerProfitService:
         self,
         partner: Partner,
         sale_id: UUID,
-        assignment: ProductAssignment,
+        product_id: UUID,
         quantity: int,
         unit_price: Decimal,
     ) -> PartnerWalletTransaction:
         """
         Credit partner wallet and create transaction record.
-
-        Constitution IV: Immutable Financial Records.
-        Constitution I: Financial Accuracy with DECIMAL types.
-
-        Args:
-            partner: Partner object (must be locked with FOR UPDATE)
-            sale_id: UUID of the sale
-            assignment: ProductAssignment object
-            quantity: Quantity sold from assignment
-            unit_price: Unit price of the product
-
-        Returns:
-            Created PartnerWalletTransaction
         """
         profit_amount = await self.calculate_partner_profit(
-            quantity, unit_price, assignment.share_percentage
+            quantity, unit_price, partner.share_percentage
         )
 
         previous_balance = await self.get_partner_wallet_balance(partner.id)
         new_balance = previous_balance + profit_amount
 
         description = (
-            f"Sale profit: {quantity} × {unit_price} × {assignment.share_percentage}% "
-            f"(Product: {assignment.product_id}, Assignment: {assignment.id})"
+            f"Sale profit: {quantity} × {unit_price} × {partner.share_percentage}% "
+            f"(Product: {product_id})"
         )
 
         transaction = PartnerWalletTransaction(
@@ -479,61 +222,40 @@ class PartnerProfitService:
             }
 
         product_ids = list(items_by_product.keys())
-        assignments_to_update = []
+        products_to_process = []
 
         for product_id in product_ids:
-            assignment = await self.get_product_assignment_for_update(product_id)
-            if assignment:
-                assignments_to_update.append(assignment)
+            # SaleService already locks products, but we re-fetch to ensure we have partner_id
+            product = await self.get_product_for_update(product_id)
+            if product and product.partner_id:
+                products_to_process.append(product)
 
-        partner_ids = list(set(a.partner_id for a in assignments_to_update))
+        partner_ids = list(set(p.partner_id for p in products_to_process))
         partners = {}
         for partner_id in partner_ids:
             partner = await self.get_partner_for_update(partner_id)
             if partner:
                 partners[partner_id] = partner
 
-        for assignment in assignments_to_update:
-            product_id = assignment.product_id
+        for product in products_to_process:
+            product_id = product.id
             item_info = items_by_product.get(product_id)
 
             if not item_info:
                 continue
 
-            quantity_to_sell = item_info["quantity"]
+            quantity_sold = item_info["quantity"]
             unit_price = item_info["unit_price"]
 
-            if assignment.remaining_quantity < quantity_to_sell:
-                logger.error(
-                    f"Insufficient assigned quantity for sale {sale_id}: "
-                    f"product={product_id}, requested={quantity_to_sell}, "
-                    f"available={assignment.remaining_quantity}"
-                )
-                raise ValueError(
-                    f"Insufficient assigned quantity for product {product_id}. "
-                    f"Requested: {quantity_to_sell}, Available: {assignment.remaining_quantity}"
-                )
-
-            partner = partners.get(assignment.partner_id)
+            partner = partners.get(product.partner_id)
             if not partner:
-                logger.error(
-                    f"Partner {assignment.partner_id} not found for assignment {assignment.id}"
+                logger.warning(
+                    f"Partner {product.partner_id} not found for product {product.id}"
                 )
-                raise ValueError(
-                    f"Partner {assignment.partner_id} not found for assignment {assignment.id}"
-                )
-
-            assignment.remaining_quantity -= quantity_to_sell
-
-            if assignment.remaining_quantity == 0:
-                assignment.status = "fulfilled"
-                logger.info(
-                    f"Assignment {assignment.id} fulfilled: product={product_id}, "
-                    f"partner={assignment.partner_id}"
-                )
+                continue
 
             transaction = await self.credit_partner_wallet(
-                partner, sale_id, assignment, quantity_to_sell, unit_price
+                partner, sale_id, product.id, quantity_sold, unit_price
             )
 
             processed_count += 1
@@ -541,7 +263,7 @@ class PartnerProfitService:
 
             logger.info(
                 f"Processed profit for sale {sale_id}: product={product_id}, "
-                f"partner={assignment.partner_id}, quantity={quantity_to_sell}, "
+                f"partner={product.partner_id}, quantity={quantity_sold}, "
                 f"profit={transaction.amount}"
             )
 

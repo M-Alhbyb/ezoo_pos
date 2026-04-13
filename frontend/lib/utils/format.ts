@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js';
 
 export function formatCurrency(value: number | string | Decimal): string {
   const num = typeof value === 'string' ? parseFloat(value) : typeof value === 'object' ? Number(value) : value;
-  return new Intl.NumberFormat('ar-SD', {
+  return new Intl.NumberFormat('ar-SD-u-nu-latn', {
     style: 'currency',
     currency: 'SDG',
     minimumFractionDigits: 2,
@@ -13,7 +13,7 @@ export function formatCurrency(value: number | string | Decimal): string {
 export function formatCurrencyCompact(value: number | string | Decimal): string {
   const num = typeof value === 'string' ? parseFloat(value) : typeof value === 'object' ? Number(value) : value;
   if (num >= 1000000) {
-    return new Intl.NumberFormat('ar-SD', {
+    return new Intl.NumberFormat('ar-SD-u-nu-latn', {
       style: 'currency',
       currency: 'SDG',
       notation: 'compact',
@@ -29,11 +29,11 @@ export function formatDate(date: Date | string, format: 'short' | 'long' = 'long
     format === 'long'
       ? { year: 'numeric', month: 'long', day: 'numeric' }
       : { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Intl.DateTimeFormat('ar-SD', options).format(d);
+  return new Intl.DateTimeFormat('ar-SD-u-nu-latn', options).format(d);
 }
 
 export function formatDateTime(date: Date | string): string {
-  return new Intl.DateTimeFormat('ar-SD', {
+  return new Intl.DateTimeFormat('ar-SD-u-nu-latn', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -43,21 +43,21 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatTime(date: Date | string): string {
-  return new Intl.DateTimeFormat('ar-SD', {
+  return new Intl.DateTimeFormat('ar-SD-u-nu-latn', {
     hour: 'numeric',
     minute: 'numeric',
   }).format(new Date(date));
 }
 
 export function formatNumber(value: number, decimals: number = 0): string {
-  return new Intl.NumberFormat('ar-SD', {
+  return new Intl.NumberFormat('ar-SD-u-nu-latn', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
 }
 
 export function formatPercentage(value: number, decimals: number = 1): string {
-  return new Intl.NumberFormat('ar-SD', {
+  return new Intl.NumberFormat('ar-SD-u-nu-latn', {
     style: 'percent',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -65,7 +65,7 @@ export function formatPercentage(value: number, decimals: number = 1): string {
 }
 
 export function formatInteger(value: number): string {
-  return new Intl.NumberFormat('ar-SD').format(Math.round(value));
+  return new Intl.NumberFormat('ar-SD-u-nu-latn').format(Math.round(value));
 }
 
 export function formatDecimal(value: number | string | Decimal, places: number = 2): string {
@@ -106,17 +106,6 @@ export function normalizeArabicNumerals(input: string): string {
 }
 
 export function toArabicNumerals(input: string | number): string {
-  const westernToArabic: Record<string, string> = {
-    '0': '٠',
-    '1': '١',
-    '2': '٢',
-    '3': '٣',
-    '4': '٤',
-    '5': '٥',
-    '6': '٦',
-    '7': '٧',
-    '8': '٨',
-    '9': '٩',
-  };
-  return String(input).replace(/[0-9]/g, (d) => westernToArabic[d] || d);
+  // Deactivated: return input as-is to use Latin digits globally
+  return String(input);
 }
