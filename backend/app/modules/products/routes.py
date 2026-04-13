@@ -103,6 +103,7 @@ async def create_product(
 )
 async def list_products(
     category_id: Optional[UUID] = Query(None, description="Filter by category"),
+    partner_id: Optional[UUID] = Query(None, description="Filter by partner"),
     search: Optional[str] = Query(
         None, max_length=200, description="Search by name or SKU"
     ),
@@ -128,7 +129,12 @@ async def list_products(
         Paginated list of products with assignment information
     """
     products, total = await service.list_products(
-        category_id=category_id, search=search, active_only=active_only, page=page, page_size=page_size
+        category_id=category_id, 
+        partner_id=partner_id,
+        search=search, 
+        active_only=active_only, 
+        page=page, 
+        page_size=page_size
     )
 
     return ProductListResponse(

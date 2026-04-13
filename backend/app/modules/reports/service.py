@@ -11,6 +11,7 @@ from app.models.sale import Sale
 from app.models.partner_distribution import PartnerDistribution
 from app.models.partner import Partner
 from app.models.inventory_log import InventoryLog
+from app.models.product import Product
 from app.schemas.report import (
     SalesReport,
     SalesSummaryGroup,
@@ -46,9 +47,9 @@ class ReportService:
         """
         stmt = select(func.count(PartnerDistribution.id))
         if start_date:
-            stmt = stmt.where(PartnerDistribution.distribution_date >= start_date)
+            stmt = stmt.where(PartnerDistribution.created_at >= start_date)
         if end_date:
-            stmt = stmt.where(PartnerDistribution.distribution_date <= end_date)
+            stmt = stmt.where(PartnerDistribution.created_at <= end_date)
 
         result = await self.db.execute(stmt)
         count = result.scalar()
@@ -257,3 +258,82 @@ class ReportService:
             page=page,
             page_size=page_size
         )
+
+    async def get_sales_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        stmt = select(Sale).order_by(Sale.created_at.desc())
+        if start_date:
+            stmt = stmt.where(Sale.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(Sale.created_at <= end_date)
+            
+        result = await self.db.execute(stmt)
+        sales = result.scalars().all()
+        return [
+            {
+                "date": str(sale.created_at),
+                "subtotal": sale.subtotal,
+                "fees_total": sale.fees_total,
+                "vat_amount": sale.vat_total,
+                "grand_total": sale.grand_total,
+                "profit": sale.profit,
+            }
+            for sale in sales
+        ]
+
+    async def get_partners_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        stmt = (
+            select(
+                PartnerDistribution,
+                Partner.name.label("partner_name")
+            )
+            .join(Partner, Partner.id == PartnerDistribution.partner_id)
+            .order_by(PartnerDistribution.created_at.desc())
+        )
+        if start_date:
+            stmt = stmt.where(PartnerDistribution.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(PartnerDistribution.created_at <= end_date)
+            
+        result = await self.db.execute(stmt)
+        data = []
+        for row in result:
+            dist = row.PartnerDistribution
+            invested = dist.snapshot_fields.get("invested_amount", 0) if dist.snapshot_fields else 0
+            profit_pct = dist.snapshot_fields.get("profit_percentage", 0) if dist.snapshot_fields else 0
+            data.append({
+                "name": row.partner_name,
+                "invested_amount": Decimal(str(invested)),
+                "profit_percentage": Decimal(str(profit_pct)),
+                "distributed_amount": dist.payout_amount,
+                "distribution_date": str(dist.created_at),
+            })
+        return data
+
+    async def get_inventory_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        stmt = (
+            select(
+                InventoryLog,
+                Product.name.label("product_name")
+            )
+            .join(Product, Product.id == InventoryLog.product_id)
+            .order_by(InventoryLog.created_at.desc())
+        )
+        if start_date:
+            stmt = stmt.where(InventoryLog.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(InventoryLog.created_at <= end_date)
+            
+        result = await self.db.execute(stmt)
+        data = []
+        for row in result:
+            log = row.InventoryLog
+            movement_type = "In" if log.delta > 0 else ("Out" if log.delta < 0 else "None")
+            data.append({
+                "product_name": row.product_name,
+                "movement_type": movement_type,
+                "quantity_delta": log.delta,
+                "reason": log.reason,
+                "created_at": str(log.created_at),
+            })
+        return data
+

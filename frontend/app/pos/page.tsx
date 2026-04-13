@@ -18,6 +18,7 @@ interface CartItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  stock_quantity: number;
 }
 
 interface Fee {
@@ -65,17 +66,27 @@ export default function POSPage() {
     let newItems;
 
     if (existingItem) {
+      // Check if we can add more
+      if (existingItem.quantity >= product.stock_quantity) {
+        setError(`${ARABIC.pos.outOfStock || 'لايوجد كمية كافية'}: ${product.name}`);
+        return;
+      }
       // Increment quantity
       newItems = cartItems.map((item) =>
         item.product_id === product.id ? { ...item, quantity: item.quantity + 1 } : item
       );
     } else {
       // Add new item
+      if (product.stock_quantity <= 0) {
+        setError(`${ARABIC.pos.outOfStock || 'لايوجد كمية كافية'}: ${product.name}`);
+        return;
+      }
       const newItem: CartItem = {
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
         unit_price: parseFloat(product.selling_price),
+        stock_quantity: product.stock_quantity,
       };
       newItems = [...cartItems, newItem];
     }
@@ -86,9 +97,13 @@ export default function POSPage() {
 
   // Change quantity
   const handleQuantityChange = async (product_id: string, quantity: number) => {
-    const newItems = cartItems.map((item) =>
-      item.product_id === product_id ? { ...item, quantity } : item
-    );
+    const newItems = cartItems.map((item) => {
+      if (item.product_id === product_id) {
+        const validatedQuantity = Math.min(Math.max(1, quantity), item.stock_quantity);
+        return { ...item, quantity: validatedQuantity };
+      }
+      return item;
+    });
     setCartItems(newItems);
     await calculateBreakdown(newItems, fees);
   };

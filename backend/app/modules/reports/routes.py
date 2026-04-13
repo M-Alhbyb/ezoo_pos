@@ -150,19 +150,7 @@ async def export_sales_report(
                 },
             )
 
-        sales_data = []
-        sales = await service.get_sales_report(start_date, end_date)
-        for group in sales.daily_breakdown:
-            sales_data.append(
-                {
-                    "date": str(group.date),
-                    "subtotal": group.revenue,
-                    "fees_total": Decimal("0"),
-                    "vat_amount": group.revenue * Decimal("0.15") / Decimal("1.15"),
-                    "grand_total": group.revenue,
-                    "profit": group.profit,
-                }
-            )
+        sales_data = await service.get_sales_export_data(start_date, end_date)
 
         filename_prefix = f"sales_report_{start_date}_{end_date}"
 
@@ -265,18 +253,7 @@ async def export_partners_report(
                 },
             )
 
-        partners_data = []
-        partners = await service.get_partners_report(start_date, end_date)
-        for payout in partners.payouts:
-            partners_data.append(
-                {
-                    "name": payout.partner_name,
-                    "invested_amount": payout.invested_amount,
-                    "profit_percentage": payout.profit_percentage,
-                    "distributed_amount": payout.distributed_amount,
-                    "distribution_date": str(payout.distribution_date),
-                }
-            )
+        partners_data = await service.get_partners_export_data(start_date, end_date)
 
         filename_prefix = f"partners_report_{start_date}_{end_date}"
 
@@ -359,18 +336,7 @@ async def export_inventory_report(
                 },
             )
 
-        inventory_data = []
-        inventory = await service.get_inventory_report(start_date, end_date)
-        for movement in inventory.movements:
-            inventory_data.append(
-                {
-                    "product_name": movement.product_name,
-                    "movement_type": movement.movement_type,
-                    "quantity_delta": movement.quantity_delta,
-                    "reason": movement.reason,
-                    "created_at": str(movement.timestamp),
-                }
-            )
+        inventory_data = await service.get_inventory_export_data(start_date, end_date)
 
         filename_prefix = f"inventory_report_{start_date}_{end_date}"
 

@@ -249,6 +249,7 @@ class SaleService:
         await self.db.flush()  # Get sale ID
 
         # Create sale items
+        created_items = []
         for item_data, item_response in zip(sale_data.items, breakdown.items):
             prod = products[item_data.product_id]
             sale_item = SaleItem(
@@ -262,6 +263,7 @@ class SaleService:
                 line_total=item_response.line_total,
             )
             self.db.add(sale_item)
+            created_items.append(sale_item)
 
         # Create sale fees
         for fee_data, fee_response in zip(sale_data.fees, breakdown.fees):
@@ -287,7 +289,7 @@ class SaleService:
         # 6. PROCESS PARTNER PROFITS (if any products are assigned)
         # Constitution VI: Atomic transaction - if profit calculation fails, entire sale rolls back
         await self.partner_profit_service.process_sale_partner_profits(
-            sale.id, sale.items
+            sale.id, created_items
         )
 
         await self.db.commit()

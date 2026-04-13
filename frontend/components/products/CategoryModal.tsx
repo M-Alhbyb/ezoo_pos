@@ -6,13 +6,14 @@ import { ARABIC } from "@/lib/constants/arabic";
 interface Category {
   id?: string;
   name: string;
+  color?: string | null;
 }
 
 interface CategoryModalProps {
   category?: Category;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string }) => Promise<void>;
+  onSubmit: (data: { name: string; color: string | null }) => Promise<void>;
 }
 
 export default function CategoryModal({
@@ -22,6 +23,7 @@ export default function CategoryModal({
   onSubmit,
 }: CategoryModalProps) {
   const [name, setName] = useState(category?.name || "");
+  const [color, setColor] = useState<string | null>(category?.color || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -30,6 +32,7 @@ export default function CategoryModal({
     setMounted(true);
     if (isOpen) {
       setName(category?.name || "");
+      setColor(category?.color || null);
       setError("");
       document.body.style.overflow = "hidden";
     } else {
@@ -52,7 +55,7 @@ export default function CategoryModal({
     try {
       setLoading(true);
       setError("");
-      await onSubmit({ name });
+      await onSubmit({ name, color });
       onClose();
     } catch (err: any) {
       setError(err.message || ARABIC.errors.saveFailed);
@@ -109,6 +112,49 @@ export default function CategoryModal({
               autoFocus
               dir="rtl"
             />
+          </div>
+          
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-slate-700 block ms-1">
+              {ARABIC.categories.categoryColor}
+            </label>
+            <div className="grid grid-cols-5 gap-3">
+              {[
+                { name: "Blue", bg: "bg-blue-50/60", hex: "bg-blue-50/60" },
+                { name: "Emerald", bg: "bg-emerald-50/60", hex: "bg-emerald-50/60" },
+                { name: "Amber", bg: "bg-amber-50/60", hex: "bg-amber-50/60" },
+                { name: "Rose", bg: "bg-rose-50/60", hex: "bg-rose-50/60" },
+                { name: "Indigo", bg: "bg-indigo-50/60", hex: "bg-indigo-50/60" },
+                { name: "Cyan", bg: "bg-cyan-50/60", hex: "bg-cyan-50/60" },
+                { name: "Orange", bg: "bg-orange-50/60", hex: "bg-orange-50/60" },
+                { name: "Teal", bg: "bg-teal-50/60", hex: "bg-teal-50/60" },
+                { name: "Fuchsia", bg: "bg-fuchsia-50/60", hex: "bg-fuchsia-50/60" },
+                { name: "Slate", bg: "bg-slate-100/50", hex: "bg-slate-100/50" },
+              ].map((c) => (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => setColor(c.bg)}
+                  className={`h-10 rounded-xl ${c.bg} border-2 transition-all flex items-center justify-center ${
+                    color === c.bg ? "border-indigo-500 scale-110 shadow-sm" : "border-transparent hover:scale-105"
+                  }`}
+                  title={c.name}
+                >
+                  {color === c.bg && (
+                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                  )}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setColor(null)}
+                className={`h-10 rounded-xl bg-white border-2 transition-all text-[10px] font-bold text-slate-400 ${
+                  color === null ? "border-indigo-500 scale-110 shadow-sm" : "border-slate-100 hover:border-slate-200"
+                }`}
+              >
+                Auto
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">

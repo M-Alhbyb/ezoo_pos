@@ -15,6 +15,7 @@ class CategoryBase(BaseModel):
     """Base category fields shared across schemas."""
 
     name: str = Field(..., min_length=1, max_length=100, description="Category name")
+    color: Optional[str] = Field(None, max_length=50, description="Category theme color")
 
 
 class CategoryCreate(CategoryBase):
@@ -29,6 +30,7 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = Field(
         None, min_length=1, max_length=100, description="Category name"
     )
+    color: Optional[str] = Field(None, max_length=50, description="Category theme color")
 
 
 class CategoryResponse(CategoryBase):
@@ -38,6 +40,7 @@ class CategoryResponse(CategoryBase):
     product_count: Optional[int] = Field(
         None, description="Number of active products in this category"
     )
+    color: Optional[str] = Field(None, description="Category theme color")
     created_at: datetime
     updated_at: datetime
 

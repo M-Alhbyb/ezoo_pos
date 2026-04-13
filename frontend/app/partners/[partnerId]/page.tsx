@@ -21,14 +21,25 @@ interface Partner {
   distributions: Distribution[];
 }
 
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  selling_price: number;
+  stock_quantity: number;
+  category_name: string;
+}
+
 export default function PartnerHistoryPage({ params }: { params: { partnerId: string } }) {
   const { partnerId } = params;
   const [partner, setPartner] = useState<Partner | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchPartner();
+    fetchProducts();
   }, [partnerId]);
 
   const fetchPartner = async () => {
@@ -49,6 +60,18 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(`/api/products?partner_id=${partnerId}&page_size=100`);
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data.items);
+      }
+    } catch (err) {
+      console.error("Failed to fetch partner products", err);
     }
   };
 
@@ -135,6 +158,58 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
                         <td className="px-6 py-4 font-medium text-slate-800">{ARABIC.status.completed}</td>
                         <td className="px-6 py-4 text-end font-semibold text-emerald-600">{formatCurrency(dist.amount)}</td>
                         <td className="px-6 py-4 text-end text-sm text-slate-500">{formatDateTime(dist.distributed_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Assigned Products Section */}
+          <div className="glass rounded-2xl overflow-hidden mt-8">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                {ARABIC.partners.assignedProducts}
+              </h3>
+              <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+                {products.length} {ARABIC.nav.products}
+              </div>
+            </div>
+            {products.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">
+                <p>{ARABIC.reports.noData}</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-start border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">{ARABIC.products.productName}</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-center">{ARABIC.products.category}</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-end">{ARABIC.products.stockQuantity}</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-end">{ARABIC.products.sellingPrice}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {products.map((product) => (
+                      <tr key={product.id} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-800">{product.name}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{product.sku}</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="bg-slate-100 px-2 py-1 rounded-lg text-xs font-medium text-slate-600">
+                            {product.category_name}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-end">
+                           <span className={`font-bold ${product.stock_quantity <= 5 ? "text-rose-500" : "text-slate-700"}`}>
+                            {product.stock_quantity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-end font-bold text-slate-900">{formatCurrency(product.selling_price)}</td>
                       </tr>
                     ))}
                   </tbody>

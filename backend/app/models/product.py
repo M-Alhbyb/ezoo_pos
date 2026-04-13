@@ -68,6 +68,11 @@ class Product(BaseModel):
         return self.category.name if self.category else None
 
     @property
+    def category_color(self):
+        """Return category color if category is loaded."""
+        return self.category.color if self.category else None
+
+    @property
     def partner_name(self):
         """Return partner name if partner is loaded."""
         return self.partner.name if self.partner else None

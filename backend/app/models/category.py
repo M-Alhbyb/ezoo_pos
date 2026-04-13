@@ -24,6 +24,7 @@ class Category(BaseModel):
 
     # Primary fields
     name = Column(String(100), nullable=False, unique=True, index=True)
+    color = Column(String(50), nullable=True)
 
     # Extensibility (for future multi-user/multi-branch support)
     # user_id and branch_id inherited from BaseModel
@@ -36,6 +37,7 @@ class Category(BaseModel):
         return {
             "id": str(self.id),
             "name": self.name,
+            "color": self.color,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

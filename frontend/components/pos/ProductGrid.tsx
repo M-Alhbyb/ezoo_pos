@@ -18,6 +18,7 @@ interface Product {
   sku: string | null;
   category_id: string;
   category_name: string | null;
+  category_color: string | null;
   selling_price: string;
   stock_quantity: number;
 }
@@ -39,6 +40,27 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Theme mapping for Tailwind safety (ensures classes are picked up by JIT)
+  const CATEGORY_THEMES: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+    "bg-blue-50/60": { bg: "bg-blue-50/60", border: "border-blue-100/50", text: "text-blue-700", icon: "bg-blue-100/50 text-blue-600" },
+    "bg-emerald-50/60": { bg: "bg-emerald-50/60", border: "border-emerald-100/50", text: "text-emerald-700", icon: "bg-emerald-100/50 text-emerald-600" },
+    "bg-amber-50/60": { bg: "bg-amber-50/60", border: "border-amber-100/50", text: "text-amber-700", icon: "bg-amber-100/50 text-amber-600" },
+    "bg-rose-50/60": { bg: "bg-rose-50/60", border: "border-rose-100/50", text: "text-rose-700", icon: "bg-rose-100/50 text-rose-600" },
+    "bg-indigo-50/60": { bg: "bg-indigo-50/60", border: "border-indigo-100/50", text: "text-indigo-700", icon: "bg-indigo-100/50 text-indigo-600" },
+    "bg-cyan-50/60": { bg: "bg-cyan-50/60", border: "border-cyan-100/50", text: "text-cyan-700", icon: "bg-cyan-100/50 text-cyan-600" },
+    "bg-orange-50/60": { bg: "bg-orange-50/60", border: "border-orange-100/50", text: "text-orange-700", icon: "bg-orange-100/50 text-orange-600" },
+    "bg-teal-50/60": { bg: "bg-teal-50/60", border: "border-teal-100/50", text: "text-teal-700", icon: "bg-teal-100/50 text-teal-600" },
+    "bg-fuchsia-50/60": { bg: "bg-fuchsia-50/60", border: "border-fuchsia-100/50", text: "text-fuchsia-700", icon: "bg-fuchsia-100/50 text-fuchsia-600" },
+    "bg-slate-100/50": { bg: "bg-slate-100/50", border: "border-slate-200/50", text: "text-slate-700", icon: "bg-slate-200/50 text-slate-600" },
+  };
+
+  const DEFAULT_THEME = { 
+    bg: "bg-white hover:bg-slate-50", 
+    border: "border-slate-200", 
+    text: "text-slate-500", 
+    icon: "bg-slate-100 text-slate-400" 
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -149,48 +171,64 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
       <div className="max-h-[500px] overflow-y-auto pe-2 no-scrollbar">
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pb-4">
-            {filteredProducts.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => onProductSelect(product)}
-              className="group relative flex flex-col p-4 bg-white/40 hover:bg-white hover:shadow-xl hover:-translate-y-1 border border-slate-100 hover:border-primary/20 rounded-2xl text-start transition-all duration-300"
-            >
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-widest truncate max-w-[100px]">
-                    {product.category_name || ARABIC.categories.title || "غير مصنف"}
-                  </span>
-                  {product.stock_quantity <= 5 && (
-                    <span className="flex items-center text-[10px] font-bold text-rose-500 animate-pulse">
-                      <AlertCircle className="w-2.5 h-2.5 me-0.5" />
-                      {ARABIC.products.lowStock || 'منخفض'}
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-sm font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-[10px] text-slate-400 font-medium truncate mb-3">
-                  {product.sku || ARABIC.products.sku || 'بدون رمز'}
-                </p>
-              </div>
+            {filteredProducts.map((product) => {
+              const theme = (product.category_color && CATEGORY_THEMES[product.category_color]) || DEFAULT_THEME;
               
-              <div className="flex items-end justify-between mt-auto">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-semibold mb-0.5 uppercase tracking-tighter">{ARABIC.pos.price || 'السعر'}</p>
-                  <p className="text-base font-black text-slate-900 tracking-tight">
-                    {formatCurrency(product.selling_price)}
-                  </p>
-                </div>
-                <div className="p-2 bg-slate-100 group-hover:bg-primary group-hover:text-white rounded-xl transition-all duration-300 shadow-sm">
-                   <Package className="w-4 h-4" />
-                </div>
-              </div>
+              return (
+                <button
+                  key={product.id}
+                  onClick={() => product.stock_quantity > 0 && onProductSelect(product)}
+                  disabled={product.stock_quantity <= 0}
+                  className={`group relative flex flex-col p-4 ${theme.bg} ${
+                    product.stock_quantity > 0 
+                      ? "hover:bg-white hover:shadow-xl hover:-translate-y-1 border-primary/10" 
+                      : "opacity-60 grayscale cursor-not-allowed bg-slate-100 border-slate-200"
+                  } border ${theme.border} hover:border-primary/20 rounded-2xl text-start transition-all duration-300`}
+                >
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-[10px] font-bold ${theme.text} uppercase tracking-widest truncate max-w-[100px]`}>
+                        {product.category_name || ARABIC.categories.title || "غير مصنف"}
+                      </span>
+                      {product.stock_quantity <= 0 ? (
+                        <span className="flex items-center text-[10px] font-bold text-slate-500">
+                          <Package className="w-2.5 h-2.5 me-0.5" />
+                          {ARABIC.products.outOfStock || 'نفدت الكمية'}
+                        </span>
+                      ) : product.stock_quantity <= 5 ? (
+                        <span className="flex items-center text-[10px] font-bold text-rose-500 animate-pulse">
+                          <AlertCircle className="w-2.5 h-2.5 me-0.5" />
+                          {ARABIC.products.lowStock || 'منخفض'}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-primary transition-colors">
+                      {product.name}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-medium truncate mb-3">
+                      {product.sku || ARABIC.products.sku || 'بدون رمز'}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-end justify-between mt-auto">
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-semibold mb-0.5 uppercase tracking-tighter">{ARABIC.pos.price || 'السعر'}</p>
+                      <p className="text-base font-black text-slate-900 tracking-tight">
+                        {formatCurrency(product.selling_price)}
+                      </p>
+                    </div>
+                    <div className={`p-2 ${theme.icon} ${product.stock_quantity > 0 ? "group-hover:bg-primary group-hover:text-white" : ""} rounded-xl transition-all duration-300 shadow-sm`}>
+                       <Package className="w-4 h-4" />
+                    </div>
+                  </div>
 
-              {/* Hover Effect Ring */}
-              <div className="absolute inset-0 border-2 border-primary/0 group-active:border-primary/40 rounded-2xl transition-all"></div>
-            </button>
-          ))}
+                  {/* Hover Effect Ring */}
+                  {product.stock_quantity > 0 && (
+                    <div className="absolute inset-0 border-2 border-primary/0 group-active:border-primary/40 rounded-2xl transition-all"></div>
+                  )}
+                </button>
+              );
+            })}
         </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-6 glass rounded-2xl">

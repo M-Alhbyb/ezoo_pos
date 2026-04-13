@@ -16,6 +16,7 @@ interface CartItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  stock_quantity: number;
 }
 
 interface POSCartProps {
@@ -56,7 +57,12 @@ export default function POSCart({ items, onQuantityChange, onRemove, onClear }: 
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                   <div className="font-medium">{item.product_name}</div>
-                  <div className="text-sm text-slate-500">{formatCurrency(item.unit_price)} {ARABIC.pos.each || 'للوحدة'}</div>
+                  <div className="text-sm text-slate-500">
+                    {formatCurrency(item.unit_price)} {ARABIC.pos.each || 'للوحدة'} 
+                    <span className="ms-2 px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-400">
+                      {ARABIC.products.stock || 'المخزون'}: {item.stock_quantity}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => onRemove(item.product_id)}
@@ -71,9 +77,10 @@ export default function POSCart({ items, onQuantityChange, onRemove, onClear }: 
                   <input
                     type="number"
                     min="1"
+                    max={item.stock_quantity}
                     value={item.quantity}
                     onChange={(e) => onQuantityChange(item.product_id, parseInt(e.target.value) || 1)}
-                    className="border rounded px-2 py-1 w-20 text-sm"
+                    className="border rounded px-2 py-1 w-20 text-sm focus:ring-1 focus:ring-primary outline-none"
                   />
                 </div>
                 <div className="font-medium">{formatCurrency(item.line_total)}</div>

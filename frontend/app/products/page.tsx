@@ -22,6 +22,7 @@ interface Product {
 interface Category {
   id: string;
   name: string;
+  color?: string | null;
   product_count: number;
 }
 
@@ -129,7 +130,7 @@ export default function ProductsPage() {
     }
   };
 
-  const handleSaveCategory = async (data: { name: string }) => {
+  const handleSaveCategory = async (data: { name: string; color: string | null }) => {
     try {
       const url = editingCategory 
         ? `/api/categories/${editingCategory.id}` 

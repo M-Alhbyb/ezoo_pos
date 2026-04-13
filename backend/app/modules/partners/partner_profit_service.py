@@ -79,29 +79,34 @@ class PartnerProfitService:
         self,
         quantity: int,
         unit_price: Decimal,
+        base_cost: Decimal,
         share_percentage: Decimal,
     ) -> Decimal:
         """
-        Calculate partner profit: quantity × unit_price × (share_percentage / 100).
+        Calculate partner profit: quantity × (unit_price - base_cost) × (share_percentage / 100).
 
         Constitution I: Financial Accuracy - DECIMAL types for all calculations.
 
         Args:
             quantity: Number of units sold
             unit_price: Price per unit
+            base_cost: Product base cost snapshot
             share_percentage: Partner's share percentage (e.g., 15.00 for 15%)
 
         Returns:
-            Calculated profit as Decimal with 2 decimal places
+            Calculated profit as Decimal with 2 decimal places, minimum 0
         """
         if (
-            quantity == 0
-            or unit_price == Decimal("0")
-            or share_percentage == Decimal("0")
+            quantity <= 0
+            or share_percentage <= Decimal("0")
         ):
             return Decimal("0.00")
 
-        profit = (Decimal(quantity) * unit_price * share_percentage) / Decimal("100")
+        unit_profit = unit_price - base_cost
+        if unit_profit <= Decimal("0"):
+            return Decimal("0.00")
+
+        profit = (Decimal(quantity) * unit_profit * share_percentage) / Decimal("100")
 
         return profit.quantize(Decimal("0.01"))
 
@@ -142,19 +147,20 @@ class PartnerProfitService:
         product_id: UUID,
         quantity: int,
         unit_price: Decimal,
+        base_cost: Decimal,
     ) -> PartnerWalletTransaction:
         """
         Credit partner wallet and create transaction record.
         """
         profit_amount = await self.calculate_partner_profit(
-            quantity, unit_price, partner.share_percentage
+            quantity, unit_price, base_cost, partner.share_percentage
         )
 
         previous_balance = await self.get_partner_wallet_balance(partner.id)
         new_balance = previous_balance + profit_amount
 
         description = (
-            f"Sale profit: {quantity} × {unit_price} × {partner.share_percentage}% "
+            f"Sale profit (Net): {quantity} × ({unit_price} - {base_cost}) × {partner.share_percentage}% "
             f"(Product: {product_id})"
         )
 
@@ -215,10 +221,14 @@ class PartnerProfitService:
             unit_price = (
                 item.unit_price if hasattr(item, "unit_price") else item["unit_price"]
             )
+            base_cost = (
+                item.base_cost if hasattr(item, "base_cost") else item.get("base_cost", Decimal("0"))
+            )
 
             items_by_product[product_id] = {
                 "quantity": quantity,
                 "unit_price": unit_price,
+                "base_cost": base_cost,
             }
 
         product_ids = list(items_by_product.keys())
@@ -246,6 +256,7 @@ class PartnerProfitService:
 
             quantity_sold = item_info["quantity"]
             unit_price = item_info["unit_price"]
+            base_cost = item_info["base_cost"]
 
             partner = partners.get(product.partner_id)
             if not partner:
@@ -255,7 +266,7 @@ class PartnerProfitService:
                 continue
 
             transaction = await self.credit_partner_wallet(
-                partner, sale_id, product.id, quantity_sold, unit_price
+                partner, sale_id, product.id, quantity_sold, unit_price, base_cost
             )
 
             processed_count += 1

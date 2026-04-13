@@ -79,6 +79,7 @@ class ProductService:
     async def list_products(
         self,
         category_id: Optional[UUID] = None,
+        partner_id: Optional[UUID] = None,
         search: Optional[str] = None,
         active_only: bool = True,
         page: int = 1,
@@ -113,6 +114,9 @@ class ProductService:
 
         if category_id:
             query = query.where(Product.category_id == category_id)
+
+        if partner_id:
+            query = query.where(Product.partner_id == partner_id)
 
         if search:
             search_term = f"%{search}%"
@@ -280,6 +284,7 @@ class ProductService:
             "sku": product.sku,
             "category_id": str(product.category_id),
             "category_name": product.category.name if product.category else None,
+            "category_color": product.category.color if product.category else None,
             "base_price": str(product.base_price),
             "selling_price": str(product.selling_price),
             "stock_quantity": product.stock_quantity,

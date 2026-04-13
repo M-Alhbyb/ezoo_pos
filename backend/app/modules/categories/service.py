@@ -40,7 +40,7 @@ class CategoryService:
         if existing:
             raise ValueError(f"Category '{category_data.name}' already exists")
 
-        category = Category(name=category_data.name)
+        category = Category(name=category_data.name, color=category_data.color)
 
         self.db.add(category)
         await self.db.commit()
@@ -110,6 +110,8 @@ class CategoryService:
                 raise ValueError(f"Category '{category_data.name}' already exists")
 
         category.name = category_data.name
+        if category_data.color is not None:
+            category.color = category_data.color
         await self.db.commit()
         await self.db.refresh(category)
 

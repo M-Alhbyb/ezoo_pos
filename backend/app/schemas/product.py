@@ -77,6 +77,9 @@ class ProductResponse(ProductBase):
     category_name: Optional[str] = Field(
         None, description="Category name (joined from categories)"
     )
+    category_color: Optional[str] = Field(
+        None, description="Category theme color (joined from categories)"
+    )
     is_active: bool = Field(..., description="Whether product is active")
     created_at: datetime
     updated_at: datetime
