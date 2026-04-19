@@ -53,7 +53,7 @@ async def get_partners(
 
 @router.get("/{partner_id}", response_model=PartnerDetailResponse)
 async def get_partner(
-    partner_id: UUID,
+    partner_id: int,
     service: PartnerService = Depends(get_partner_service),
 ):
     """
@@ -100,7 +100,7 @@ async def distribute_profits(
 
 @router.get("/{partner_id}/wallet", response_model=PartnerWalletBalanceResponse)
 async def get_partner_wallet(
-    partner_id: UUID,
+    partner_id: int,
     db: AsyncSession = Depends(get_db),
     # TODO: Add admin authorization check per FR-013
     # current_user: User = Depends(require_admin),
@@ -147,7 +147,7 @@ async def get_partner_wallet(
     response_model=PartnerWalletTransactionListResponse,
 )
 async def get_partner_wallet_transactions(
-    partner_id: UUID,
+    partner_id: int,
     limit: int = Query(100, ge=1, le=1000, description="Max transactions to return"),
     offset: int = Query(0, ge=0, description="Number of transactions to skip"),
     db: AsyncSession = Depends(get_db),
@@ -199,7 +199,7 @@ async def get_partner_wallet_transactions(
     status_code=status.HTTP_201_CREATED,
 )
 async def adjust_partner_wallet(
-    partner_id: UUID,
+    partner_id: int,
     data: ManualWalletAdjustmentRequest,
     db: AsyncSession = Depends(get_db),
     # TODO: Add admin authorization check per FR-013

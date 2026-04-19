@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
 
 interface WalletBalance {
-  partner_id: string;
+  partner_id: number;
   partner_name: string;
   current_balance: string;
   last_transaction_at: string | null;
@@ -29,7 +29,7 @@ interface Transaction {
 }
 
 interface PartnerWalletViewProps {
-  partnerId: string;
+  partnerId: number;
   partnerName: string;
   onRefresh?: () => void;
 }
@@ -53,8 +53,8 @@ export default function PartnerWalletView({
     try {
       setLoading(true);
       const [balanceRes, transactionsRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/v1/partners/${partnerId}/wallet`),
-        fetch(`http://localhost:8000/api/v1/partners/${partnerId}/wallet/transactions?limit=${limit}`),
+        fetch(`/api/v1/partners/${partnerId}/wallet`),
+        fetch(`/api/v1/partners/${partnerId}/wallet/transactions?limit=${limit}`),
       ]);
 
       if (!balanceRes.ok || !transactionsRes.ok) {

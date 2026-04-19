@@ -15,6 +15,7 @@ from app.models.settings import Settings
 from app.models.inventory_log import InventoryLog
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
+from app.models.partner_wallet_transaction import PartnerWalletTransaction
 import app.models.payment_method
 import app.models.product
 import app.models.sale

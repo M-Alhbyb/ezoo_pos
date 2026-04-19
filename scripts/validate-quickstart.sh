@@ -7,7 +7,7 @@ set -e  # Exit on error
 echo "=== Partner Profit Tracking - Quickstart Validation ==="
 echo ""
 
-BASE_URL="${BASE_URL:-http://localhost:8000/api/v1}"
+BASE_URL="${BASE_URL:-http://localhost:8001/api/v1}"
 PARTNER_ID=""
 PRODUCT_ID=""
 ASSIGNMENT_ID=""

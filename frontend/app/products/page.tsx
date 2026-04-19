@@ -15,7 +15,7 @@ interface Product {
   selling_price: string;
   stock_quantity: number;
   is_active: boolean;
-  partner_id?: string | null;
+  partner_id?: number | null;
   partner_name?: string | null;
 }
 
@@ -27,7 +27,7 @@ interface Category {
 }
 
 interface Partner {
-  id: string;
+  id: number;
   name: string;
   share_percentage: string;
 }

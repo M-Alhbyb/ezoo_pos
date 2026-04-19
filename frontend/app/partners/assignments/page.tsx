@@ -9,7 +9,7 @@ import AssignmentList from "@/components/partners/AssignmentList";
 
 interface Assignment {
   id: string;
-  partner_id: string;
+  partner_id: number;
   partner_name: string;
   product_id: string;
   product_name: string;
@@ -21,7 +21,7 @@ interface Assignment {
 }
 
 interface Partner {
-  id: string;
+  id: number;
   name: string;
   share_percentage: string;
 }

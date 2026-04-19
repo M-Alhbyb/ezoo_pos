@@ -17,7 +17,7 @@ from app.schemas.dashboard import (
 from app.models.sale import Sale
 
 from app.models.partner import Partner
-from app.models.partner_distribution import PartnerDistribution
+from app.models.partner_wallet_transaction import PartnerWalletTransaction
 from app.models.inventory_log import InventoryLog
 
 logger = logging.getLogger(__name__)
@@ -54,8 +54,8 @@ class DashboardService:
                     func.sum(Sale.profit).label("profit"),
                     func.coalesce(func.sum(Sale.vat_total), 0).label("vat"),
                 )
-                .where(Sale.created_at >= start_date)
-                .where(Sale.created_at <= end_date)
+                .where(cast(Sale.created_at, Date) >= start_date)
+                .where(cast(Sale.created_at, Date) <= end_date)
                 .group_by(cast(Sale.created_at, Date))
                 .order_by(cast(Sale.created_at, Date))
             )
@@ -109,13 +109,14 @@ class DashboardService:
                 select(
                     Partner.id,
                     Partner.name,
-                    func.sum(PartnerDistribution.payout_amount).label(
+                    func.sum(PartnerWalletTransaction.amount).label(
                         "total_dividends"
                     ),
                 )
-                .join(Partner, Partner.id == PartnerDistribution.partner_id)
-                .where(PartnerDistribution.created_at >= start_date)
-                .where(PartnerDistribution.created_at <= end_date)
+                .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
+                .where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
+                .where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
+                .where(PartnerWalletTransaction.transaction_type == "sale_profit")
                 .group_by(Partner.id, Partner.name)
             )
 
@@ -179,8 +180,8 @@ class DashboardService:
                     InventoryLog.reason,
                     func.sum(InventoryLog.delta).label("total_quantity"),
                 )
-                .where(InventoryLog.created_at >= start_date)
-                .where(InventoryLog.created_at <= end_date)
+                .where(cast(InventoryLog.created_at, Date) >= start_date)
+                .where(cast(InventoryLog.created_at, Date) <= end_date)
                 .group_by(
                     cast(InventoryLog.created_at, Date), InventoryLog.reason
                 )

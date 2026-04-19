@@ -63,6 +63,28 @@ class SaleFeeCreate(SaleFeeBase):
     pass
 
 
+class SalePaymentBase(BaseModel):
+    """Base sale payment fields."""
+
+    payment_method_id: UUID = Field(..., description="Payment method ID")
+    amount: Decimal = Field(..., ge=0, description="Amount paid with this method")
+
+
+class SalePaymentCreate(SalePaymentBase):
+    """Schema for creating a sale payment."""
+
+    pass
+
+
+class SalePaymentResponse(SalePaymentBase):
+    """Schema for sale payment response."""
+
+    payment_method_name: Optional[str] = Field(None, description="Payment method name")
+
+    class Config:
+        from_attributes = True
+
+
 class SaleCreate(BaseModel):
     """Schema for creating a new sale."""
 
@@ -70,7 +92,10 @@ class SaleCreate(BaseModel):
         ..., min_length=1, description="Sale items (at least 1)"
     )
     fees: list[SaleFeeCreate] = Field(default_factory=list, description="Optional fees")
-    payment_method_id: Optional[UUID] = Field(None, description="Optional Payment method ID")
+    payment_method_id: Optional[UUID] = Field(None, description="Deprecated: Use payments instead")
+    payments: list[SalePaymentCreate] = Field(
+        default_factory=list, description="Payment breakdown"
+    )
     note: Optional[str] = Field(None, max_length=1000, description="Optional note")
     idempotency_key: Optional[str] = Field(None, description="Idempotency key to prevent double sales")
 
@@ -132,6 +157,7 @@ class SaleResponse(BaseModel):
     id: UUID
     payment_method_id: UUID
     payment_method_name: str = Field(..., description="Payment method name")
+    payments: list[SalePaymentResponse] = Field(default_factory=list, description="Payment breakdown")
     items: list[SaleItemResponse]
     subtotal: Decimal
     fees: list[SaleFeeResponse]

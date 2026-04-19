@@ -6,7 +6,7 @@ import { Edit2, Trash2, Package, User, Hash, Percent, TrendingUp } from "lucide-
 
 export interface Assignment {
   id: string;
-  partner_id: string;
+  partner_id: number;
   partner_name: string;
   product_id: string;
   product_name: string;

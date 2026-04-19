@@ -13,13 +13,14 @@ from typing import Optional, List, Tuple
 from uuid import UUID
 from datetime import datetime
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.sale_fee import SaleFee
+from app.models.sale_payment import SalePayment
 from app.models.product import Product
 from app.models.payment_method import PaymentMethod
 from app.models.settings import Settings
@@ -177,8 +178,20 @@ class SaleService:
             if existing_sale:
                 return existing_sale
 
-        # Resolve Payment Method safely
-        payment_method_id = sale_data.payment_method_id
+        # 2. VALIDATE PAYMENTS
+        if not sale_data.payments and sale_data.payment_method_id:
+            # Backward compatibility: Create a single payment from payment_method_id
+            # This is handled later during breakdown calculation if payments is empty
+            pass
+        elif not sale_data.payments:
+            raise ValueError("At least one payment method is required")
+
+        # Resolve primary Payment Method for legacy support
+        if sale_data.payments:
+            payment_method_id = sale_data.payments[0].payment_method_id
+        else:
+            payment_method_id = sale_data.payment_method_id
+
         if not payment_method_id:
             pm_query = select(PaymentMethod).where(PaymentMethod.is_active == True)
             pm_result = await self.db.execute(pm_query)
@@ -218,10 +231,21 @@ class SaleService:
                     f"requested {item.quantity}, available {prod.stock_quantity}"
                 )
 
-        # Calculate breakdown safely since locks are acquired
         breakdown = await self.calculate_breakdown(
             SaleCalculationRequest(items=sale_data.items, fees=sale_data.fees)
         )
+
+        # 4.5 VALIDATE PAYMENT TOTAL
+        if not sale_data.payments:
+            # Default to full amount for the single payment method
+            payments_to_create = [{"payment_method_id": payment_method_id, "amount": breakdown.total}]
+        else:
+            payment_total = sum(p.amount for p in sale_data.payments)
+            if payment_total != breakdown.total:
+                raise ValueError(
+                    f"Payment total ({payment_total}) does not match grand total ({breakdown.total})"
+                )
+            payments_to_create = [p.model_dump() for p in sale_data.payments]
 
         # Calculate total cost and profit
         total_cost = Decimal("0")
@@ -247,6 +271,15 @@ class SaleService:
 
         self.db.add(sale)
         await self.db.flush()  # Get sale ID
+
+        # Create sale payments
+        for p_data in payments_to_create:
+            sale_payment = SalePayment(
+                sale_id=sale.id,
+                payment_method_id=p_data["payment_method_id"],
+                amount=p_data["amount"],
+            )
+            self.db.add(sale_payment)
 
         # Create sale items
         created_items = []
@@ -350,6 +383,7 @@ class SaleService:
                 selectinload(Sale.items),
                 selectinload(Sale.fees),
                 selectinload(Sale.payment_method),
+                selectinload(Sale.payments).joinedload(SalePayment.payment_method),
             )
             .order_by(Sale.created_at.desc())
         )
@@ -358,10 +392,10 @@ class SaleService:
         conditions = []
 
         if filters.start_date:
-            conditions.append(Sale.created_at >= filters.start_date)
+            conditions.append(cast(Sale.created_at, Date) >= filters.start_date)
 
         if filters.end_date:
-            conditions.append(Sale.created_at <= filters.end_date)
+            conditions.append(cast(Sale.created_at, Date) <= filters.end_date)
 
         if filters.payment_method_id:
             conditions.append(Sale.payment_method_id == filters.payment_method_id)
@@ -402,6 +436,7 @@ class SaleService:
                 selectinload(Sale.items),
                 selectinload(Sale.fees),
                 selectinload(Sale.payment_method),
+                selectinload(Sale.payments).joinedload(SalePayment.payment_method),
             )
             .where(Sale.id == sale_id)
         )

@@ -12,7 +12,7 @@
 3. **Run backend**:
    ```bash
    cd backend
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --reload --port 8001
    ```
 
 ## Testing

@@ -28,6 +28,8 @@ interface SalesReportResponse {
   total_revenue: number;
   total_cost: number;
   total_profit: number;
+  total_partner_profit: number;
+  total_net_profit: number;
   sales_count: number;
   daily_breakdown: SalesData[];
 }
@@ -219,21 +221,29 @@ export default function SalesReportPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="glass-card p-6 bg-gradient-to-br from-blue-50/50 to-white hover:shadow-xl transition-all duration-500 border border-blue-100 shadow-sm rounded-[2rem]">
           <div className="p-3 bg-blue-100/50 text-blue-600 rounded-2xl w-fit mb-4 shadow-inner">
             <TrendingUp className="w-6 h-6" />
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.totalRevenue}</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1 tracking-tighter">{formatCurrency(reportData?.total_revenue || 0)}</h3>
+          <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">{formatCurrency(reportData?.total_revenue || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 bg-gradient-to-br from-emerald-50/50 to-white hover:shadow-xl transition-all duration-500 border border-emerald-100 shadow-sm rounded-[2rem]">
           <div className="p-3 bg-emerald-100/50 text-emerald-600 rounded-2xl w-fit mb-4 shadow-inner">
             <DollarSign className="w-6 h-6" />
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.netProfit}</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1 tracking-tighter">{formatCurrency(reportData?.total_profit || 0)}</h3>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.grossProfit}</p>
+          <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">{formatCurrency(reportData?.total_profit || 0)}</h3>
+        </div>
+
+        <div className="glass-card p-6 bg-gradient-to-br from-violet-50/50 to-white hover:shadow-xl transition-all duration-500 border border-violet-100 shadow-sm rounded-[2rem]">
+          <div className="p-3 bg-violet-100/50 text-violet-600 rounded-2xl w-fit mb-4 shadow-inner">
+            <Activity className="w-6 h-6" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.netProfitOwner}</p>
+          <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">{formatCurrency(reportData?.total_net_profit || 0)}</h3>
         </div>
 
         <div className="glass-card p-6 bg-gradient-to-br from-indigo-50/50 to-white hover:shadow-xl transition-all duration-500 border border-indigo-100 shadow-sm rounded-[2rem]">
@@ -241,7 +251,7 @@ export default function SalesReportPage() {
             <ShoppingBag className="w-6 h-6" />
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.salesCount}</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1 tracking-tighter">{reportData?.sales_count || 0}</h3>
+          <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">{reportData?.sales_count || 0}</h3>
         </div>
 
         <div className="glass-card p-6 bg-gradient-to-br from-purple-50/50 to-white hover:shadow-xl transition-all duration-500 border border-purple-100 shadow-sm rounded-[2rem]">
@@ -249,7 +259,7 @@ export default function SalesReportPage() {
             <PieIcon className="w-6 h-6" />
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ARABIC.reports.sales.avgMargin}</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1 tracking-tighter">
+          <h3 className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">
             {reportData?.total_revenue && reportData.total_revenue > 0
               ? ((reportData.total_profit / reportData.total_revenue) * 100).toFixed(1)
               : "0.0"}%

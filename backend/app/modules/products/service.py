@@ -79,7 +79,7 @@ class ProductService:
     async def list_products(
         self,
         category_id: Optional[UUID] = None,
-        partner_id: Optional[UUID] = None,
+        partner_id: Optional[int] = None,
         search: Optional[str] = None,
         active_only: bool = True,
         page: int = 1,

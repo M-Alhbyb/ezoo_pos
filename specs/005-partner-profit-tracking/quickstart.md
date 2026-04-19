@@ -15,7 +15,7 @@
 ### 1. Create a Partner
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/partners \
+curl -X POST http://localhost:8001/api/v1/partners \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Solar Partner Inc",
@@ -29,7 +29,7 @@ curl -X POST http://localhost:8000/api/v1/partners \
 Assign 10 units of a product to the partner with 20% profit share (overrides partner default):
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/partners/assignments \
+curl -X POST http://localhost:8001/api/v1/partners/assignments \
   -H "Content-Type: application/json" \
   -d '{
     "partner_id": "PARTNER_UUID",
@@ -42,7 +42,7 @@ curl -X POST http://localhost:8000/api/v1/partners/assignments \
 ### 3. Check Assignment Status
 
 ```bash
-curl http://localhost:8000/api/v1/partners/assignments/{assignment_id}
+curl http://localhost:8001/api/v1/partners/assignments/{assignment_id}
 ```
 
 Response shows:
@@ -53,7 +53,7 @@ Response shows:
 ### 4. View Product Inventory with Assignments
 
 ```bash
-curl http://localhost:8000/api/v1/products
+curl http://localhost:8001/api/v1/products
 ```
 
 Each product includes an `assignment` field showing which partner has units assigned.
@@ -63,7 +63,7 @@ Each product includes an `assignment` field showing which partner has units assi
 Use existing POS workflow. Partner profit is automatically calculated and credited.
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/sales \
+curl -X POST http://localhost:8001/api/v1/sales \
   -H "Content-Type: application/json" \
   -d '{
     "payment_method_id": "PAYMENT_METHOD_UUID",
@@ -87,7 +87,7 @@ curl -X POST http://localhost:8000/api/v1/sales \
 ### 6. Check Partner Wallet Balance
 
 ```bash
-curl http://localhost:8000/api/v1/partners/{partner_id}/wallet
+curl http://localhost:8001/api/v1/partners/{partner_id}/wallet
 ```
 
 Response:
@@ -103,7 +103,7 @@ Response:
 ### 7. View Partner Transaction History
 
 ```bash
-curl http://localhost:8000/api/v1/partners/{partner_id}/wallet/transactions
+curl http://localhost:8001/api/v1/partners/{partner_id}/wallet/transactions
 ```
 
 Shows all profit credits and manual adjustments.
@@ -113,7 +113,7 @@ Shows all profit credits and manual adjustments.
 Add or subtract from wallet for payouts, corrections, etc.:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/partners/{partner_id}/wallet/adjust \
+curl -X POST http://localhost:8001/api/v1/partners/{partner_id}/wallet/adjust \
   -H "Content-Type: application/json" \
   -d '{
     "amount": -100.00,

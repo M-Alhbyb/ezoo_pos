@@ -17,7 +17,7 @@ class PartnerCreate(PartnerBase):
 
 
 class PartnerResponse(PartnerBase):
-    id: UUID
+    id: int
     created_at: datetime
 
     class Config:
@@ -25,7 +25,7 @@ class PartnerResponse(PartnerBase):
 
 
 class PartnerDistributionItem(BaseModel):
-    partner_id: UUID
+    partner_id: int
     name: str
     share_percentage: Decimal
     amount: Decimal
@@ -39,7 +39,7 @@ class DistributionResponse(BaseModel):
 
 class PartnerDistributionResponse(BaseModel):
     id: UUID
-    partner_id: UUID
+    partner_id: int
     payout_amount: Decimal
     snapshot_fields: dict
     created_at: datetime
@@ -72,7 +72,7 @@ class DistributionRequest(BaseModel):
 class PartnerWalletBalanceResponse(BaseModel):
     """Schema for partner wallet balance."""
 
-    partner_id: UUID
+    partner_id: int
     partner_name: str
     current_balance: Decimal = Field(
         ..., description="Current wallet balance computed from latest transaction"
@@ -90,7 +90,7 @@ class PartnerWalletTransactionResponse(BaseModel):
     """Schema for individual wallet transaction."""
 
     id: UUID
-    partner_id: UUID
+    partner_id: int
     amount: Decimal = Field(..., description="Credit (+) or debit (-)")
     transaction_type: str = Field(
         ..., description="'sale_profit' or 'manual_adjustment'"

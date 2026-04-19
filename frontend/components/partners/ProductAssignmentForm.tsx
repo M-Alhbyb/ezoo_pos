@@ -6,7 +6,7 @@ import { User, Package, Hash, Percent, AlertCircle } from "lucide-react";
 
 export interface ProductAssignment {
   id?: string;
-  partner_id: string;
+  partner_id: number;
   product_id: string;
   assigned_quantity: number;
   share_percentage: string;
@@ -15,7 +15,7 @@ export interface ProductAssignment {
 }
 
 interface Partner {
-  id: string;
+  id: number;
   name: string;
   share_percentage: string;
 }
@@ -51,7 +51,7 @@ export default function ProductAssignmentForm({
   const [error, setError] = useState("");
 
   const t = ARABIC.partners.assignments;
-  const selectedPartner = partners.find(p => p.id === formData.partner_id);
+  const selectedPartner = partners.find(p => p.id === Number(formData.partner_id));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +61,7 @@ export default function ProductAssignmentForm({
     try {
       await onSubmit({
         ...formData,
+        partner_id: Number(formData.partner_id),
         share_percentage: formData.share_percentage || selectedPartner?.share_percentage,
       });
     } catch (err: any) {

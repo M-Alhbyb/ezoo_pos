@@ -293,6 +293,8 @@ export const ARABIC = {
       title: 'تقرير المبيعات',
       subtitle: 'تحليلات يومية وتفصيل الإيرادات لكل معاملة',
       totalRevenue: 'إجمالي الإيرادات',
+      grossProfit: 'إجمالي الربح',
+      netProfitOwner: 'صافي ربح المالك',
       netProfit: 'صافي الربح',
       salesCount: 'عدد المبيعات',
       avgMargin: 'متوسط هامش الربح',

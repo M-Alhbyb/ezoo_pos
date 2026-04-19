@@ -55,7 +55,7 @@ class AssignmentError(BaseModel):
     message: str
     assignment_id: Optional[UUID] = None
     product_id: Optional[UUID] = None
-    partner_id: Optional[UUID] = None
+    partner_id: Optional[int] = None
     details: Optional[dict] = None
 
     class Config:
@@ -120,7 +120,7 @@ class WalletError(BaseModel):
         "wallet_calculation_error",
     ]
     message: str
-    partner_id: Optional[UUID] = None
+    partner_id: Optional[int] = None
     details: Optional[dict] = None
 
     class Config:
@@ -141,7 +141,7 @@ class PartnerNotFoundError(BaseModel):
     """Raised when partner does not exist."""
 
     error_type: Literal["partner_not_found"] = "partner_not_found"
-    partner_id: UUID
+    partner_id: int
     message: str = "Partner not found"
 
     class Config:

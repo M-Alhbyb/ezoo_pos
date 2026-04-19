@@ -1,5 +1,5 @@
 from decimal import Decimal
-from sqlalchemy import Column, Numeric, DateTime, text, ForeignKey
+from sqlalchemy import Column, Numeric, DateTime, text, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from app.core.database import Base
@@ -14,7 +14,7 @@ class PartnerDistribution(Base):
         server_default=text("gen_random_uuid()"),
     )
     partner_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("partners.id"),
         nullable=False,
         index=True,

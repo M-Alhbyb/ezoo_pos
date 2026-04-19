@@ -28,12 +28,12 @@ class PartnerService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_partner(self, partner_id: UUID) -> Optional[Partner]:
+    async def get_partner(self, partner_id: int) -> Optional[Partner]:
         query = select(Partner).where(Partner.id == partner_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_partner_distributions(self, partner_id: UUID) -> List[PartnerDistribution]:
+    async def get_partner_distributions(self, partner_id: int) -> List[PartnerDistribution]:
         query = select(PartnerDistribution).where(
             PartnerDistribution.partner_id == partner_id
         ).order_by(PartnerDistribution.created_at.desc())

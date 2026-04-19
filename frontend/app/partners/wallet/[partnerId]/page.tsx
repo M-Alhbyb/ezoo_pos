@@ -37,7 +37,7 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8000/api/v1/partners/${partnerId}`
+        `/api/v1/partners/${partnerId}`
       );
 
       if (!response.ok) {
@@ -64,7 +64,7 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
     try {
       setAdjusting(true);
       const response = await fetch(
-        `http://localhost:8000/api/v1/partners/${partnerId}/wallet/adjust`,
+        `/api/v1/partners/${partnerId}/wallet/adjust`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

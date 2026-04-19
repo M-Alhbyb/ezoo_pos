@@ -44,7 +44,7 @@ class PartnerProfitService:
 
     # Profit Calculation Methods
 
-    async def get_partner_for_update(self, partner_id: UUID) -> Optional[Partner]:
+    async def get_partner_for_update(self, partner_id: int) -> Optional[Partner]:
         """
         Lock partner row for update using SELECT FOR UPDATE.
 
@@ -290,7 +290,7 @@ class PartnerProfitService:
 
     # Wallet Management Methods
 
-    async def get_partner_wallet_balance(self, partner_id: UUID) -> Decimal:
+    async def get_partner_wallet_balance(self, partner_id: int) -> Decimal:
         """
         Get current wallet balance (O(1) using balance_after on latest transaction).
 
@@ -318,7 +318,7 @@ class PartnerProfitService:
 
     async def get_partner_wallet_transactions(
         self,
-        partner_id: UUID,
+        partner_id: int,
         limit: int = 100,
         offset: int = 0,
     ) -> List[PartnerWalletTransaction]:
@@ -347,7 +347,7 @@ class PartnerProfitService:
 
     async def adjust_wallet(
         self,
-        partner_id: UUID,
+        partner_id: int,
         amount: Decimal,
         description: str,
     ) -> PartnerWalletTransaction:

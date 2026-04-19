@@ -297,7 +297,7 @@ useEffect(() => {
 // frontend/lib/websocket-client.ts
 
 const connectWebSocket = () => {
-  const ws = new WebSocket('ws://localhost:8000/ws/stock-updates');
+  const ws = new WebSocket('ws://localhost:8001/ws/stock-updates');
   
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);

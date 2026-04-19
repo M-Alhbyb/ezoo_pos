@@ -20,6 +20,8 @@ class SalesReport(BaseModel):
     total_revenue: Decimal
     total_cost: Decimal
     total_profit: Decimal
+    total_partner_profit: Decimal
+    total_net_profit: Decimal
     sales_count: int
     daily_breakdown: List[SalesSummaryGroup]
     total: int
@@ -29,7 +31,7 @@ class SalesReport(BaseModel):
 
 class PartnerPayoutSummary(BaseModel):
     """Aggregate distributions per partner."""
-    partner_id: UUID
+    partner_id: int
     partner_name: str
     total_payout: Decimal
 

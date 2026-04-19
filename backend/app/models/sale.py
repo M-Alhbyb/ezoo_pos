@@ -81,6 +81,9 @@ class Sale(BaseModel):
     )
     fees = relationship("SaleFee", back_populates="sale", cascade="all, delete-orphan")
     payment_method = relationship("PaymentMethod", backref="sales")
+    payments = relationship(
+        "SalePayment", back_populates="sale", cascade="all, delete-orphan"
+    )
 
     # Extensibility (for future multi-user/multi-branch support)
     # user_id and branch_id inherited from BaseModel

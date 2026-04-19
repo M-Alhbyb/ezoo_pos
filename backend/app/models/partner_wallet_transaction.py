@@ -21,6 +21,7 @@ from sqlalchemy import (
     CheckConstraint,
     Index,
     text,
+    Integer,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
@@ -57,7 +58,7 @@ class PartnerWalletTransaction(Base):
 
     # Foreign keys
     partner_id = Column(
-        PG_UUID(as_uuid=True),
+        Integer,
         ForeignKey("partners.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
@@ -139,7 +140,7 @@ class PartnerWalletTransaction(Base):
         """Convert to dictionary for API responses."""
         return {
             "id": str(self.id),
-            "partner_id": str(self.partner_id),
+            "partner_id": self.partner_id,
             "amount": float(self.amount),
             "transaction_type": self.transaction_type,
             "reference_id": str(self.reference_id) if self.reference_id else None,

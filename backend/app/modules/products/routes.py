@@ -103,7 +103,7 @@ async def create_product(
 )
 async def list_products(
     category_id: Optional[UUID] = Query(None, description="Filter by category"),
-    partner_id: Optional[UUID] = Query(None, description="Filter by partner"),
+    partner_id: Optional[int] = Query(None, description="Filter by partner"),
     search: Optional[str] = Query(
         None, max_length=200, description="Search by name or SKU"
     ),

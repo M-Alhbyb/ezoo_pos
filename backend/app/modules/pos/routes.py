@@ -349,10 +349,22 @@ async def _prepare_sale_response(sale) -> dict:
     reversal_info = None
     # reversal check would go here when we implement reversal functionality
 
+    # Prepare payments
+    payments = []
+    for p in sale.payments:
+        payments.append(
+            {
+                "payment_method_id": str(p.payment_method_id),
+                "payment_method_name": p.payment_method_name,
+                "amount": p.amount,
+            }
+        )
+
     return {
         "id": str(sale.id),
         "payment_method_id": str(sale.payment_method_id),
         "payment_method_name": sale.payment_method.name,
+        "payments": payments,
         "items": items,
         "subtotal": sale.subtotal,
         "fees": fees,

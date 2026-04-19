@@ -42,7 +42,7 @@ class Product(BaseModel):
     # Relationships
     category = relationship("Category", backref="products")
     partner_id = Column(
-        UUID(as_uuid=True), ForeignKey("partners.id", ondelete="SET NULL"), nullable=True, index=True
+        Integer, ForeignKey("partners.id", ondelete="SET NULL"), nullable=True, index=True
     )
     partner = relationship("Partner", backref="products")
 
@@ -84,7 +84,7 @@ class Product(BaseModel):
             "name": self.name,
             "sku": self.sku,
             "category_id": str(self.category_id),
-            "partner_id": str(self.partner_id) if self.partner_id else None,
+            "partner_id": self.partner_id,
             "base_price": float(self.base_price),
             "selling_price": float(self.selling_price),
             "stock_quantity": self.stock_quantity,
