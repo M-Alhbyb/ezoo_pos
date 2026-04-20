@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 class PartnerBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    profit_percentage: Decimal = Field(..., ge=0, le=100)
+    share_percentage: Decimal = Field(..., ge=0, le=100)
     investment_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
 
 
@@ -27,7 +27,7 @@ class PartnerResponse(PartnerBase):
 class PartnerDistributionItem(BaseModel):
     partner_id: UUID
     name: str
-    profit_percentage: Decimal
+    share_percentage: Decimal
     amount: Decimal
 
 

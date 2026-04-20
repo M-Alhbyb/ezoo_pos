@@ -4,7 +4,17 @@ Sale SQLAlchemy model.
 Defines the Sale entity for the EZOO POS system.
 """
 
-from sqlalchemy import Column, String, Numeric, Text, ForeignKey, CheckConstraint, Boolean
+from sqlalchemy import (
+    Column,
+    String,
+    Numeric,
+    Text,
+    DateTime,
+    ForeignKey,
+    CheckConstraint,
+    Boolean,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -32,6 +42,12 @@ class Sale(BaseModel):
     payment_method_id = Column(
         UUID(as_uuid=True), ForeignKey("payment_methods.id"), nullable=False, index=True
     )
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        index=True,
+    )
     subtotal = Column(Numeric(12, 2), nullable=False)
     fees_total = Column(Numeric(12, 2), nullable=False, default=0)
     vat_rate = Column(Numeric(5, 2), nullable=True)  # e.g., 16.00 for 16%
@@ -41,7 +57,9 @@ class Sale(BaseModel):
     profit = Column(Numeric(12, 2), nullable=False, default=0)
     note = Column(Text, nullable=True)
     idempotency_key = Column(String(255), unique=True, nullable=True, index=True)
-    original_sale_id = Column(UUID(as_uuid=True), ForeignKey("sales.id"), nullable=True, index=True)
+    original_sale_id = Column(
+        UUID(as_uuid=True), ForeignKey("sales.id"), nullable=True, index=True
+    )
     is_reversal = Column(Boolean, nullable=False, default=False)
 
     # Added properties for test backward compatibility
@@ -68,7 +86,7 @@ class Sale(BaseModel):
     # user_id and branch_id inherited from BaseModel
 
     # Removed strict non-negative check constraints to allow for reversal records
-    # Non-negativity for standard sales and true negativity for reversals 
+    # Non-negativity for standard sales and true negativity for reversals
     # must be enforced at the application layer.
     __table_args__ = ()
 

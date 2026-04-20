@@ -1,4 +1,20 @@
-import type { Metadata } from "next";
+"use client";
+
+import React, { useState } from "react";
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  Package, 
+  Briefcase, 
+  Users, 
+  PieChart, 
+  Settings,
+  TrendingUp,
+  History,
+  Menu,
+  X,
+  Plus
+} from "lucide-react";
 import { Inter, Outfit } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,74 +23,137 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
-export const metadata: Metadata = {
-  title: "RAYON energy | Premium Sales Suite",
-  description: "Next-Generation Point of Sale System",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable} font-sans`}>
-        <div className="flex min-h-screen bg-slate-50">
-          {/* Glassmorphic Sidebar */}
-          <aside className="w-64 glass hidden md:flex flex-col border-r border-slate-200">
-            <div className="p-8 flex justify-center">
-              <Image src="/logo.png" alt="RAYON energy Logo" width={120} height={120} className="rounded-2xl shadow-lg hover:scale-105 transition-transform duration-300" />
+        <div className="flex min-h-screen bg-slate-50 relative overflow-x-hidden">
+          {/* Mobile Sidebar Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+
+          {/* Glassmorphic Sidebar (Desktop & Mobile Drawer) */}
+          <aside className={`
+            w-64 glass flex flex-col border-r border-slate-200 fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
+            md:relative md:translate-x-0 
+            ${isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
+          `}>
+            <div className="p-8 flex flex-col items-center relative">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <Image src="/logo.png" alt="RAYON energy Logo" width={100} height={100} className="relative rounded-2xl shadow-xl transition-transform duration-300" />
+              </div>
+              <button 
+                className="md:hidden absolute top-2 right-2 p-2 text-slate-400 hover:text-slate-600 rounded-xl bg-slate-100/50"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="mt-6 text-center">
+                 <h2 className="text-xl font-bold text-slate-900 font-heading">RAYON energy</h2>
+                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mt-1">Premium POS Suite</p>
+              </div>
             </div>
 
-            <nav className="flex-1 px-4 space-y-2 mt-4 text-slate-600 font-medium tracking-wide">
-              <Link href="/" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                Dashboard
+            <nav className="flex-1 px-4 space-y-2 mt-4 text-slate-600 font-medium tracking-wide overflow-y-auto custom-scrollbar">
+              <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                  <LayoutDashboard className="w-5 h-5" />
+                </div>
+                Overview
               </Link>
-              <Link href="/pos" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              <Link href="/pos" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                  <ShoppingCart className="w-5 h-5" />
+                </div>
                 Point of Sale
               </Link>
-              <Link href="/products" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+              <Link href="/products" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <Package className="w-5 h-5" />
+                </div>
                 Products
               </Link>
-              <Link href="/inventory" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+              <Link href="/inventory" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <History className="w-5 h-5" />
+                </div>
                 Inventory
               </Link>
-              <Link href="/settings" className="flex items-center px-4 py-3 hover:bg-slate-100/50 rounded-xl transition-all">
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Settings
+              <Link href="/projects" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <Briefcase className="w-5 h-5" />
+                </div>
+                Projects
+              </Link>
+              <Link href="/partners" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <Users className="w-5 h-5" />
+                </div>
+                Partners
+              </Link>
+              
+              <div className="pt-6 pb-2">
+                <p className="px-4 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">Analytics & Reports</p>
+              </div>
+              <Link href="/dashboard/reports/sales" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 hover:translate-x-1 transition-all duration-200">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-3"></div>
+                Sales Reports
+              </Link>
+              <Link href="/dashboard/reports/projects" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:translate-x-1 transition-all duration-200">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-3"></div>
+                Project Reports
+              </Link>
+              <Link href="/dashboard/reports/partners" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-emerald-600 hover:translate-x-1 transition-all duration-200">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-3"></div>
+                Partner Payouts
+              </Link>
+              <Link href="/dashboard/reports/inventory" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-rose-600 hover:translate-x-1 transition-all duration-200">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mr-3"></div>
+                Stock Flow
               </Link>
             </nav>
 
-            <div className="p-4 border-t border-slate-200">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#073053] to-[#F69826] shadow-inner"></div>
-                <div className="ml-3">
-                  <p className="text-sm font-semibold text-slate-800">Admin User</p>
-                  <p className="text-xs text-slate-500">Store Manager</p>
-                </div>
-              </div>
+            <div className="p-6 border-t border-slate-100">
+               <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">
+                     AD
+                  </div>
+                  <div className="flex-1 truncate">
+                    <p className="text-sm font-bold text-slate-900 truncate">Admin User</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manager</p>
+                  </div>
+               </div>
             </div>
           </aside>
 
           {/* Main Content Area */}
           <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {/* Topbar Mobile */}
-            <div className="md:hidden glass p-4 flex justify-between items-center sticky top-0 z-20">
+            <div className="md:hidden glass p-4 flex justify-between items-center sticky top-0 z-40 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Image src="/logo.png" alt="RAYON energy Logo" width={32} height={32} className="rounded-md shadow-sm" />
-                <h1 className="text-xl font-bold text-gradient font-heading">RAYON energy</h1>
+                <Image src="/logo.png" alt="RAYON energy Logo" width={32} height={32} className="rounded-lg shadow-sm" />
+                <h1 className="text-lg font-bold text-slate-900 font-heading">RAYON energy</h1>
               </div>
-              <button className="p-2 text-slate-600 rounded bg-slate-100">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              <button 
+                className="p-2.5 text-slate-600 rounded-xl bg-white border border-slate-200 shadow-sm transition-all active:scale-95"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-4 md:p-8 animate-fade-in max-w-7xl mx-auto">
+            <div className="p-6 md:p-10 animate-in fade-in duration-700 max-w-7xl mx-auto">
               {children}
             </div>
           </main>

@@ -1,6 +1,9 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
@@ -14,17 +17,40 @@ from app.modules.projects.routes import router as projects_router
 from app.modules.expenses.routes import router as expenses_router
 from app.modules.partners.routes import router as partners_router
 from app.modules.reports.routes import router as reports_router
+from app.api.routes.dashboard import router as dashboard_router
 import logging
 
 logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description=settings.app_description,
+    description=(
+        f"{settings.app_description}\n\n"
+        "## Export Endpoints (003-export-visualization-dashboards)\n\n"
+        "- `GET /api/reports/sales/export` - Export sales report (CSV, XLSX, PDF)\n"
+        "- `GET /api/reports/projects/export` - Export projects report (CSV, XLSX, PDF)\n"
+        "- `GET /api/reports/partners/export` - Export partners report (CSV, XLSX, PDF)\n"
+        "- `GET /api/reports/inventory/export` - Export inventory report (CSV, XLSX, PDF)\n\n"
+        "## Dashboard Endpoints (003-export-visualization-dashboards)\n\n"
+        "- `GET /api/dashboard/sales` - Sales line chart data with date range filter\n"
+        "- `GET /api/dashboard/projects` - Project profit bar chart data\n"
+        "- `GET /api/dashboard/partners` - Partner dividends pie chart data\n"
+        "- `GET /api/dashboard/inventory` - Inventory stacked bar chart data\n\n"
+        "## Limits\n\n"
+        f"- CSV max rows: {settings.csv_max_rows:,}\n"
+        f"- XLSX max rows: {settings.xlsx_max_rows:,}\n"
+        f"- PDF max rows: {settings.pdf_max_rows:,}\n"
+        f"- Dashboard max points: {settings.dashboard_max_points:,}\n"
+        f"- Rate limit threshold: {settings.export_rate_limit_threshold:,} rows\n"
+    ),
 )
 
-# Setup exception handlers
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 setup_exception_handlers(app)
 
 app.add_middleware(
@@ -44,6 +70,7 @@ app.include_router(projects_router)
 app.include_router(expenses_router)
 app.include_router(partners_router)
 app.include_router(reports_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
@@ -61,8 +88,10 @@ async def get_payment_methods(db: AsyncSession = Depends(get_db)):
     """Get all active payment methods (compatibility endpoint)."""
     from sqlalchemy import select
     from app.models.payment_method import PaymentMethod
-    
-    result = await db.execute(select(PaymentMethod).where(PaymentMethod.is_active == True))
+
+    result = await db.execute(
+        select(PaymentMethod).where(PaymentMethod.is_active == True)
+    )
     methods = result.scalars().all()
     return {"items": [m.to_dict() for m in methods]}
 

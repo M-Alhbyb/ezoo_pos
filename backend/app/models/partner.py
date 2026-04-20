@@ -15,7 +15,7 @@ class Partner(Base):
     )
     name = Column(String(200), nullable=False)
     investment_amount = Column(Numeric(12, 2), nullable=False, default=0, server_default='0')
-    profit_percentage = Column(Numeric(5, 2), nullable=False)
+    share_percentage = Column(Numeric(5, 2), nullable=False)
 
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
