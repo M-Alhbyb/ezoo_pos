@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Decimal } from "decimal.js";
 
 // Components
-import ProductSearch from "@/components/pos/ProductSearch";
+import ProductGrid from "@/components/pos/ProductGrid";
 import POSCart from "@/components/pos/POSCart";
 import FeeEditor from "@/components/pos/FeeEditor";
 import PaymentMethodSelect from "@/components/pos/PaymentMethodSelect";
@@ -220,12 +220,20 @@ export default function POSPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left/Middle Column (Search & Cart) */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="glass p-6 rounded-2xl">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              Find Products
-            </h2>
-            <ProductSearch onProductSelect={handleProductSelect} />
+          <div className="glass p-6 rounded-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div className="relative mb-6">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+                <div className="p-2 bg-primary/10 rounded-lg mr-3 text-primary">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </div>
+                Quick Select
+              </h2>
+              <p className="text-sm text-slate-500 ml-12 mt-0.5">Click a product to add it to your cart.</p>
+            </div>
+
+            <ProductGrid onProductSelect={handleProductSelect} />
           </div>
 
           <div className="glass p-6 rounded-2xl relative overflow-hidden">

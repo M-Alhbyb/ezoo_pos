@@ -147,6 +147,45 @@ class ConnectionManager:
         await self.broadcast(message)
         logger.info(f"Broadcasted batch stock update for {len(updates)} products")
 
+    async def broadcast_preset_update(
+        self, fee_type: str, location_id: int, presets: list
+    ):
+        """
+        Broadcast a fee preset update to all connected POS clients.
+
+        Called when presets are created, updated, or deleted.
+
+        Args:
+            fee_type: Type of fee (shipping, installation, custom)
+            location_id: Store location ID
+            presets: List of preset amounts
+
+        Example message:
+            {
+                "event": "preset_updated",
+                "data": {
+                    "fee_type": "shipping",
+                    "location_id": 1,
+                    "presets": [10, 30, 50, 100]
+                }
+            }
+        """
+        message = json.dumps(
+            {
+                "event": "preset_updated",
+                "data": {
+                    "fee_type": fee_type,
+                    "location_id": location_id,
+                    "presets": presets,
+                },
+            }
+        )
+
+        await self.broadcast(message)
+        logger.info(
+            f"Broadcasted preset update for {fee_type} at location {location_id}: {presets}"
+        )
+
     def get_connection_count(self) -> int:
         """
         Get the number of active WebSocket connections.

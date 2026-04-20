@@ -36,17 +36,6 @@ class ProductService:
     async def create_product(self, product_data: ProductCreate) -> Product:
         """
         Create a new product with validation.
-
-        Constitution VII: Backend validates all business rules.
-
-        Args:
-            product_data: ProductCreate schema with validated fields
-
-        Returns:
-            Created Product instance
-
-        Raises:
-            ValueError: If SKU already exists or category not found
         """
         if product_data.sku:
             existing = await self._get_by_sku(product_data.sku)
@@ -55,14 +44,25 @@ class ProductService:
                     f"Product with SKU '{product_data.sku}' already exists"
                 )
 
-        category = await self._get_category(product_data.category_id)
-        if not category:
-            raise ValueError(f"Category {product_data.category_id} not found")
+        category_id = product_data.category_id
+        if not category_id:
+            cat_query = select(Category).limit(1)
+            cat_result = await self.db.execute(cat_query)
+            category = cat_result.scalars().first()
+            if not category:
+                category = Category(name="Uncategorized")
+                self.db.add(category)
+                await self.db.flush()
+            category_id = category.id
+        else:
+            category = await self._get_category(category_id)
+            if not category:
+                raise ValueError(f"Category {category_id} not found")
 
         product = Product(
             name=product_data.name,
             sku=product_data.sku,
-            category_id=product_data.category_id,
+            category_id=category_id,
             base_price=product_data.base_price,
             selling_price=product_data.selling_price,
             stock_quantity=product_data.stock_quantity,
@@ -73,7 +73,7 @@ class ProductService:
         await self.db.commit()
         await self.db.refresh(product)
 
-        return product
+        return await self.get_product(product.id)
 
     async def list_products(
         self,
@@ -201,7 +201,7 @@ class ProductService:
         await self.db.commit()
         await self.db.refresh(product)
 
-        return product
+        return await self.get_product(product_id)
 
     async def soft_delete_product(self, product_id: UUID) -> bool:
         """

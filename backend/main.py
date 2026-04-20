@@ -9,6 +9,11 @@ from app.modules.products.routes import router as products_router
 from app.modules.categories.routes import router as categories_router
 from app.modules.pos.routes import router as pos_router
 from app.modules.inventory.routes import router as inventory_router
+from app.modules.settings.routes import router as settings_router
+from app.modules.projects.routes import router as projects_router
+from app.modules.expenses.routes import router as expenses_router
+from app.modules.partners.routes import router as partners_router
+from app.modules.reports.routes import router as reports_router
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,6 +39,11 @@ app.include_router(products_router)
 app.include_router(categories_router)
 app.include_router(pos_router)
 app.include_router(inventory_router)
+app.include_router(settings_router)
+app.include_router(projects_router)
+app.include_router(expenses_router)
+app.include_router(partners_router)
+app.include_router(reports_router)
 
 
 @app.get("/")
@@ -48,7 +58,7 @@ async def health():
 
 @app.get("/api/payment-methods")
 async def get_payment_methods(db: AsyncSession = Depends(get_db)):
-    """Get all active payment methods."""
+    """Get all active payment methods (compatibility endpoint)."""
     from sqlalchemy import select
     from app.models.payment_method import PaymentMethod
     

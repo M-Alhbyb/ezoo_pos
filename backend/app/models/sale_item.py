@@ -34,6 +34,8 @@ class SaleItem(BaseModel):
     product_name = Column(String(200), nullable=False)  # Snapshot
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Numeric(12, 2), nullable=False)
+    base_cost = Column(Numeric(12, 2), nullable=True)  # Snapshot of product.base_price
+    vat_rate = Column(Numeric(5, 2), nullable=True)  # Snapshot of VAT rate at time of sale
     line_total = Column(Numeric(12, 2), nullable=False)
 
     # Relationships
@@ -44,13 +46,13 @@ class SaleItem(BaseModel):
     # user_id and branch_id inherited from BaseModel
 
     __table_args__ = (
-        CheckConstraint("quantity > 0", name="check_quantity_positive"),
         CheckConstraint("unit_price >= 0", name="check_unit_price_nonnegative"),
-        CheckConstraint("line_total >= 0", name="check_line_total_nonnegative"),
+        CheckConstraint("base_cost >= 0", name="check_base_cost_nonnegative"),
     )
 
-    def __repr__(self):
-        return f"<SaleItem {self.product_name} x{self.quantity}>"
+    @property
+    def price(self):
+        return self.unit_price
 
     def to_dict(self):
         """Convert sale item to dictionary for API responses."""

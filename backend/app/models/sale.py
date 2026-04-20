@@ -4,7 +4,7 @@ Sale SQLAlchemy model.
 Defines the Sale entity for the EZOO POS system.
 """
 
-from sqlalchemy import Column, String, Numeric, Text, ForeignKey, CheckConstraint
+from sqlalchemy import Column, String, Numeric, Text, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -35,9 +35,29 @@ class Sale(BaseModel):
     subtotal = Column(Numeric(12, 2), nullable=False)
     fees_total = Column(Numeric(12, 2), nullable=False, default=0)
     vat_rate = Column(Numeric(5, 2), nullable=True)  # e.g., 16.00 for 16%
-    vat_amount = Column(Numeric(12, 2), nullable=True)
-    total = Column(Numeric(12, 2), nullable=False)
-    note = Column(Text, nullable=True)  # Relationships
+    vat_total = Column(Numeric(12, 2), nullable=True)  # Renamed from vat_amount
+    grand_total = Column(Numeric(12, 2), nullable=False)  # Renamed from total
+    total_cost = Column(Numeric(12, 2), nullable=False, default=0)
+    profit = Column(Numeric(12, 2), nullable=False, default=0)
+    note = Column(Text, nullable=True)
+    idempotency_key = Column(String(255), unique=True, nullable=True, index=True)
+    original_sale_id = Column(UUID(as_uuid=True), ForeignKey("sales.id"), nullable=True, index=True)
+    is_reversal = Column(Boolean, nullable=False, default=False)
+
+    # Added properties for test backward compatibility
+    @property
+    def vat_amount(self):
+        return self.vat_total
+
+    @property
+    def total(self):
+        return self.grand_total
+
+    @property
+    def vat_percentage(self):
+        return self.vat_rate
+
+    # Relationships
     items = relationship(
         "SaleItem", back_populates="sale", cascade="all, delete-orphan"
     )
@@ -47,11 +67,10 @@ class Sale(BaseModel):
     # Extensibility (for future multi-user/multi-branch support)
     # user_id and branch_id inherited from BaseModel
 
-    __table_args__ = (
-        CheckConstraint("subtotal >= 0", name="check_subtotal_nonnegative"),
-        CheckConstraint("fees_total >= 0", name="check_fees_total_nonnegative"),
-        CheckConstraint("total >= 0", name="check_total_nonnegative"),
-    )
+    # Removed strict non-negative check constraints to allow for reversal records
+    # Non-negativity for standard sales and true negativity for reversals 
+    # must be enforced at the application layer.
+    __table_args__ = ()
 
     def __repr__(self):
         return f"<Sale {self.id} - Total: {self.total}>"

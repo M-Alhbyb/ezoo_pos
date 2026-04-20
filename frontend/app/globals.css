@@ -10,19 +10,19 @@
     --card-foreground: #0f172a;
     --popover: #ffffff;
     --popover-foreground: #0f172a;
-    --primary: #3b82f6; /* Beautiful Blue */
+    --primary: #073053; /* Logo Deep Blue */
     --primary-foreground: #ffffff;
     --secondary: #e2e8f0;
     --secondary-foreground: #0f172a;
     --muted: #f1f5f9;
     --muted-foreground: #64748b;
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
+    --accent: #F69826; /* Logo Bright Orange */
+    --accent-foreground: #ffffff;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: #3b82f6;
+    --ring: #F69826;
     --radius: 0.75rem;
   }
 
@@ -39,7 +39,7 @@
     @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-md relative z-10;
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#073053] to-[#F69826];
   }
   .animate-fade-in {
     animation: fadeIn 0.4s ease-out;
@@ -68,7 +68,7 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #07305344;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {

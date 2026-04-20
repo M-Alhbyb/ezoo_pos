@@ -213,7 +213,7 @@ class TestProductSKUUniqueness:
         await db_session.commit()
 
         # Try to update product2 to use product1's SKU
-        response = await client.put(
+        response = await client.patch(
             f"/api/products/{product2.id}",
             json={"sku": "PROD-001"},  # Duplicate SKU
         )
@@ -227,7 +227,7 @@ class TestProductSKUUniqueness:
         self, client: AsyncClient, test_product: Product
     ):
         """Test that updating a product with its own SKU is allowed."""
-        response = await client.put(
+        response = await client.patch(
             f"/api/products/{test_product.id}",
             json={
                 "name": "Updated Name",
@@ -558,7 +558,7 @@ class TestProductUpdateAndGet:
         self, client: AsyncClient, test_product: Product, test_category: Category
     ):
         """Test updating all product fields."""
-        response = await client.put(
+        response = await client.patch(
             f"/api/products/{test_product.id}",
             json={
                 "name": "Updated Product Name",
@@ -581,7 +581,7 @@ class TestProductUpdateAndGet:
     ):
         """Test updating only some product fields."""
         original_sku = test_product.sku
-        response = await client.put(
+        response = await client.patch(
             f"/api/products/{test_product.id}",
             json={"name": "New Name Only"},
         )

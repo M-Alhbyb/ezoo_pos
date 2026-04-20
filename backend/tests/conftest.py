@@ -19,14 +19,15 @@ from app.core.database import Base, get_db
 from main import app
 
 
-# Test database URL (use in-memory SQLite for testing)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL (use PostgreSQL test database)
+TEST_DATABASE_URL = "postgresql+asyncpg://pasha:pshpsh00@localhost:5432/ezoo_pos_test"
 
 
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
@@ -36,8 +37,6 @@ async def db_engine():
     """Create a test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
-        poolclass=pool.StaticPool,
-        connect_args={"check_same_thread": False},
         echo=False,
     )
 
@@ -69,11 +68,22 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create a test HTTP client."""
+async def async_client(db_engine) -> AsyncGenerator[AsyncClient, None]:
+    """Create a test HTTP client with isolated DB sessions per request."""
+    from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+
+    async_session_maker = async_sessionmaker(
+        db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
 
     async def override_get_db():
-        yield db_session
+        async with async_session_maker() as session:
+            yield session
+            await session.rollback()
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -81,6 +91,15 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
     app.dependency_overrides.clear()
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+@pytest.fixture(scope="function")
+async def client(async_client):
+    """Alias for async_client fixture."""
+    yield async_client
 
 
 # Test utilities

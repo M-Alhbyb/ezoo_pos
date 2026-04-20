@@ -8,6 +8,21 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import Base
+# Import all models to ensure they are registered with Base.metadata
+from app.models.sale_fee import SaleFee
+from app.models.category import Category
+from app.models.settings import Settings
+from app.models.inventory_log import InventoryLog
+from app.models.project import Project
+from app.models.project_item import ProjectItem
+from app.models.expense import Expense
+from app.models.partner import Partner
+from app.models.partner_distribution import PartnerDistribution
+import app.models.payment_method
+import app.models.product
+import app.models.sale
+import app.models.sale_item
+
 from app.core.config import settings
 
 config = context.config
