@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${inter.variable} ${cairo.variable} font-sans`}>
-        <div className="flex min-h-screen bg-slate-50 relative overflow-x-hidden">
+        <div className="flex h-screen bg-slate-50 relative overflow-hidden">
           {isMobileMenuOpen && (
             <div 
               className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
@@ -96,6 +96,12 @@ export default function RootLayout({
                 </div>
                 الشركاء
               </Link>
+              <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <Settings className="w-5 h-5" />
+                </div>
+                الإعدادات
+              </Link>
               
               <div className="pt-6 pb-2">
                 <p className="px-4 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">التحليلات والتقارير</p>
@@ -127,7 +133,7 @@ export default function RootLayout({
             </div>
           </aside>
 
-          <main className="flex-1 overflow-x-hidden overflow-y-auto">
+          <main className="flex-1 overflow-y-auto h-full">
             <div className="md:hidden glass p-4 flex justify-between items-center sticky top-0 z-40 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Image src="/logo.png" alt="RAYON energy Logo" width={32} height={32} className="rounded-lg shadow-sm" />

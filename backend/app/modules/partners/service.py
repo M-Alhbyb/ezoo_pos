@@ -1,5 +1,6 @@
 from decimal import Decimal
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.partner import Partner
@@ -24,6 +25,18 @@ class PartnerService:
 
     async def get_partners(self) -> List[Partner]:
         query = select(Partner)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_partner(self, partner_id: int) -> Optional[Partner]:
+        query = select(Partner).where(Partner.id == partner_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_partner_distributions(self, partner_id: int) -> List[PartnerDistribution]:
+        query = select(PartnerDistribution).where(
+            PartnerDistribution.partner_id == partner_id
+        ).order_by(PartnerDistribution.created_at.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
 

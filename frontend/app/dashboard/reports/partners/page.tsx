@@ -8,7 +8,7 @@ import { DataTable, Column } from "@/components/reports/DataTable";
 import { ExportButtonGroup } from "@/components/reports/ExportButtonGroup";
 
 interface PartnerPayoutData {
-  partner_id: string;
+  partner_id: number;
   partner_name: string;
   total_payout: number;
 }

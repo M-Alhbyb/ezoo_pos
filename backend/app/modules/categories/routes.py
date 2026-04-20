@@ -266,6 +266,7 @@ def _prepare_category_response(category: Category, product_count: int = 0) -> di
     return {
         "id": str(category.id),
         "name": category.name,
+        "color": category.color,
         "product_count": product_count,
         "created_at": category.created_at,
         "updated_at": category.updated_at,

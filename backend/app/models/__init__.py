@@ -11,9 +11,11 @@ from app.models.settings import Settings
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.sale_fee import SaleFee
+from app.models.sale_payment import SalePayment
 from app.models.inventory_log import InventoryLog
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
+from app.models.partner_wallet_transaction import PartnerWalletTransaction
 
 __all__ = [
     "Product",
@@ -23,7 +25,9 @@ __all__ = [
     "Sale",
     "SaleItem",
     "SaleFee",
+    "SalePayment",
     "InventoryLog",
     "Partner",
     "PartnerDistribution",
+    "PartnerWalletTransaction",
 ]

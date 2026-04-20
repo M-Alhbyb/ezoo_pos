@@ -10,7 +10,7 @@ This guide helps developers quickly understand and implement the quick fee amoun
 
 ## Prerequisites
 
-- Backend running on `localhost:8000`
+- Backend running on `localhost:8001`
 - Frontend running on `localhost:3000`
 - PostgreSQL database accessible
 - Understanding of existing settings and fee modules
@@ -111,7 +111,7 @@ cd backend
 pytest tests/integration/test_settings_api.py -v
 
 # Manual test
-curl -X POST http://localhost:8000/api/settings/fee-presets \
+curl -X POST http://localhost:8001/api/settings/fee-presets \
   -H "Content-Type: application/json" \
   -d '{"location_id": 1, "fee_type": "shipping", "presets": [10, 30, 50, 100]}'
 ```
@@ -320,7 +320,7 @@ Run these tests before considering the feature complete:
 ### Issue: Presets not loading
 
 **Check**:
-1. Backend API is running on port 8000
+1. Backend API is running on port 8001
 2. Database has settings table with fee_preset keys
 3. Network request reaches `/api/settings/fee-presets`
 

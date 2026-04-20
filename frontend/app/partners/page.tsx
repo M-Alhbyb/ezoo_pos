@@ -8,7 +8,7 @@ import PartnerModal from "@/components/partners/PartnerModal";
 import DistributeModal from "@/components/partners/DistributeModal";
 
 interface Partner {
-  id: string;
+  id: number;
   name: string;
   share_percentage: number;
   investment_amount: number;

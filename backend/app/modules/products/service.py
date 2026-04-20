@@ -66,6 +66,7 @@ class ProductService:
             base_price=product_data.base_price,
             selling_price=product_data.selling_price,
             stock_quantity=product_data.stock_quantity,
+            partner_id=product_data.partner_id,
             is_active=True,
         )
 
@@ -78,6 +79,7 @@ class ProductService:
     async def list_products(
         self,
         category_id: Optional[UUID] = None,
+        partner_id: Optional[int] = None,
         search: Optional[str] = None,
         active_only: bool = True,
         page: int = 1,
@@ -100,7 +102,10 @@ class ProductService:
 
         query = (
             select(Product)
-            .options(selectinload(Product.category))
+            .options(
+                selectinload(Product.category),
+                selectinload(Product.partner)
+            )
             .order_by(Product.created_at.desc())
         )
 
@@ -109,6 +114,9 @@ class ProductService:
 
         if category_id:
             query = query.where(Product.category_id == category_id)
+
+        if partner_id:
+            query = query.where(Product.partner_id == partner_id)
 
         if search:
             search_term = f"%{search}%"
@@ -143,7 +151,10 @@ class ProductService:
         """
         query = (
             select(Product)
-            .options(selectinload(Product.category))
+            .options(
+                selectinload(Product.category),
+                selectinload(Product.partner)
+            )
             .where(Product.id == product_id)
         )
 
@@ -273,9 +284,12 @@ class ProductService:
             "sku": product.sku,
             "category_id": str(product.category_id),
             "category_name": product.category.name if product.category else None,
+            "category_color": product.category.color if product.category else None,
             "base_price": str(product.base_price),
             "selling_price": str(product.selling_price),
             "stock_quantity": product.stock_quantity,
+            "partner_id": str(product.partner_id) if product.partner_id else None,
+            "partner_name": product.partner.name if product.partner else None,
             "is_active": product.is_active,
             "created_at": product.created_at.isoformat(),
             "updated_at": product.updated_at.isoformat(),

@@ -87,12 +87,18 @@ export default function OverviewPage() {
         setInventoryData(transformInventoryChartData(inventory.data.dates, inventory.data.sales, inventory.data.restocks, inventory.data.reversals));
       }
 
-      const lowStockRes = await fetch("/api/inventory/low-stock?threshold=10");
-
+      // Fix low stock count logic (it's a list, not a paginated object with .total)
+      const lowStockRes = await fetch("/api/inventory/low-stock?threshold=20");
       if (lowStockRes.ok) {
         const data = await lowStockRes.json();
+        setStats(s => ({ ...s, lowStockCount: Array.isArray(data) ? data.length : 0 }));
+      }
 
-        setStats(s => ({ ...s, lowStockCount: data.total || 0 }));
+      // Fetch actual total partners count (not just those with transactions)
+      const partnersRes = await fetch("/api/partners");
+      if (partnersRes.ok) {
+        const data = await partnersRes.json();
+        setStats(s => ({ ...s, totalPartners: Array.isArray(data) ? data.length : 0 }));
       }
 
     } catch (error) {

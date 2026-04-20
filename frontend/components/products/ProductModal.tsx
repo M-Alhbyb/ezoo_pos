@@ -12,6 +12,7 @@ interface Product {
   base_price: string;
   selling_price: string;
   stock_quantity: number;
+  partner_id?: number | null;
 }
 
 interface Category {
@@ -19,17 +20,25 @@ interface Category {
   name: string;
 }
 
+interface Partner {
+  id: number;
+  name: string;
+  share_percentage: string;
+}
+
 interface ProductModalProps {
   product?: Product;
   categories: Category[];
+  partners: Partner[];
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<Product>) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 export default function ProductModal({
   product,
   categories,
+  partners,
   isOpen,
   onClose,
   onSubmit,
@@ -81,6 +90,7 @@ export default function ProductModal({
           <ProductForm 
             product={product} 
             categories={categories} 
+            partners={partners}
             onSubmit={async (data) => {
               await onSubmit(data);
               onClose();

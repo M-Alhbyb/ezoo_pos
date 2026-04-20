@@ -41,7 +41,7 @@ alembic upgrade head
 
 6. Start the server:
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8001
 ```
 
 ## Project Structure
@@ -93,8 +93,8 @@ pytest --cov=app --cov-report=html
 ## API Documentation
 
 Once the server is running, access:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:8001/docs
+- ReDoc: http://localhost:8001/redoc
 
 ## Calculation Engine
 

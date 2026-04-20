@@ -23,6 +23,7 @@ class ProductBase(BaseModel):
     base_price: Decimal = Field(..., ge=0, description="Cost to acquire")
     selling_price: Decimal = Field(..., ge=0, description="Price to customers")
     stock_quantity: int = Field(default=0, ge=0, description="Current stock level")
+    partner_id: Optional[int] = Field(None, description="Optional Partner ID")
 
     @field_validator("selling_price")
     @classmethod
@@ -49,6 +50,7 @@ class ProductUpdate(BaseModel):
     category_id: Optional[UUID] = None
     base_price: Optional[Decimal] = Field(None, ge=0)
     selling_price: Optional[Decimal] = Field(None, ge=0)
+    partner_id: Optional[int] = None
 
     @field_validator("selling_price")
     @classmethod
@@ -75,9 +77,13 @@ class ProductResponse(ProductBase):
     category_name: Optional[str] = Field(
         None, description="Category name (joined from categories)"
     )
+    category_color: Optional[str] = Field(
+        None, description="Category theme color (joined from categories)"
+    )
     is_active: bool = Field(..., description="Whether product is active")
     created_at: datetime
     updated_at: datetime
+    partner_name: Optional[str] = Field(None, description="Partner name (joined from partners)")
 
     class Config:
         from_attributes = True

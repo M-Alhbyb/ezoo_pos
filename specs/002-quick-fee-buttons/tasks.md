@@ -25,7 +25,7 @@
 **Purpose**: Initialize feature branch and verify existing infrastructure
 
 - [X] T001 Create feature branch `002-quick-fee-buttons` from main
-- [X] T002 [P] Pull latest changes and verify backend runs on localhost:8000
+- [X] T002 [P] Pull latest changes and verify backend runs on localhost:8001
 - [X] T003 [P] Pull latest changes and verify frontend runs on localhost:3000
 - [X] T004 Verify PostgreSQL database is accessible and settings table exists
 

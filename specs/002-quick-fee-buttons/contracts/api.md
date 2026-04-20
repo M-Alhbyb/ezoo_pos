@@ -64,7 +64,7 @@ interface FeePresetsListResponse {
 **Example Request**:
 ```http
 GET /api/settings/fee-presets?location_id=1 HTTP/1.1
-Host: localhost:8000
+Host: localhost:8001
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
@@ -142,7 +142,7 @@ interface FeePresetsResponse {
 **Example Request**:
 ```http
 POST /api/settings/fee-presets HTTP/1.1
-Host: localhost:8000
+Host: localhost:8001
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 Content-Type: application/json
 
@@ -200,7 +200,7 @@ interface FeePresetsResponse {
 **Example Request**:
 ```http
 GET /api/settings/fee-presets/shipping?location_id=1 HTTP/1.1
-Host: localhost:8000
+Host: localhost:8001
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 

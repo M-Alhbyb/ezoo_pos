@@ -1,4 +1,3 @@
-
 """
 Product API Routes - REST endpoints for product catalog management.
 
@@ -9,6 +8,8 @@ from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.modules.products.service import ProductService
@@ -58,7 +59,7 @@ async def create_product(
     """
     try:
         product = await service.create_product(product_data)
-        return _prepare_product_response(product)
+        return product
     except ValueError as e:
         error_msg = str(e)
         if "already exists" in error_msg:
@@ -102,6 +103,7 @@ async def create_product(
 )
 async def list_products(
     category_id: Optional[UUID] = Query(None, description="Filter by category"),
+    partner_id: Optional[int] = Query(None, description="Filter by partner"),
     search: Optional[str] = Query(
         None, max_length=200, description="Search by name or SKU"
     ),
@@ -113,6 +115,8 @@ async def list_products(
     """
     List products with optional filters and pagination.
 
+    Includes active product assignment information for each product.
+
     Args:
         category_id: Filter by category UUID
         search: Search by name (partial) or SKU (exact)
@@ -122,18 +126,19 @@ async def list_products(
         service: Injected ProductService
 
     Returns:
-        Paginated list of products
+        Paginated list of products with assignment information
     """
     products, total = await service.list_products(
-        category_id=category_id,
-        search=search,
-        active_only=active_only,
-        page=page,
-        page_size=page_size,
+        category_id=category_id, 
+        partner_id=partner_id,
+        search=search, 
+        active_only=active_only, 
+        page=page, 
+        page_size=page_size
     )
 
     return ProductListResponse(
-        items=[_prepare_product_response(p) for p in products],
+        items=products,
         total=total,
         page=page,
         page_size=page_size,
@@ -178,14 +183,14 @@ async def search_by_sku(
             },
         )
 
-    return _prepare_product_response(product)
+    return product
 
 
 @router.get(
     "/{product_id}",
     response_model=ProductResponse,
     summary="Get product by ID",
-    description="Retrieves a single product by ID",
+    description="Retrieves a single product by ID with assignment information",
 )
 async def get_product(
     product_id: UUID,
@@ -194,12 +199,14 @@ async def get_product(
     """
     Get a single product by ID.
 
+    Includes active product assignment information if the product is assigned to a partner.
+
     Args:
         product_id: Product UUID
         service: Injected ProductService
 
     Returns:
-        Product details
+        Product details with assignment information
 
     Raises:
         HTTPException 404: Product not found
@@ -217,7 +224,7 @@ async def get_product(
             },
         )
 
-    return _prepare_product_response(product)
+    return product
 
 
 @router.patch(
@@ -263,7 +270,7 @@ async def update_product(
                 },
             )
 
-        return _prepare_product_response(product)
+        return product
     except ValueError as e:
         error_msg = str(e)
         if "already exists" in error_msg:
@@ -329,24 +336,3 @@ async def delete_product(
         )
 
     return {"message": "Product deactivated successfully"}
-
-
-def _prepare_product_response(product) -> dict:
-    """
-    Convert Product instance to response dictionary.
-
-    Ensures category_name is included and all values are properly formatted.
-    """
-    return {
-        "id": str(product.id),
-        "name": product.name,
-        "sku": product.sku,
-        "category_id": str(product.category_id),
-        "category_name": product.category.name if product.category else None,
-        "base_price": str(product.base_price),
-        "selling_price": str(product.selling_price),
-        "stock_quantity": product.stock_quantity,
-        "is_active": product.is_active,
-        "created_at": product.created_at,
-        "updated_at": product.updated_at,
-    }

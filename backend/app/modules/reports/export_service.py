@@ -9,7 +9,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.pdfbase import pdfmetrics
@@ -212,7 +212,7 @@ class ExportService:
         """Synchronous PDF generation with Arabic support."""
         try:
             output = BytesIO()
-            doc = SimpleDocTemplate(output, pagesize=letter)
+            doc = SimpleDocTemplate(output, pagesize=landscape(letter))
             elements = []
 
             styles = getSampleStyleSheet()
@@ -404,17 +404,18 @@ class ExportService:
             for sale in sales_data:
                 formatted_data.append(
                     {
-                        "Date": sale.get("date", ""),
-                        "Subtotal": sale.get("subtotal", Decimal("0")),
-                        "Fees": sale.get("fees_total", Decimal("0")),
-                        "VAT": sale.get("vat_amount", Decimal("0")),
-                        "Total": sale.get("grand_total", Decimal("0")),
-                        "Profit": sale.get("profit", Decimal("0")),
+                        "Date": sale.get("Date", ""),
+                        "Payments": sale.get("Payment Methods", ""),
+                        "Total": sale.get("Grand Total", Decimal("0")),
+                        "Gross Profit": sale.get("Gross Profit", Decimal("0")),
+                        "Partner Share": sale.get("Partner Share", Decimal("0")),
+                        "Net Profit": sale.get("Net Profit", Decimal("0")),
+                        "Note": sale.get("Note", ""),
                     }
                 )
 
             logger.info(
-                f"Generating sales PDF report: {len(sales_data)} records, "
+                f"Generating modernized sales PDF report: {len(sales_data)} records, "
                 f"date range: {start_date} to {end_date}"
             )
             return await self.generate_pdf(

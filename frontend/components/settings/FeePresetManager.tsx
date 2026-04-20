@@ -196,7 +196,7 @@ export default function FeePresetManager({
                   value={preset || ""}
                   onChange={(e) => handlePresetChange(index, e.target.value)}
                   className="border rounded px-3 py-2 w-32 text-end"
-                  placeholder={ARABIC.expenses.amount}
+                  placeholder={ARABIC.pos.amount}
                   dir="ltr"
                 />
                 <button

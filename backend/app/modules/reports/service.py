@@ -9,8 +9,11 @@ from sqlalchemy.orm import selectinload
 
 from app.models.sale import Sale
 from app.models.partner_distribution import PartnerDistribution
+from app.models.partner_wallet_transaction import PartnerWalletTransaction
 from app.models.partner import Partner
+from app.models.sale_payment import SalePayment
 from app.models.inventory_log import InventoryLog
+from app.models.product import Product
 from app.schemas.report import (
     SalesReport,
     SalesSummaryGroup,
@@ -31,9 +34,9 @@ class ReportService:
         """
         stmt = select(func.count(Sale.id))
         if start_date:
-            stmt = stmt.where(Sale.created_at >= start_date)
+            stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
         if end_date:
-            stmt = stmt.where(Sale.created_at <= end_date)
+            stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
 
         result = await self.db.execute(stmt)
         count = result.scalar()
@@ -42,13 +45,15 @@ class ReportService:
 
     async def get_partners_count(self, start_date: date, end_date: date) -> int:
         """
-        Count total partner distributions in date range for export validation.
+        Count total partner profit transactions in date range for export validation.
         """
-        stmt = select(func.count(PartnerDistribution.id))
+        stmt = select(func.count(PartnerWalletTransaction.id)).where(
+            PartnerWalletTransaction.transaction_type == "sale_profit"
+        )
         if start_date:
-            stmt = stmt.where(PartnerDistribution.distribution_date >= start_date)
+            stmt = stmt.where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
         if end_date:
-            stmt = stmt.where(PartnerDistribution.distribution_date <= end_date)
+            stmt = stmt.where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
 
         result = await self.db.execute(stmt)
         count = result.scalar()
@@ -60,9 +65,9 @@ class ReportService:
         """
         stmt = select(func.count(InventoryLog.id))
         if start_date:
-            stmt = stmt.where(InventoryLog.created_at >= start_date)
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
         if end_date:
-            stmt = stmt.where(InventoryLog.created_at <= end_date)
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
 
         result = await self.db.execute(stmt)
         count = result.scalar()
@@ -76,9 +81,9 @@ class ReportService:
         """
         stmt = select(Sale)
         if start_date:
-            stmt = stmt.where(Sale.created_at >= start_date)
+            stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
         if end_date:
-            stmt = stmt.where(Sale.created_at <= end_date)
+            stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
 
         # Totals for summary cards (not paginated)
         total_stmt = select(
@@ -88,9 +93,9 @@ class ReportService:
             func.count(Sale.id).label("count")
         )
         if start_date:
-            total_stmt = total_stmt.where(Sale.created_at >= start_date)
+            total_stmt = total_stmt.where(cast(Sale.created_at, Date) >= start_date)
         if end_date:
-            total_stmt = total_stmt.where(Sale.created_at <= end_date)
+            total_stmt = total_stmt.where(cast(Sale.created_at, Date) <= end_date)
             
         total_result = await self.db.execute(total_stmt)
         total_row = total_result.one()
@@ -108,9 +113,9 @@ class ReportService:
             .order_by("day")
         )
         if start_date:
-            group_stmt = group_stmt.where(Sale.created_at >= start_date)
+            group_stmt = group_stmt.where(cast(Sale.created_at, Date) >= start_date)
         if end_date:
-            group_stmt = group_stmt.where(Sale.created_at <= end_date)
+            group_stmt = group_stmt.where(cast(Sale.created_at, Date) <= end_date)
 
         # Get total count of groups for pagination
         count_stmt = select(func.count()).select_from(group_stmt.alias("subquery"))
@@ -132,10 +137,27 @@ class ReportService:
             for row in group_result
         ]
 
+        # Calculate total partner payouts for net profit calculation
+        payout_stmt = select(func.sum(PartnerWalletTransaction.amount)).where(
+            PartnerWalletTransaction.transaction_type == "sale_profit"
+        )
+        if start_date:
+            payout_stmt = payout_stmt.where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
+        if end_date:
+            payout_stmt = payout_stmt.where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
+            
+        payout_res = await self.db.execute(payout_stmt)
+        total_partner_profit = payout_res.scalar() or Decimal("0.00")
+        
+        gross_profit = total_row.profit or Decimal("0.00")
+        total_net_profit = gross_profit - total_partner_profit
+
         return SalesReport(
             total_revenue=total_row.revenue or Decimal("0.00"),
             total_cost=total_row.cost or Decimal("0.00"),
-            total_profit=total_row.profit or Decimal("0.00"),
+            total_profit=gross_profit,
+            total_partner_profit=total_partner_profit,
+            total_net_profit=total_net_profit,
             sales_count=total_row.count or 0,
             daily_breakdown=daily_breakdown,
             total=total_groups,
@@ -154,18 +176,19 @@ class ReportService:
             select(
                 Partner.id.label("partner_id"),
                 Partner.name.label("partner_name"),
-                func.sum(PartnerDistribution.payout_amount).label("total_payout"),
+                func.sum(PartnerWalletTransaction.amount).label("total_payout"),
             )
-            .join(Partner, Partner.id == PartnerDistribution.partner_id)
+            .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
+            .where(PartnerWalletTransaction.transaction_type == "sale_profit")
             .group_by(Partner.id, Partner.name)
         )
 
         if start_date:
             payout_stmt = payout_stmt.where(
-                PartnerDistribution.created_at >= start_date
+                cast(PartnerWalletTransaction.created_at, Date) >= start_date
             )
         if end_date:
-            payout_stmt = payout_stmt.where(PartnerDistribution.created_at <= end_date)
+            payout_stmt = payout_stmt.where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
 
         # Get total for pagination
         count_stmt = select(func.count()).select_from(payout_stmt.alias("subquery"))
@@ -186,11 +209,13 @@ class ReportService:
         ]
 
         # Overall total payout (not paginated)
-        total_payout_stmt = select(func.sum(PartnerDistribution.payout_amount))
+        total_payout_stmt = select(func.sum(PartnerWalletTransaction.amount)).where(
+            PartnerWalletTransaction.transaction_type == "sale_profit"
+        )
         if start_date:
-            total_payout_stmt = total_payout_stmt.where(PartnerDistribution.created_at >= start_date)
+            total_payout_stmt = total_payout_stmt.where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
         if end_date:
-            total_payout_stmt = total_payout_stmt.where(PartnerDistribution.created_at <= end_date)
+            total_payout_stmt = total_payout_stmt.where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
             
         total_payout_res = await self.db.execute(total_payout_stmt)
         overall_total_payout = total_payout_res.scalar() or Decimal("0.00")
@@ -216,9 +241,9 @@ class ReportService:
         ).group_by(InventoryLog.reason)
 
         if start_date:
-            stmt = stmt.where(InventoryLog.created_at >= start_date)
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
         if end_date:
-            stmt = stmt.where(InventoryLog.created_at <= end_date)
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
 
         # Get total for pagination
         count_stmt = select(func.count()).select_from(stmt.alias("subquery"))
@@ -244,9 +269,9 @@ class ReportService:
         # Get total movements count (not paginated)
         total_mov_stmt = select(func.count(InventoryLog.id))
         if start_date:
-            total_mov_stmt = total_mov_stmt.where(InventoryLog.created_at >= start_date)
+            total_mov_stmt = total_mov_stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
         if end_date:
-            total_mov_stmt = total_mov_stmt.where(InventoryLog.created_at <= end_date)
+            total_mov_stmt = total_mov_stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
         total_mov_res = await self.db.execute(total_mov_stmt)
         overall_total_movements = total_mov_res.scalar() or 0
 
@@ -257,3 +282,115 @@ class ReportService:
             page=page,
             page_size=page_size
         )
+
+    async def get_sales_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        # Load sales with payments and their associated method names
+        stmt = (
+            select(Sale)
+            .options(selectinload(Sale.payments).selectinload(SalePayment.payment_method))
+            .order_by(Sale.created_at.desc())
+        )
+        if start_date:
+            stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
+        if end_date:
+            stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
+            
+        result = await self.db.execute(stmt)
+        sales = result.scalars().all()
+
+        # Fetch partner payouts for these sales
+        # Map sale_id -> sum(amount)
+        sale_ids = [sale.id for sale in sales]
+        payouts_by_sale = {}
+        if sale_ids:
+            payout_stmt = (
+                select(PartnerWalletTransaction.reference_id, func.sum(PartnerWalletTransaction.amount))
+                .where(PartnerWalletTransaction.reference_id.in_(sale_ids))
+                .where(PartnerWalletTransaction.transaction_type == "sale_profit")
+                .group_by(PartnerWalletTransaction.reference_id)
+            )
+            payout_res = await self.db.execute(payout_stmt)
+            for row in payout_res:
+                payouts_by_sale[row[0]] = row[1]
+
+        data = []
+        for sale in sales:
+            partner_share = payouts_by_sale.get(sale.id, Decimal("0.00"))
+            gross_profit = sale.profit or Decimal("0.00")
+            net_profit = gross_profit - partner_share
+            
+            # Combine payment methods into a string
+            methods = ", ".join([p.payment_method_name for p in sale.payments]) if sale.payments else ""
+
+            data.append({
+                "Date": str(sale.created_at),
+                "Payment Methods": methods,
+                "Subtotal": sale.subtotal,
+                "Fees": sale.fees_total,
+                "VAT": sale.vat_total,
+                "Grand Total": sale.grand_total,
+                "Gross Profit": gross_profit,
+                "Partner Share": partner_share,
+                "Net Profit": net_profit,
+                "Note": sale.note or "",
+            })
+        return data
+
+    async def get_partners_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        stmt = (
+            select(
+                PartnerWalletTransaction,
+                Partner.name.label("partner_name"),
+                Partner.investment_amount.label("invested_amount"),
+                Partner.share_percentage.label("profit_percentage")
+            )
+            .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
+            .where(PartnerWalletTransaction.transaction_type == "sale_profit")
+            .order_by(PartnerWalletTransaction.created_at.desc())
+        )
+        if start_date:
+            stmt = stmt.where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
+        if end_date:
+            stmt = stmt.where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
+            
+        result = await self.db.execute(stmt)
+        data = []
+        for row in result:
+            trans = row.PartnerWalletTransaction
+            data.append({
+                "name": row.partner_name,
+                "invested_amount": row.invested_amount,
+                "profit_percentage": row.profit_percentage,
+                "distributed_amount": trans.amount,
+                "distribution_date": str(trans.created_at),
+            })
+        return data
+
+    async def get_inventory_export_data(self, start_date: Optional[date], end_date: Optional[date]) -> List[Dict[str, Any]]:
+        stmt = (
+            select(
+                InventoryLog,
+                Product.name.label("product_name")
+            )
+            .join(Product, Product.id == InventoryLog.product_id)
+            .order_by(InventoryLog.created_at.desc())
+        )
+        if start_date:
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
+        if end_date:
+            stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
+            
+        result = await self.db.execute(stmt)
+        data = []
+        for row in result:
+            log = row.InventoryLog
+            movement_type = "In" if log.delta > 0 else ("Out" if log.delta < 0 else "None")
+            data.append({
+                "product_name": row.product_name,
+                "movement_type": movement_type,
+                "quantity_delta": log.delta,
+                "reason": log.reason,
+                "created_at": str(log.created_at),
+            })
+        return data
+

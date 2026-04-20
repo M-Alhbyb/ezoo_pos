@@ -310,7 +310,7 @@ describe('SalesLineChart', () => {
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8001
 ```
 
 ### Start Frontend
@@ -323,9 +323,9 @@ npm run dev
 ### Access Application
 
 - Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/api/docs
-- Export endpoints: http://localhost:8000/api/reports/{report}/export
-- Dashboard endpoints: http://localhost:8000/api/dashboard/{type}
+- API Docs: http://localhost:8001/api/docs
+- Export endpoints: http://localhost:8001/api/reports/{report}/export
+- Dashboard endpoints: http://localhost:8001/api/dashboard/{type}
 
 ## Verification Checklist
 

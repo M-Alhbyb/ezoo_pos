@@ -9,6 +9,7 @@ import ProductGrid from "@/components/pos/ProductGrid";
 import POSCart from "@/components/pos/POSCart";
 import FeeEditor from "@/components/pos/FeeEditor";
 import PaymentMethodSelect from "@/components/pos/PaymentMethodSelect";
+import MultiPaymentSelect, { SalePayment } from "@/components/pos/MultiPaymentSelect";
 import SaleBreakdown from "@/components/pos/SaleBreakdown";
 import ConfirmButton from "@/components/pos/ConfirmButton";
 
@@ -18,6 +19,7 @@ interface CartItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  stock_quantity: number;
 }
 
 interface Fee {
@@ -51,7 +53,7 @@ interface Breakdown {
 export default function POSPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
-  const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
+  const [payments, setPayments] = useState<SalePayment[]>([]);
   const [note, setNote] = useState("");
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,17 +67,27 @@ export default function POSPage() {
     let newItems;
 
     if (existingItem) {
+      // Check if we can add more
+      if (existingItem.quantity >= product.stock_quantity) {
+        setError(`${ARABIC.pos.outOfStock || 'لايوجد كمية كافية'}: ${product.name}`);
+        return;
+      }
       // Increment quantity
       newItems = cartItems.map((item) =>
         item.product_id === product.id ? { ...item, quantity: item.quantity + 1 } : item
       );
     } else {
       // Add new item
+      if (product.stock_quantity <= 0) {
+        setError(`${ARABIC.pos.outOfStock || 'لايوجد كمية كافية'}: ${product.name}`);
+        return;
+      }
       const newItem: CartItem = {
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
         unit_price: parseFloat(product.selling_price),
+        stock_quantity: product.stock_quantity,
       };
       newItems = [...cartItems, newItem];
     }
@@ -86,9 +98,13 @@ export default function POSPage() {
 
   // Change quantity
   const handleQuantityChange = async (product_id: string, quantity: number) => {
-    const newItems = cartItems.map((item) =>
-      item.product_id === product_id ? { ...item, quantity } : item
-    );
+    const newItems = cartItems.map((item) => {
+      if (item.product_id === product_id) {
+        const validatedQuantity = Math.min(Math.max(1, quantity), item.stock_quantity);
+        return { ...item, quantity: validatedQuantity };
+      }
+      return item;
+    });
     setCartItems(newItems);
     await calculateBreakdown(newItems, fees);
   };
@@ -137,6 +153,14 @@ export default function POSPage() {
 
       const data = await response.json();
       setBreakdown(data);
+      
+      // Update payments if there's only one payment or none
+      if (payments.length <= 1) {
+        const total = parseFloat(data.total);
+        if (payments.length === 1) {
+          setPayments([{ ...payments[0], amount: total }]);
+        }
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -152,7 +176,14 @@ export default function POSPage() {
 
   // Confirm sale
   const handleConfirm = async () => {
-    if (!paymentMethodId || cartItems.length === 0) return;
+    if (payments.length === 0 || cartItems.length === 0) return;
+
+    const total = parseFloat(breakdown?.total || "0");
+    const currentSum = payments.reduce((sum, p) => sum + p.amount, 0);
+    if (Math.abs(currentSum - total) > 0.01) {
+      setError("Payment total must match grand total");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -169,7 +200,7 @@ export default function POSPage() {
             unit_price_override: item.unit_price !== undefined ? item.unit_price : undefined,
           })),
           fees,
-          payment_method_id: paymentMethodId,
+          payments,
           note: note || undefined,
         }),
       });
@@ -285,7 +316,11 @@ export default function POSPage() {
               <div className="pt-4 border-t border-slate-100 space-y-4">
                 <FeeEditor fees={fees} onFeesChange={handleFeesChange} />
                 
-                <PaymentMethodSelect value={paymentMethodId} onChange={setPaymentMethodId} />
+                <MultiPaymentSelect 
+                  total={parseFloat(breakdown?.total || "0")} 
+                  payments={payments} 
+                  onChange={setPayments} 
+                />
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{ARABIC.pos.note || 'ملاحظة'} (اختياري)</label>
@@ -301,7 +336,7 @@ export default function POSPage() {
               <div className="pt-4">
                 <ConfirmButton
                   onConfirm={handleConfirm}
-                  disabled={!paymentMethodId || cartItems.length === 0}
+                  disabled={payments.length === 0 || cartItems.length === 0}
                   loading={loading}
                 />
               </div>
