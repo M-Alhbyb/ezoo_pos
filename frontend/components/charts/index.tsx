@@ -14,7 +14,8 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { formatDecimal, formatCurrency, formatPercentage } from '../utils/chart-utils';
+import { formatDecimal } from '../utils/chart-utils';
+import { formatCurrency, formatPercentage } from '@/lib/utils/format';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -62,10 +63,10 @@ export const defaultChartConfig: BaseChartConfig = {
 export const formatTooltipValue = (value: number, config: BaseChartConfig): string => {
   const formatted = formatDecimal(value, config.decimalPlaces || 4);
   if (config.isCurrency) {
-    return `$${formatted}`;
+    return formatCurrency(value);
   }
   if (config.isPercentage) {
-    return `${formatted}%`;
+    return formatPercentage(value);
   }
   return formatted;
 };
@@ -81,11 +82,11 @@ export const SalesLineChart: React.FC<SalesLineChartProps> = ({
   lines,
   height = 400,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'لا توجد بيانات',
   config = defaultChartConfig
 }) => {
   if (loading) {
-    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>جارٍ التحميل...</div>;
   }
   
   if (!data || data.length === 0) {
@@ -94,10 +95,10 @@ export const SalesLineChart: React.FC<SalesLineChartProps> = ({
   
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data}>
+      <LineChart data={data} layout="vertical">
         {config.showGrid && <CartesianGrid strokeDasharray="3 3" />}
-        <XAxis dataKey="date" />
-        <YAxis />
+        <XAxis type="number" />
+        <YAxis type="category" dataKey="date" width={100} />
         {config.showTooltip && (
           <Tooltip formatter={(value: number) => formatTooltipValue(value, config)} />
         )}
@@ -129,11 +130,11 @@ export const ProjectBarChart: React.FC<ProjectBarChartProps> = ({
   bars,
   height = 400,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'لا توجد بيانات',
   config = defaultChartConfig
 }) => {
   if (loading) {
-    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>جارٍ التحميل...</div>;
   }
   
   if (!data || data.length === 0) {
@@ -142,10 +143,10 @@ export const ProjectBarChart: React.FC<ProjectBarChartProps> = ({
   
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data}>
+      <BarChart data={data} layout="vertical">
         {config.showGrid && <CartesianGrid strokeDasharray="3 3" />}
-        <XAxis dataKey="name" />
-        <YAxis />
+        <XAxis type="number" />
+        <YAxis type="category" dataKey="name" width={100} />
         {config.showTooltip && (
           <Tooltip formatter={(value: number) => formatTooltipValue(value, config)} />
         )}
@@ -172,11 +173,11 @@ export const PartnerPieChart: React.FC<PartnerPieChartProps> = ({
   data,
   height = 400,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'لا توجد بيانات',
   config = defaultChartConfig
 }) => {
   if (loading) {
-    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>جارٍ التحميل...</div>;
   }
   
   if (!data || data.length === 0) {

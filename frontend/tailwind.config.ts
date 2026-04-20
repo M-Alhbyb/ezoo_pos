@@ -14,6 +14,9 @@ const config: Config = {
           foreground: "var(--primary-foreground)",
         },
       },
+      fontFamily: {
+        sans: ["var(--font-cairo)", "var(--font-inter)", "sans-serif"],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

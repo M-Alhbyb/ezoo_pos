@@ -1,13 +1,8 @@
-/**
- * ProductModal Component
- * 
- * A premium, glassmorphic modal for creating and editing products.
- */
-
 "use client";
 
 import { useEffect, useState } from "react";
 import ProductForm from "./ProductForm";
+import { ARABIC } from "@/lib/constants/arabic";
 
 interface Product {
   id?: string;
@@ -57,21 +52,19 @@ export default function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop with blur */}
       <div 
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
       />
       
-      {/* Modal Content */}
       <div className="relative w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
-              {product ? "Edit Product" : "Add New Product"}
+              {product ? ARABIC.products.editProduct : ARABIC.products.addProduct}
             </h2>
             <p className="text-slate-500 text-sm mt-0.5">
-              {product ? "Update product details and pricing." : "Create a new product in your catalog."}
+              {product ? ARABIC.common.updateDetails : ARABIC.common.createNew}
             </p>
           </div>
           <button 

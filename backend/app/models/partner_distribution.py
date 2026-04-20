@@ -19,12 +19,6 @@ class PartnerDistribution(Base):
         nullable=False,
         index=True,
     )
-    project_id = Column(  # Allows multiple distributions correctly separated per project
-        UUID(as_uuid=True),
-        ForeignKey("projects.id"),
-        nullable=False,
-        index=True,
-    )
     payout_amount = Column(Numeric(12, 2), nullable=False)
     snapshot_fields = Column(JSONB, nullable=False, server_default='{}')
 

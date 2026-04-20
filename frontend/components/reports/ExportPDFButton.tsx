@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FileText, Download } from 'lucide-react';
 import { ExportFormat } from '../../lib/utils/export-utils';
+import { ARABIC } from '../../lib/constants/arabic';
 
 export interface ExportPDFButtonProps {
   reportType: 'sales' | 'projects' | 'partners' | 'inventory';
@@ -27,7 +28,7 @@ export function ExportPDFButton({
 
   const handleExport = async () => {
     if (!startDate || !endDate) {
-      onExportError?.('Please select a date range');
+      onExportError?.(ARABIC.reports.selectDateRange);
       return;
     }
 
@@ -50,7 +51,7 @@ export function ExportPDFButton({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Export failed');
+        throw new Error(error.detail || ARABIC.reports.export.exportFailed);
       }
 
       const blob = await response.blob();
@@ -75,7 +76,7 @@ export function ExportPDFButton({
 
       onExportComplete?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : ARABIC.common.error;
       onExportError?.(errorMessage);
     } finally {
       setIsExporting(false);
@@ -91,12 +92,12 @@ export function ExportPDFButton({
       {isExporting ? (
         <>
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          <span>Exporting...</span>
+          <span>{ARABIC.reports.export.exporting}</span>
         </>
       ) : (
         <>
           <FileText className="w-4 h-4" />
-          <span>Export as PDF</span>
+          <span>{ARABIC.reports.export.pdf}</span>
         </>
       )}
     </button>

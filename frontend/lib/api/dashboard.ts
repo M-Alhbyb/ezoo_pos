@@ -5,9 +5,6 @@ export interface SalesDashboardFilter {
   end_date: string;
 }
 
-export interface ProjectsDashboardFilter extends SalesDashboardFilter {
-  project_id?: number;
-}
 
 export interface PartnersDashboardFilter extends SalesDashboardFilter {
   partner_id?: number;
@@ -30,12 +27,6 @@ export interface SalesChartData {
   vat: number[];
 }
 
-export interface ProjectChartData {
-  project_names: string[];
-  profits: number[];
-  profit_margins: number[];
-  project_ids: number[];
-}
 
 export interface PartnerChartData {
   partner_names: string[];
@@ -55,27 +46,12 @@ export async function getSalesDashboard(
   startDate: string,
   endDate: string
 ): Promise<DashboardResponse<SalesChartData>> {
-  const response = await api.get('/dashboard/sales', {
+  const response = await api.get('/api/dashboard/sales', {
     params: { start_date: startDate, end_date: endDate }
   });
-  return response.data;
+  return response;
 }
 
-export async function getProjectsDashboard(
-  startDate: string,
-  endDate: string,
-  projectId?: number
-): Promise<DashboardResponse<ProjectChartData>> {
-  const params: Record<string, string | number> = {
-    start_date: startDate,
-    end_date: endDate
-  };
-  if (projectId !== undefined) {
-    params.project_id = projectId;
-  }
-  const response = await api.get('/dashboard/projects', { params });
-  return response.data;
-}
 
 export async function getPartnersDashboard(
   startDate: string,
@@ -89,16 +65,16 @@ export async function getPartnersDashboard(
   if (partnerId !== undefined) {
     params.partner_id = partnerId;
   }
-  const response = await api.get('/dashboard/partners', { params });
-  return response.data;
+  const response = await api.get('/api/dashboard/partners', { params });
+  return response;
 }
 
 export async function getInventoryDashboard(
   startDate: string,
   endDate: string
 ): Promise<DashboardResponse<InventoryChartData>> {
-  const response = await api.get('/dashboard/inventory', {
+  const response = await api.get('/api/dashboard/inventory', {
     params: { start_date: startDate, end_date: endDate }
   });
-  return response.data;
+  return response;
 }

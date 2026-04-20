@@ -8,6 +8,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ARABIC } from "@/lib/constants/arabic";
 
 interface PaymentMethod {
   id: string;
@@ -38,7 +39,6 @@ export default function PaymentMethodSelect({ value, onChange }: PaymentMethodSe
       const data = await response.json();
       setPaymentMethods(data.items.filter((pm: PaymentMethod) => pm.is_active));
 
-      // Auto-select first payment method if none selected
       if (!value && data.items.length > 0) {
         onChange(data.items[0].id);
       }
@@ -50,7 +50,7 @@ export default function PaymentMethodSelect({ value, onChange }: PaymentMethodSe
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading payment methods...</div>;
+    return <div className="text-slate-500">{ARABIC.common.loading}</div>;
   }
 
   if (error) {
@@ -58,18 +58,18 @@ export default function PaymentMethodSelect({ value, onChange }: PaymentMethodSe
   }
 
   if (paymentMethods.length === 0) {
-    return <div className="text-red-600">No payment methods available</div>;
+    return <div className="text-red-600">{ARABIC.pos.noPaymentMethods || 'لا توجد طرق دفع متاحة'}</div>;
   }
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">Payment Method *</label>
+      <label className="block text-sm font-medium mb-1">{ARABIC.pos.paymentMethod || 'طريقة الدفع'} *</label>
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         className="border rounded px-3 py-2 w-full"
       >
-        <option value="">Select payment method</option>
+        <option value="">{ARABIC.pos.selectPaymentMethod || 'اختر طريقة الدفع'}</option>
         {paymentMethods.map((pm) => (
           <option key={pm.id} value={pm.id}>
             {pm.name}

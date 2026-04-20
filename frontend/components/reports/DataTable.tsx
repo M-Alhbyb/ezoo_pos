@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ARABIC } from "@/lib/constants/arabic";
 
 export interface Column<T> {
   header: string;
@@ -15,7 +16,6 @@ interface DataTableProps<T> {
   data: T[];
   loading?: boolean;
   emptyMessage?: string;
-  // Pagination Props
   totalItems?: number;
   pageSize?: number;
   currentPage?: number;
@@ -26,7 +26,7 @@ export function DataTable<T>({
   columns,
   data,
   loading = false,
-  emptyMessage = "No data available",
+  emptyMessage = ARABIC.reports.noData || "لا توجد بيانات",
   totalItems = 0,
   pageSize = 50,
   currentPage = 1,
@@ -37,7 +37,7 @@ export function DataTable<T>({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-[1.5rem] border border-slate-100 bg-white shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-start border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
               {columns.map((column, idx) => (
@@ -99,7 +99,7 @@ export function DataTable<T>({
       {totalPages > 1 && onPageChange && (
         <div className="flex items-center justify-between px-4 py-2 bg-white/50 backdrop-blur-md rounded-2xl border border-slate-100">
           <div className="text-sm font-semibold text-slate-500">
-            Showing <span className="text-slate-900">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-slate-900">{Math.min(currentPage * pageSize, totalItems)}</span> of <span className="text-slate-900">{totalItems}</span> items
+            {ARABIC.reports.showing || 'عرض'} <span className="text-slate-900">{(currentPage - 1) * pageSize + 1}</span> {ARABIC.reports.to || 'إلى'} <span className="text-slate-900">{Math.min(currentPage * pageSize, totalItems)}</span> {ARABIC.reports.of || 'من'} <span className="text-slate-900">{totalItems}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -107,12 +107,11 @@ export function DataTable<T>({
               disabled={currentPage === 1 || loading}
               className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 disabled:opacity-50 disabled:hover:text-slate-400 disabled:hover:border-slate-200 transition-all duration-200"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 rtl:rotate-180" />
             </button>
             <div className="flex items-center gap-1">
               {[...Array(totalPages)].map((_, i) => {
                 const pageNum = i + 1;
-                // Only show a few pages around current if many
                 if (totalPages > 7) {
                    if (pageNum !== 1 && pageNum !== totalPages && Math.abs(pageNum - currentPage) > 1) {
                       if (pageNum === 2 || pageNum === totalPages - 1) return <span key={pageNum} className="px-2 text-slate-300">...</span>;
@@ -139,7 +138,7 @@ export function DataTable<T>({
               disabled={currentPage === totalPages || loading}
               className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 disabled:opacity-50 disabled:hover:text-slate-400 disabled:hover:border-slate-200 transition-all duration-200"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
             </button>
           </div>
         </div>

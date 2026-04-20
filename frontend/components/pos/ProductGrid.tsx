@@ -9,6 +9,8 @@
 
 import { useState, useEffect } from "react";
 import { Search, Package, CheckCircle2, AlertCircle } from "lucide-react";
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface Product {
   id: string;
@@ -80,7 +82,7 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-medium animate-pulse">Loading products...</p>
+        <p className="text-slate-500 font-medium animate-pulse">{ARABIC.common.loading}</p>
       </div>
     );
   }
@@ -89,13 +91,13 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-6 glass rounded-2xl border-rose-100 bg-rose-50/30">
         <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-        <p className="text-rose-700 font-semibold">Error Loading Products</p>
+        <p className="text-rose-700 font-semibold">{ARABIC.common.error}</p>
         <p className="text-rose-600/70 text-sm mt-1 text-center">{error}</p>
         <button 
           onClick={fetchInitialData}
           className="mt-4 px-4 py-2 bg-rose-100/50 hover:bg-rose-100 text-rose-700 rounded-xl text-sm font-medium transition-all"
         >
-          Try Again
+          {ARABIC.common.tryAgain || 'حاول مرة أخرى'}
         </button>
       </div>
     );
@@ -114,7 +116,7 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            All Items
+            {ARABIC.products.allCategories || 'الكل'}
           </button>
           {categories.map((cat) => (
             <button
@@ -132,36 +134,36 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
         </div>
 
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
-            placeholder="Quick search..."
+            placeholder={ARABIC.pos.searchProducts || 'البحث عن منتجات...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-slate-100/50 border border-slate-200 rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all"
+            className="ps-10 pe-4 py-2 bg-slate-100/50 border border-slate-200 rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all"
           />
         </div>
       </div>
 
       {/* Product Grid Area */}
-      <div className="max-h-[500px] overflow-y-auto pr-2 no-scrollbar">
+      <div className="max-h-[500px] overflow-y-auto pe-2 no-scrollbar">
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pb-4">
             {filteredProducts.map((product) => (
             <button
               key={product.id}
               onClick={() => onProductSelect(product)}
-              className="group relative flex flex-col p-4 bg-white/40 hover:bg-white hover:shadow-xl hover:-translate-y-1 border border-slate-100 hover:border-primary/20 rounded-2xl text-left transition-all duration-300"
+              className="group relative flex flex-col p-4 bg-white/40 hover:bg-white hover:shadow-xl hover:-translate-y-1 border border-slate-100 hover:border-primary/20 rounded-2xl text-start transition-all duration-300"
             >
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-1">
                   <span className="text-[10px] font-bold text-primary/60 uppercase tracking-widest truncate max-w-[100px]">
-                    {product.category_name || "Uncategorized"}
+                    {product.category_name || ARABIC.categories.title || "غير مصنف"}
                   </span>
                   {product.stock_quantity <= 5 && (
                     <span className="flex items-center text-[10px] font-bold text-rose-500 animate-pulse">
-                      <AlertCircle className="w-2.5 h-2.5 mr-0.5" />
-                      LOW
+                      <AlertCircle className="w-2.5 h-2.5 me-0.5" />
+                      {ARABIC.products.lowStock || 'منخفض'}
                     </span>
                   )}
                 </div>
@@ -169,15 +171,15 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
                   {product.name}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-medium truncate mb-3">
-                  {product.sku || "No SKU"}
+                  {product.sku || ARABIC.products.sku || 'بدون رمز'}
                 </p>
               </div>
               
               <div className="flex items-end justify-between mt-auto">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-semibold mb-0.5 uppercase tracking-tighter">Price</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mb-0.5 uppercase tracking-tighter">{ARABIC.pos.price || 'السعر'}</p>
                   <p className="text-base font-black text-slate-900 tracking-tight">
-                    ${parseFloat(product.selling_price).toFixed(2)}
+                    {formatCurrency(product.selling_price)}
                   </p>
                 </div>
                 <div className="p-2 bg-slate-100 group-hover:bg-primary group-hover:text-white rounded-xl transition-all duration-300 shadow-sm">
@@ -193,8 +195,8 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-6 glass rounded-2xl">
             <Package className="w-16 h-16 text-slate-200 mb-4" />
-            <h3 className="text-lg font-bold text-slate-400">No Products Found</h3>
-            <p className="text-slate-400/60 text-sm mt-1">Try adjusting your filters or search query.</p>
+            <h3 className="text-lg font-bold text-slate-400">{ARABIC.products.noProducts || 'لا توجد منتجات'}</h3>
+            <p className="text-slate-400/60 text-sm mt-1">{ARABIC.pos.tryAdjustingFilters || 'جرب تعديل الفلاتر أو البحث'}</p>
             {(selectedCategoryId || searchQuery) && (
               <button 
                 onClick={() => {
@@ -203,7 +205,7 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
                 }}
                 className="mt-4 px-4 py-2 text-primary font-bold text-sm hover:underline"
               >
-                Clear All Filters
+                {ARABIC.common.clearAll || 'مسح الكل'}
               </button>
             )}
           </div>

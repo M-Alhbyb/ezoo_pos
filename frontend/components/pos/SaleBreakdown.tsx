@@ -7,6 +7,9 @@
 
 "use client";
 
+import { ARABIC } from "@/lib/constants/arabic";
+import { formatCurrency } from "@/lib/utils/format";
+
 interface BreakdownItem {
   product_name: string;
   quantity: number;
@@ -44,46 +47,46 @@ export default function SaleBreakdown({
 }: SaleBreakdownProps) {
   return (
     <div className="border rounded p-4 space-y-4">
-      <h3 className="font-medium text-lg">Financial Breakdown</h3>
+      <h3 className="font-medium text-lg">{ARABIC.pos.financialBreakdown || 'تفصيل مالي'}</h3>
 
       {/* Line Items */}
       <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700">Items:</div>
+        <div className="text-sm font-medium text-slate-700">{ARABIC.pos.items || 'المنتجات'}:</div>
         {items.map((item, index) => (
-          <div key={index} className="flex justify-between text-sm pl-4">
+          <div key={index} className="flex justify-between text-sm ps-4">
             <div>
               {item.product_name} × {item.quantity}
-              <span className="text-gray-500 ml-2">(@ ${item.unit_price})</span>
+              <span className="text-slate-500 ms-2">({ARABIC.pos.at || '@'} {formatCurrency(item.unit_price)})</span>
             </div>
-            <div>${item.line_total}</div>
+            <div>{formatCurrency(item.line_total)}</div>
           </div>
         ))}
       </div>
 
       {/* Subtotal */}
       <div className="flex justify-between font-medium pt-2 border-t">
-        <div>Subtotal:</div>
-        <div>${subtotal}</div>
+        <div>{ARABIC.pos.subtotal || 'المجموع الفرعي'}:</div>
+        <div>{formatCurrency(subtotal)}</div>
       </div>
 
       {/* Fees */}
       {fees.length > 0 && (
         <div className="space-y-2">
-          <div className="text-sm font-medium text-gray-700">Fees:</div>
+          <div className="text-sm font-medium text-slate-700">{ARABIC.pos.fees || 'الرسوم'}:</div>
           {fees.map((fee, index) => (
-            <div key={index} className="flex justify-between text-sm pl-4">
+            <div key={index} className="flex justify-between text-sm ps-4">
               <div>
                 {fee.fee_label}
-                <span className="text-gray-500 ml-2">
-                  ({fee.fee_value_type === "percent" ? `${fee.fee_value}%` : `$${fee.fee_value}`})
+                <span className="text-slate-500 ms-2">
+                  ({fee.fee_value_type === "percent" ? `${fee.fee_value}%` : formatCurrency(fee.fee_value)})
                 </span>
               </div>
-              <div>${fee.calculated_amount}</div>
+              <div>{formatCurrency(fee.calculated_amount)}</div>
             </div>
           ))}
-          <div className="flex justify-between text-sm pl-4 font-medium">
-            <div>Total Fees:</div>
-            <div>${fees_total}</div>
+          <div className="flex justify-between text-sm ps-4 font-medium">
+            <div>{ARABIC.pos.totalFees || 'إجمالي الرسوم'}:</div>
+            <div>{formatCurrency(fees_total)}</div>
           </div>
         </div>
       )}
@@ -91,15 +94,15 @@ export default function SaleBreakdown({
       {/* VAT */}
       {vat_enabled && vat_amount && vat_rate && (
         <div className="flex justify-between text-sm">
-          <div>VAT ({vat_rate}%):</div>
-          <div>${vat_amount}</div>
+          <div>{ARABIC.pos.vat || 'ضريبة القيمة المضافة'} ({vat_rate}%):</div>
+          <div>{formatCurrency(vat_amount)}</div>
         </div>
       )}
 
       {/* Grand Total */}
       <div className="flex justify-between font-bold text-lg pt-2 border-t">
-        <div>Total:</div>
-        <div>${total}</div>
+        <div>{ARABIC.pos.grandTotal || 'الإجمالي الكلي'}:</div>
+        <div>{formatCurrency(total)}</div>
       </div>
     </div>
   );

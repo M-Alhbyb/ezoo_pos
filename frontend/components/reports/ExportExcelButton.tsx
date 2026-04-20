@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FileSpreadsheet, Download } from 'lucide-react';
 import { exportReport } from '../../lib/utils/export-utils';
+import { ARABIC } from '../../lib/constants/arabic';
 
 export interface ExportExcelButtonProps {
   reportType: 'sales' | 'projects' | 'partners' | 'inventory';
@@ -27,7 +28,7 @@ export function ExportExcelButton({
 
   const handleExport = async () => {
     if (!startDate || !endDate) {
-      onExportError?.('Please select a date range');
+      onExportError?.(ARABIC.reports.selectDateRange);
       return;
     }
 
@@ -38,7 +39,7 @@ export function ExportExcelButton({
       await exportReport(reportType, 'xlsx', startDate, endDate);
       onExportComplete?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : ARABIC.common.error;
       onExportError?.(errorMessage);
     } finally {
       setIsExporting(false);
@@ -54,12 +55,12 @@ export function ExportExcelButton({
       {isExporting ? (
         <>
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          <span>Exporting...</span>
+          <span>{ARABIC.reports.export.exporting}</span>
         </>
       ) : (
         <>
           <FileSpreadsheet className="w-4 h-4" />
-          <span>Export as Excel</span>
+          <span>{ARABIC.reports.export.excel}</span>
         </>
       )}
     </button>

@@ -32,23 +32,12 @@ async def get_partners(
 
 @router.post("/distribute", response_model=DistributionResponse)
 async def distribute_profits(
-    data: Optional[DistributionRequest] = None,
+    data: DistributionRequest,
     service: PartnerService = Depends(get_partner_service),
 ):
     try:
-        date_range = {}
-        project_ids = None
-        
-        if data:
-            project_ids = data.project_ids
-            if data.start_date:
-                date_range["start"] = data.start_date
-            if data.end_date:
-                date_range["end"] = data.end_date
-            
         return await service.calculate_distribution(
-            project_ids=project_ids,
-            date_range=date_range if date_range else None
+            total_profit=data.profit
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -12,12 +12,78 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import pandas as pd
 
 from app.core.config import settings
+from app.core.arabic_pdf import prepare_cell_value, is_arabic_text
 from app.schemas.export import ExportFormat, ExportMetadata, ExportResponse
 
 logger = logging.getLogger(__name__)
+
+
+# Arabic font directory
+FONT_DIR = "/usr/share/fonts/truetype"  # System fonts directory on Linux
+
+
+def _register_arabic_fonts():
+    """Register Arabic fonts for PDF rendering, prioritizing Cairo."""
+    fonts_registered = False
+
+    try:
+        import os
+
+        # Get path to static fonts directory
+        # Current file is in app/modules/reports/export_service.py
+        # app/static/fonts is at ../../../static/fonts relative to this file
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        static_fonts_dir = os.path.join(base_dir, "static", "fonts")
+        
+        cairo_regular = os.path.join(static_fonts_dir, "Cairo-Regular.ttf")
+        cairo_bold = os.path.join(static_fonts_dir, "Cairo-Bold.ttf")
+
+        # Register Cairo if available
+        if os.path.exists(cairo_regular):
+            try:
+                pdfmetrics.registerFont(TTFont("Cairo", cairo_regular))
+                pdfmetrics.registerFont(TTFont("Cairo-Bold", cairo_bold))
+                # Register alias for generic font usage
+                pdfmetrics.registerFont(TTFont("ArabicFont", cairo_regular))
+                fonts_registered = True
+                logger.info(f"Registered Cairo fonts from: {static_fonts_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to register Cairo font: {e}")
+
+        # Fallback to system fonts if Cairo not found
+        if not fonts_registered:
+            font_paths = [
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            ]
+
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        pdfmetrics.registerFont(TTFont("ArabicFont", font_path))
+                        fonts_registered = True
+                        logger.info(f"Registered system Arabic-capable font: {font_path}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Failed to register font {font_path}: {e}")
+
+        if not fonts_registered:
+            logger.warning(
+                "No Arabic-capable fonts found, using default Helvetica"
+            )
+
+    except Exception as e:
+        logger.warning(f"Font registration failed: {e}. Using default fonts.")
+
+
+_register_arabic_fonts()
 
 
 class ExportService:
@@ -46,15 +112,42 @@ class ExportService:
         return await loop.run_in_executor(self.executor, self._generate_csv_sync, data)
 
     def _generate_csv_sync(self, data: list[dict]) -> BytesIO:
-        """Synchronous CSV generation."""
+        """Synchronous CSV generation with UTF-8 BOM for Arabic support."""
         try:
             output = BytesIO()
+            # Add UTF-8 BOM for proper Arabic display in Excel/CSV viewers
+            output.write("\ufeff".encode("utf-8"))
             df = pd.DataFrame(data)
             df.to_csv(output, index=False, encoding="utf-8", float_format="%.4f")
             output.seek(0)
             return output
         except Exception as e:
             logger.error(f"CSV export generation failed: {str(e)}", exc_info=True)
+            raise
+
+    def _generate_xlsx_sync(self, data: list[dict]) -> BytesIO:
+        """Synchronous XLSX generation with Arabic support."""
+        try:
+            output = BytesIO()
+            df = pd.DataFrame(data)
+
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df.to_excel(
+                    writer, index=False, sheet_name="Report", float_format="%.4f"
+                )
+
+                workbook = writer.book
+                worksheet = writer.sheets["Report"]
+
+                # Configure columns
+                for idx, col in enumerate(df.columns):
+                    max_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
+                    worksheet.set_column(idx, idx, max_len)
+
+            output.seek(0)
+            return output
+        except Exception as e:
+            logger.error(f"XLSX export generation failed: {str(e)}", exc_info=True)
             raise
 
     async def generate_xlsx(
@@ -75,29 +168,6 @@ class ExportService:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.executor, self._generate_xlsx_sync, data)
 
-    def _generate_xlsx_sync(self, data: list[dict]) -> BytesIO:
-        """Synchronous XLSX generation."""
-        try:
-            output = BytesIO()
-            df = pd.DataFrame(data)
-
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(
-                    writer, index=False, sheet_name="Report", float_format="%.4f"
-                )
-
-                workbook = writer.book
-                worksheet = writer.sheets["Report"]
-
-                for idx, col in enumerate(df.columns):
-                    max_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
-                    worksheet.set_column(idx, idx, max_len)
-
-            output.seek(0)
-            return output
-        except Exception as e:
-            logger.error(f"XLSX export generation failed: {str(e)}", exc_info=True)
-            raise
 
     async def generate_pdf(
         self,
@@ -139,25 +209,35 @@ class ExportService:
         end_date: date,
         generated_by: str,
     ) -> bytes:
-        """Synchronous PDF generation."""
+        """Synchronous PDF generation with Arabic support."""
         try:
             output = BytesIO()
             doc = SimpleDocTemplate(output, pagesize=letter)
             elements = []
 
             styles = getSampleStyleSheet()
-            title_style = styles["Heading1"]
 
-            elements.append(Paragraph(title, title_style))
-            elements.append(
-                Paragraph(f"Date Range: {start_date} to {end_date}", styles["Normal"])
-            )
-            elements.append(
-                Paragraph(
-                    f"Generated by: {generated_by} on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-                    styles["Normal"],
-                )
-            )
+            # Try to use Arabic font if registered, prioritizing Cairo-Bold for headings
+            try:
+                title_style = styles["Heading1"]
+                if "Cairo-Bold" in pdfmetrics.getRegisteredFontNames():
+                    title_style.fontName = "Cairo-Bold"
+                elif "ArabicFont" in pdfmetrics.getRegisteredFontNames():
+                    title_style.fontName = "ArabicFont"
+            except Exception:
+                title_style = styles["Heading1"]
+
+            # Prepare title for PDF (handle Arabic text)
+            pdf_title = prepare_cell_value(title) if is_arabic_text(title) else title
+            elements.append(Paragraph(pdf_title, title_style))
+
+            # Prepare date range text
+            date_text = f"Date Range: {start_date} to {end_date}"
+            elements.append(Paragraph(date_text, styles["Normal"]))
+
+            # Prepare generated by text
+            generated_text = f"Generated by: {generated_by} on {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            elements.append(Paragraph(generated_text, styles["Normal"]))
             elements.append(Paragraph("<br/><br/>", styles["Normal"]))
 
             if data:
@@ -168,16 +248,8 @@ class ExportService:
                     table_row = []
                     for key in headers:
                         value = row[key]
-                        if isinstance(value, Decimal):
-                            table_row.append(str(value))
-                        elif isinstance(value, (int, float)):
-                            table_row.append(
-                                f"{value:.4f}"
-                                if isinstance(value, float)
-                                else str(value)
-                            )
-                        else:
-                            table_row.append(str(value))
+                        # Use prepare_cell_value for proper handling of Arabic text
+                        table_row.append(prepare_cell_value(value))
                     table_data.append(table_row)
 
                 table = Table(table_data)
@@ -198,6 +270,44 @@ class ExportService:
                         ]
                     )
                 )
+
+                # Try to use Arabic font for data if available
+                try:
+                    registered_fonts = pdfmetrics.getRegisteredFontNames()
+                    if "ArabicFont" in registered_fonts:
+                        # Check if any data contains Arabic
+                        has_arabic = any(
+                            is_arabic_text(str(v)) for row in data for v in row.values()
+                        )
+                        if has_arabic:
+                            # Use Cairo-Bold for headers and ArabicFont (Cairo) for body if available
+                            header_font = "Cairo-Bold" if "Cairo-Bold" in registered_fonts else "ArabicFont"
+                            body_font = "ArabicFont"
+                            
+                            table.setStyle(
+                                TableStyle(
+                                    [
+                                        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                                        (
+                                            "TEXTCOLOR",
+                                            (0, 0),
+                                            (-1, 0),
+                                            colors.whitesmoke,
+                                        ),
+                                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                                        ("FONTNAME", (0, 0), (-1, 0), header_font),
+                                        ("FONTNAME", (0, 1), (-1, -1), body_font),
+                                        ("FONTSIZE", (0, 0), (-1, 0), 10),
+                                        ("FONTSIZE", (0, 1), (-1, -1), 8),
+                                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                                        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                                        ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
+                                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                                    ]
+                                )
+                            )
+                except Exception as e:
+                    logger.warning(f"Arabic font styling skipped: {e}")
 
                 elements.append(table)
 
@@ -316,40 +426,6 @@ class ExportService:
             )
         except Exception as e:
             logger.error(f"Sales PDF report generation failed: {str(e)}", exc_info=True)
-            raise
-
-    async def generate_projects_pdf_report(
-        self, projects_data: list, start_date: date, end_date: date, generated_by: str
-    ) -> bytes:
-        """
-        Generate PDF report specifically for projects data.
-        """
-        try:
-            formatted_data = []
-            for project in projects_data:
-                formatted_data.append(
-                    {
-                        "Project": project.get("name", ""),
-                        "Status": project.get("status", ""),
-                        "Start Date": project.get("start_date", ""),
-                        "Total Cost": project.get("total_cost", Decimal("0")),
-                        "Selling Price": project.get("selling_price", Decimal("0")),
-                        "Profit": project.get("profit", Decimal("0")),
-                    }
-                )
-
-            logger.info(f"Generating projects PDF report: {len(projects_data)} records")
-            return await self.generate_pdf(
-                data=formatted_data,
-                title="Projects Report",
-                start_date=start_date,
-                end_date=end_date,
-                generated_by=generated_by,
-            )
-        except Exception as e:
-            logger.error(
-                f"Projects PDF report generation failed: {str(e)}", exc_info=True
-            )
             raise
 
     async def generate_partners_pdf_report(

@@ -32,7 +32,6 @@ class PartnerDistributionItem(BaseModel):
 
 
 class DistributionResponse(BaseModel):
-    project_id: UUID
     total_profit: Decimal
     distributed_total: Decimal
     distributions: List[PartnerDistributionItem]
@@ -41,7 +40,6 @@ class DistributionResponse(BaseModel):
 class PartnerDistributionResponse(BaseModel):
     id: UUID
     partner_id: UUID
-    project_id: UUID
     payout_amount: Decimal
     snapshot_fields: dict
     created_at: datetime
@@ -51,6 +49,5 @@ class PartnerDistributionResponse(BaseModel):
 
 
 class DistributionRequest(BaseModel):
-    project_ids: Optional[List[UUID]] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    profit: Decimal
+    memo: Optional[str] = None
