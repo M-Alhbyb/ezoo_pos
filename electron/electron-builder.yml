@@ -1,0 +1,23 @@
+appId: com.ezoo.pos
+productName: EZOO POS
+directories:
+  output: dist
+  buildResources: build
+files:
+  - src/**/*
+asar: true
+win:
+  target:
+    - target: dir
+      arch:
+        - x64
+  sign: false
+extraResources:
+  - from: ../frontend/.next/standalone
+    to: frontend/.next/standalone
+    filter:
+      - "**/*"
+  - from: ../backend/dist
+    to: backend/dist
+    filter:
+      - "**/*"

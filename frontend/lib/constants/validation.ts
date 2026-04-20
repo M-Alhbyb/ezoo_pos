@@ -26,7 +26,7 @@ export function getValidationMessage(
 ): string {
   const message = VALIDATION_MESSAGES[key];
   if (typeof message === 'function') {
-    return message(...args);
+    return (message as (...args: (string | number)[]) => string)(...args);
   }
   return message;
 }
