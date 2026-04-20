@@ -1,0 +1,126 @@
+# ==============================
+# Python / FastAPI Backend
+# ==============================
+
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+sdist/
+wheels/
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.cache
+.pytest_cache/
+nosetests.xml
+
+# mypy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Ruff / linting
+.ruff_cache/
+
+# Alembic (don't ignore migrations, but ignore temp files)
+*.db
+*.sqlite3
+
+# ==============================
+# Node.js / Next.js Frontend
+# ==============================
+
+node_modules/
+.next/
+out/
+
+# Package manager locks (keep ONE — remove the others you don't use)
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build output
+frontend/dist/
+frontend/.turbo/
+
+# Vercel
+.vercel/
+
+# ==============================
+# Environment & Secrets
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+# ==============================
+# IDE & Editors
+# ==============================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ==============================
+# OS Files
+# ==============================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+*.lnk
+
+# ==============================
+# Docker (if used later)
+# ==============================
+
+# Ignore docker volumes but not config
+docker-compose.override.yml
+
+# ==============================
+# Logs & Temp
+# ==============================
+
+*.log
+logs/
+tmp/
+temp/
+
+# ==============================
+# Database dumps & backups
+# ==============================
+
+*.sql
+*.dump
+!migrations/**/*.sql
