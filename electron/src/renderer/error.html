@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EZOO POS - Error</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      color: white;
+      max-width: 500px;
+      padding: 32px;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    p {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+    button {
+      background: white;
+      color: #dc3545;
+      border: none;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    button.secondary {
+      background: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+    button.secondary:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .logs {
+      margin-top: 32px;
+      text-align: left;
+      background: rgba(0,0,0,0.2);
+      padding: 16px;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>Startup Failed</h1>
+    <p id="error-message">An error occurred while starting EZOO POS.</p>
+    <div class="buttons">
+      <button onclick="retry()">Retry</button>
+      <button class="secondary" onclick="showLogs()">View Logs</button>
+    </div>
+    <div id="logs" class="logs" style="display: none;"></div>
+  </div>
+  <script>
+    async function retry() {
+      if (window.api) {
+        await window.api.retryStartup();
+      }
+    }
+    async function showLogs() {
+      const logsEl = document.getElementById('logs');
+      if (logsEl.style.display === 'none') {
+        logsEl.style.display = 'block';
+        if (window.api) {
+          logsEl.textContent = await window.api.getLogs();
+        }
+      } else {
+        logsEl.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

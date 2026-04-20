@@ -92,7 +92,7 @@ export default function InventoryReportPage() {
             <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
                 item.total_delta >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
             }`}>
-                {item.total_delta >= 0 ? (ARABIC.inventory.restock || 'إعادة تخزين') : (ARABIC.inventory.sale || 'بيع')}
+                {item.total_delta >= 0 ? (ARABIC.inventory.restock || 'إعادة تخزين') : (ARABIC.inventory.movementTypes?.sale || 'مبيعة')}
             </span>
         ) 
     },

@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { formatDecimal } from '../utils/chart-utils';
+import { formatDecimal } from '@/lib/utils/chart-utils';
 import { formatCurrency, formatPercentage } from '@/lib/utils/format';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe', '#00C49F', '#FFBB28', '#FF8042'];

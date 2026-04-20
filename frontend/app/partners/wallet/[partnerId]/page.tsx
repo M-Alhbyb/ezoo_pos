@@ -204,7 +204,7 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
 
       {/* Wallet View */}
       <PartnerWalletView
-        partnerId={partnerId}
+        partnerId={Number(partnerId)}
         partnerName={partner.name}
         onRefresh={fetchPartner}
       />

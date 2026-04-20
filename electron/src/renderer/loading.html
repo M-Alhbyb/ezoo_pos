@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EZOO POS - Loading</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      color: white;
+    }
+    .logo {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 24px;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .message {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    .error {
+      background: #dc3545;
+      padding: 16px 24px;
+      border-radius: 8px;
+      margin-top: 24px;
+    }
+    .error h3 { margin-bottom: 8px; }
+    .retry-btn {
+      background: white;
+      color: #dc3545;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    .retry-btn:hover { background: #f8f9fa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">EZOO POS</div>
+    <div class="spinner"></div>
+    <p class="message">Starting services...</p>
+    <div id="error" style="display: none;">
+      <div class="error">
+        <h3>Startup Error</h3>
+        <p id="error-message">An error occurred</p>
+        <button class="retry-btn" onclick="retry()">Retry</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    if (window.api) {
+      window.api.onShowError((message) => {
+        document.querySelector('.spinner').style.display = 'none';
+        document.querySelector('.message').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-message').textContent = message;
+      });
+    }
+    async function retry() {
+      document.getElementById('error').style.display = 'none';
+      document.querySelector('.spinner').style.display = 'block';
+      document.querySelector('.message').style.display = 'block';
+      if (window.api) {
+        await window.api.retryStartup();
+      }
+    }
+  </script>
+</body>
+</html>
