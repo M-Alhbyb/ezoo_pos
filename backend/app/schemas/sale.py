@@ -98,6 +98,7 @@ class SaleCreate(BaseModel):
     )
     note: Optional[str] = Field(None, max_length=1000, description="Optional note")
     idempotency_key: Optional[str] = Field(None, description="Idempotency key to prevent double sales")
+    customer_id: Optional[UUID] = Field(None, description="Customer for credit sale (optional)")
 
 
 class SaleCalculationRequest(BaseModel):
@@ -175,6 +176,7 @@ class SaleResponse(BaseModel):
     reason: Optional[str] = Field(None, description="Alias for note, for tests")
     is_reversal: bool = Field(default=False, description="Whether this sale is a reversal")
     original_sale_id: Optional[UUID] = Field(None, description="ID of original sale if this is a reversal")
+    customer_id: Optional[UUID] = Field(None, description="Customer for credit sale")
     created_at: datetime
 
     class Config:

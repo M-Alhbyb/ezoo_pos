@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
 import { User, Package, Hash, Percent, AlertCircle } from "lucide-react";
+import NumberInput from "@/components/shared/NumberInput";
 
 export interface ProductAssignment {
   id?: string;
   partner_id: number;
   product_id: string;
   assigned_quantity: number;
-  share_percentage: string;
+  share_percentage: string | number;
   status?: 'active' | 'fulfilled';
   remaining_quantity?: number;
 }
@@ -45,7 +46,7 @@ export default function ProductAssignmentForm({
     partner_id: assignment?.partner_id || "",
     product_id: assignment?.product_id || "",
     assigned_quantity: assignment?.assigned_quantity || 0,
-    share_percentage: assignment?.share_percentage || "",
+    share_percentage: Number(assignment?.share_percentage) || 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +63,7 @@ export default function ProductAssignmentForm({
       await onSubmit({
         ...formData,
         partner_id: Number(formData.partner_id),
-        share_percentage: formData.share_percentage || selectedPartner?.share_percentage,
+        share_percentage: formData.share_percentage || Number(selectedPartner?.share_percentage) || 0,
       });
     } catch (err: any) {
       setError(err.message || ARABIC.errors.saveFailed);
@@ -72,7 +73,7 @@ export default function ProductAssignmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 text-start">
       {error && (
         <div className="bg-rose-50 border border-rose-100 text-rose-600 rounded-xl p-3 text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -125,40 +126,22 @@ export default function ProductAssignmentForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Quantity */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-            <Hash className="w-3.5 h-3.5" />
-            {t.quantity} *
-          </label>
-          <input
-            type="number"
-            value={formData.assigned_quantity || ""}
-            onChange={(e) => setFormData({ ...formData, assigned_quantity: parseInt(e.target.value) || 0 })}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none"
-            min="1"
-            required
-            placeholder="0"
-          />
-        </div>
+        <NumberInput
+          label={t.quantity}
+          value={formData.assigned_quantity}
+          onChange={(val) => setFormData({ ...formData, assigned_quantity: val })}
+          required
+          min={1}
+        />
 
-        {/* Share Percentage */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-            <Percent className="w-3.5 h-3.5" />
-            {t.share}
-          </label>
-          <input
-            type="number"
-            step="0.1"
-            value={formData.share_percentage}
-            onChange={(e) => setFormData({ ...formData, share_percentage: e.target.value })}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none"
-            placeholder={selectedPartner?.share_percentage || "0.0"}
-            min="0"
-            max="100"
-          />
-        </div>
+        <NumberInput
+          label={t.share}
+          suffix="%"
+          value={formData.share_percentage}
+          onChange={(val) => setFormData({ ...formData, share_percentage: val })}
+          placeholder={selectedPartner?.share_percentage || "0.0"}
+          max={100}
+        />
       </div>
 
       <p className="text-[10px] text-slate-400 font-medium">

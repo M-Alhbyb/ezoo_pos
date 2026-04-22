@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
 import { User, Package, Hash, Percent, TrendingUp } from "lucide-react";
+import NumberInput from "@/components/shared/NumberInput";
 
 interface Product {
   id?: string;
   name: string;
   sku: string | null;
   category_id: string;
-  base_price: string;
-  selling_price: string;
+  base_price: string | number;
+  selling_price: string | number;
   stock_quantity: number;
   partner_id?: number | null;
 }
@@ -39,8 +40,8 @@ export default function ProductForm({ product, categories, partners, onSubmit, o
     name: product?.name || "",
     sku: product?.sku || "",
     category_id: product?.category_id || "",
-    base_price: product?.base_price || "",
-    selling_price: product?.selling_price || "",
+    base_price: Number(product?.base_price) || 0,
+    selling_price: Number(product?.selling_price) || 0,
     stock_quantity: product?.stock_quantity || 0,
     partner_id: product?.partner_id || "",
   });
@@ -69,7 +70,7 @@ export default function ProductForm({ product, categories, partners, onSubmit, o
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 text-start">
       {error && (
         <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-4 text-sm flex items-center gap-3 animate-slide-up">
           <Package className="w-5 h-5 text-rose-500" />
@@ -123,33 +124,19 @@ export default function ProductForm({ product, categories, partners, onSubmit, o
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{ARABIC.products.basePrice} *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.base_price}
-              onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none text-end"
-              dir="ltr"
-              required
-            />
-          </div>
+          <NumberInput
+            label={ARABIC.products.basePrice}
+            value={formData.base_price}
+            onChange={(val) => setFormData({ ...formData, base_price: val })}
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{ARABIC.products.sellingPrice} *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.selling_price}
-              onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none text-end"
-              dir="ltr"
-              required
-            />
-          </div>
+          <NumberInput
+            label={ARABIC.products.sellingPrice}
+            value={formData.selling_price}
+            onChange={(val) => setFormData({ ...formData, selling_price: val })}
+            required
+          />
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{ARABIC.inventory.balance}</label>
@@ -158,7 +145,7 @@ export default function ProductForm({ product, categories, partners, onSubmit, o
               min="0"
               value={formData.stock_quantity}
               onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none text-end"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary p-3 transition-all outline-none text-end font-mono"
               dir="ltr"
             />
           </div>

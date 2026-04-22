@@ -530,3 +530,57 @@ class ExportService:
             end_date=date.today(),
             generated_by=generated_by,
         )
+
+    async def generate_customer_statement_pdf(
+        self,
+        customer_data: dict,
+        ledger_entries: list,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        generated_by: str = "system"
+    ) -> bytes:
+        """
+        T029: Generate PDF statement for a customer.
+        """
+        try:
+            formatted_entries = []
+            for entry in ledger_entries:
+                entry_type = entry.get("type", "")
+                type_label = {
+                    "SALE": "بيع",
+                    "PAYMENT": "دفعة",
+                    "RETURN": "مرتجع",
+                }.get(entry_type, entry_type)
+
+                formatted_entries.append({
+                    "التاريخ": entry.get("created_at", ""),
+                    "النوع": type_label,
+                    "المبلغ": entry.get("amount", 0),
+                    "ملاحظة": entry.get("note", "") or "-",
+                })
+
+            customer_name = customer_data.get("name", "عميل")
+            summary = customer_data.get("summary", {})
+
+            formatted_data = [
+                {"العميل": customer_name},
+                {"الهاتف": customer_data.get("phone", "-")},
+                {"إجمالي المبيعات": summary.get("total_sales", 0)},
+                {"إجمالي المدفوعات": summary.get("total_payments", 0)},
+                {"إجمالي المرتجعات": summary.get("total_returns", 0)},
+                {"الرصيد": summary.get("balance", 0)},
+            ]
+
+            title = f"كشف حساب - {customer_name}"
+            logger.info(f"Generating customer statement PDF: {customer_name}")
+
+            return await self.generate_pdf(
+                data=formatted_entries,
+                title=title,
+                start_date=start_date or date.today(),
+                end_date=end_date or date.today(),
+                generated_by=generated_by,
+            )
+        except Exception as e:
+            logger.error(f"Customer statement PDF generation failed: {str(e)}", exc_info=True)
+            raise

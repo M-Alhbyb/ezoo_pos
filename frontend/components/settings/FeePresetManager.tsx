@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency } from "@/lib/utils/format";
+import NumberInput from "@/components/shared/NumberInput";
 
 interface FeePresetManagerProps {
   locationId?: number;
@@ -61,8 +62,7 @@ export default function FeePresetManager({
     setError("");
   };
 
-  const handlePresetChange = (index: number, value: string) => {
-    const numValue = parseFloat(value) || 0;
+  const handlePresetChange = (index: number, numValue: number) => {
     const newPresets = [...editPresets];
     newPresets[index] = numValue;
     setEditPresets(newPresets);
@@ -151,23 +151,23 @@ export default function FeePresetManager({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-start">
       <div>
-        <h2 className="text-lg font-medium mb-2">{ARABIC.settings.feePresets}</h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <h2 className="text-lg font-bold text-slate-800 mb-2">{ARABIC.settings.feePresets}</h2>
+        <p className="text-sm text-slate-500 mb-4">
           {ARABIC.settings.feePresetsDescription}
         </p>
       </div>
 
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b border-slate-100">
         {FEE_TYPES.map((type) => (
           <button
             key={type.value}
             onClick={() => handleFeeTypeChange(type.value)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`px-4 py-3 text-sm font-bold transition-all relative ${
               selectedFeeType === type.value
-                ? "border-b-2 border-primary text-primary"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600"
+                : "text-slate-400 hover:text-slate-600"
             }`}
           >
             {type.label}
@@ -176,35 +176,31 @@ export default function FeePresetManager({
       </div>
 
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded">
+        <div className="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSave} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-3">
             {ARABIC.settings.presetAmounts} {FEE_TYPES.find(t => t.value === selectedFeeType)?.label}
           </label>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {editPresets.map((preset, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={preset || ""}
-                  onChange={(e) => handlePresetChange(index, e.target.value)}
-                  className="border rounded px-3 py-2 w-32 text-end"
-                  placeholder={ARABIC.pos.amount}
-                  dir="ltr"
+              <div key={index} className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100 w-fit">
+                <NumberInput
+                  value={preset}
+                  onChange={(val) => handlePresetChange(index, val)}
+                  className="w-32 py-1.5 rounded-lg text-sm"
+                  containerClassName="w-32"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemovePreset(index)}
-                  className="text-red-600 hover:text-red-800 text-sm"
+                  className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                 >
-                  {ARABIC.common.delete}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>
             ))}
@@ -215,33 +211,33 @@ export default function FeePresetManager({
           <button
             type="button"
             onClick={handleAddPreset}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+            className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:text-blue-600 text-slate-400 text-sm font-bold transition-all"
           >
-            + {ARABIC.settings.addPreset}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            {ARABIC.settings.addPreset}
           </button>
         )}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 pt-4 border-t border-slate-50">
           <button
             type="submit"
             disabled={saving}
-            className={`px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark text-sm ${
-              saving ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold shadow-lg shadow-blue-100 disabled:opacity-50 transition-all"
           >
             {saving ? ARABIC.common.saving : ARABIC.common.save}
           </button>
           
           {saving === false && editPresets.length > 0 && presets[selectedFeeType]?.length > 0 && (
-            <span className="text-sm text-green-600">
+            <span className="text-sm font-bold text-emerald-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
               {ARABIC.common.success}
             </span>
           )}
         </div>
       </form>
 
-      <div className="mt-6 p-4 bg-gray-50 rounded">
-        <h3 className="text-sm font-medium mb-2">{ARABIC.settings.currentPresets}</h3>
+      <div className="p-5 bg-blue-50/30 border border-blue-100 rounded-2xl">
+        <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3">{ARABIC.settings.currentPresets}</h3>
         <div className="flex flex-wrap gap-2">
           {editPresets
             .filter(p => p > 0)
@@ -249,13 +245,13 @@ export default function FeePresetManager({
             .map((preset, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-white border rounded text-sm"
+                className="px-4 py-1.5 bg-white border border-blue-100 rounded-lg text-sm font-bold text-blue-700 shadow-sm"
               >
-                {formatCurrency(preset.toString())}
+                {formatCurrency(preset)}
               </span>
             ))}
           {editPresets.filter(p => p > 0).length === 0 && (
-            <span className="text-sm text-gray-500 italic">
+            <span className="text-sm text-slate-400 italic">
               {ARABIC.settings.noPresets}
             </span>
           )}

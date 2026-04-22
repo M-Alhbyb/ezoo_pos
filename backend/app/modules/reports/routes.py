@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,11 @@ from app.schemas.report import (
     InventoryReport,
 )
 from app.schemas.export import ExportFormat
+from app.schemas.supplier_ledger import (
+    SupplierSummaryReportResponse,
+    SupplierSummaryReportItem,
+    SupplierStatementResponse,
+)
 from app.websocket.manager import manager
 
 logger = logging.getLogger(__name__)
@@ -43,8 +49,6 @@ async def get_sales_report(
     Get aggregate sales statistics with daily breakdown.
     """
     return await service.get_sales_report(start_date, end_date, page, page_size)
-
-
 
 
 @router.get("/partners", response_model=PartnerReport)
@@ -219,8 +223,6 @@ async def export_sales_report(
         )
 
 
-
-
 @router.get("/partners/export")
 async def export_partners_report(
     format: ExportFormat = Query(..., description="Export format: csv, xlsx, or pdf"),
@@ -385,3 +387,44 @@ async def export_inventory_report(
                 "suggestion": "If the problem persists, try with a smaller date range.",
             },
         )
+
+
+@router.get("/suppliers", response_model=SupplierSummaryReportResponse)
+async def get_suppliers_summary_report(
+    service: ReportService = Depends(get_report_service),
+):
+    """
+    Get summary report for all suppliers.
+    """
+    try:
+        data = await service.get_supplier_summary_report()
+        return SupplierSummaryReportResponse(
+            suppliers=[SupplierSummaryReportItem(**item) for item in data]
+        )
+    except Exception as e:
+        logger.error(f"Supplier summary report failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/suppliers/{supplier_id}")
+async def get_supplier_statement(
+    supplier_id: UUID,
+    start_date: Optional[date] = Query(None, description="Filter start date"),
+    end_date: Optional[date] = Query(None, description="Filter end date"),
+    service: ReportService = Depends(get_report_service),
+):
+    """
+    Get supplier statement with ledger entries and date filtering.
+    """
+    try:
+        data = await service.get_supplier_statement(
+            supplier_id=supplier_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return data
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Supplier statement failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

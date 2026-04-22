@@ -40,6 +40,8 @@ from app.core.calculations import (
 )
 from app.modules.inventory.service import InventoryService
 from app.modules.partners.partner_profit_service import PartnerProfitService
+from app.modules.customers.service import CustomerService
+from app.core.constants import LedgerTransactionType
 
 
 class SaleService:
@@ -267,6 +269,7 @@ class SaleService:
             profit=profit,
             note=sale_data.note,
             idempotency_key=sale_data.idempotency_key,
+            customer_id=sale_data.customer_id,
         )
 
         self.db.add(sale)
@@ -324,6 +327,48 @@ class SaleService:
         await self.partner_profit_service.process_sale_partner_profits(
             sale.id, created_items
         )
+
+        # 7. CUSTOMER CREDIT SALE PROCESSING (T013, T015, T015.5)
+        if sale_data.customer_id:
+            customer_service = CustomerService(self.db)
+            customer = await customer_service.get_customer(sale_data.customer_id)
+            if not customer:
+                raise ValueError(f"Customer {sale_data.customer_id} not found")
+
+            # T013: Check credit limit before creating ledger entry
+            debt_amount = breakdown.total
+            is_exceeded, current_balance, credit_limit = await customer_service.check_credit_limit(
+                sale_data.customer_id, debt_amount
+            )
+            if is_exceeded:
+                raise ValueError(
+                    f"Credit limit exceeded. Current balance: {current_balance}, "
+                    f"Credit limit: {credit_limit}, Sale total: {debt_amount}"
+                )
+
+            # T015: Create SALE ledger entry (amount = grand_total - paid_amount)
+            paid_amount = sum(p.amount for p in sale_data.payments) if sale_data.payments else breakdown.total
+            credit_amount = breakdown.total - paid_amount
+            if credit_amount > 0:
+                await customer_service.record_ledger_entry(
+                    customer_id=sale_data.customer_id,
+                    type=LedgerTransactionType.SALE,
+                    amount=credit_amount,
+                    reference_id=sale.id,
+                    note=f"Credit sale {sale.id}",
+                )
+
+            # T015.5: Create PAYMENT ledger entry for paid_amount (if any)
+            if paid_amount > 0:
+                payment_method_name = payment_method.name if payment_method else "Unknown"
+                await customer_service.record_ledger_entry(
+                    customer_id=sale_data.customer_id,
+                    type=LedgerTransactionType.PAYMENT,
+                    amount=paid_amount,
+                    reference_id=sale.id,
+                    payment_method=payment_method_name,
+                    note=f"Payment on sale {sale.id}",
+                )
 
         await self.db.commit()
 
@@ -571,6 +616,17 @@ class SaleService:
                 quantity=item.quantity,
                 reason="reversal",
                 reference_id=reversal.id,
+            )
+
+        # T022-T023: Create RETURN ledger entry if this was a customer-linked sale
+        if original_sale.customer_id:
+            customer_service = CustomerService(self.db)
+            await customer_service.record_ledger_entry(
+                customer_id=original_sale.customer_id,
+                type=LedgerTransactionType.RETURN,
+                amount=abs(original_sale.grand_total),
+                reference_id=original_sale.id,
+                note=f"إلغاء البيع {original_sale.id}",
             )
 
         await self.db.commit()

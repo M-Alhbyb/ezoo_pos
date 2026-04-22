@@ -6,9 +6,9 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
-import { Decimal } from "decimal.js";
+import NumberInput from "@/components/shared/NumberInput";
 
 interface PaymentMethod {
   id: string;
@@ -72,9 +72,6 @@ export default function MultiPaymentSelect({ total, payments, onChange }: MultiP
   const removePayment = (index: number) => {
     if (payments.length <= 1) return;
     const newPayments = payments.filter((_, i) => i !== index);
-    
-    // Auto-adjust the last payment to cover the total if needed? 
-    // Or just let the user fix it. Let's auto-adjust the first one for now or just leave it.
     onChange(newPayments);
   };
 
@@ -92,7 +89,7 @@ export default function MultiPaymentSelect({ total, payments, onChange }: MultiP
   if (error) return <div className="text-rose-500 text-sm py-2">{error}</div>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-start">
       <div className="flex justify-between items-center">
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {ARABIC.pos.paymentMethod || 'طريقة الدفع'}
@@ -123,17 +120,13 @@ export default function MultiPaymentSelect({ total, payments, onChange }: MultiP
                 ))}
               </select>
             </div>
-            <div className="w-28 relative">
-              <input
-                type="number"
-                step="0.01"
+            <div className="w-40">
+              <NumberInput
                 value={payment.amount}
-                onChange={(e) => updatePayment(index, { amount: parseFloat(e.target.value) || 0 })}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-2.5 transition-all shadow-sm pe-8"
+                onChange={(val) => updatePayment(index, { amount: val })}
+                className="p-2.5 rounded-xl text-sm"
+                containerClassName="w-full"
               />
-              <span className="absolute end-2.5 top-2.5 text-slate-400 text-xs font-medium">
-                {ARABIC.common?.currency || 'ر.س'}
-              </span>
             </div>
             {payments.length > 1 && (
               <button
@@ -151,7 +144,7 @@ export default function MultiPaymentSelect({ total, payments, onChange }: MultiP
       </div>
 
       <div className={`text-xs font-medium p-2.5 rounded-lg flex justify-between items-center ${isBalanced ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
-        <span>{ARABIC.pos.total || 'المجموع'}: {total} {ARABIC.common?.currency || 'ر.س'}</span>
+        <span>{ARABIC.pos.total || 'المجموع'}: {total.toLocaleString()} {ARABIC.common?.currency || 'ج.س'}</span>
         <div className="flex items-center">
           {isBalanced ? (
             <svg className="w-4 h-4 me-1.5" fill="currentColor" viewBox="0 0 20 20">
@@ -162,7 +155,7 @@ export default function MultiPaymentSelect({ total, payments, onChange }: MultiP
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           )}
-          <span>{ARABIC.pos.remaining || 'المتبقي'}: {(total - currentSum).toFixed(2)}</span>
+          <span>{ARABIC.pos.remaining || 'المتبقي'}: {(total - currentSum).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
       </div>
     </div>

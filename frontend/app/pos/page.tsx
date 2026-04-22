@@ -12,6 +12,9 @@ import PaymentMethodSelect from "@/components/pos/PaymentMethodSelect";
 import MultiPaymentSelect, { SalePayment } from "@/components/pos/MultiPaymentSelect";
 import SaleBreakdown from "@/components/pos/SaleBreakdown";
 import ConfirmButton from "@/components/pos/ConfirmButton";
+import CustomerSelector from "@/components/pos/CustomerSelector";
+import CreditWarningModal from "@/components/pos/CreditWarningModal";
+import { getCustomers, CustomerWithBalance } from "@/lib/api/customers";
 
 // Types
 interface CartItem {
@@ -59,6 +62,15 @@ export default function POSPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<CustomerWithBalance[]>([]);
+  const [creditWarningOpen, setCreditWarningOpen] = useState(false);
+  const [creditWarningData, setCreditWarningData] = useState<{
+    currentBalance: number;
+    creditLimit: number;
+    saleAmount: number;
+    newBalance: number;
+  } | null>(null);
 
   // Add product to cart
   const handleProductSelect = async (product: any) => {
@@ -185,6 +197,33 @@ export default function POSPage() {
       return;
     }
 
+    // If customer selected, check credit limit
+    if (selectedCustomerId) {
+      const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+      if (selectedCustomer) {
+        const availableCredit = Number(selectedCustomer.credit_limit) - Number(selectedCustomer.balance);
+        if (total > availableCredit) {
+          setCreditWarningData({
+            currentBalance: Number(selectedCustomer.balance),
+            creditLimit: Number(selectedCustomer.credit_limit),
+            saleAmount: total,
+            newBalance: Number(selectedCustomer.balance) + total,
+          });
+          setCreditWarningOpen(true);
+          return;
+        }
+      }
+    }
+
+    await createSale();
+  };
+
+  // Create the actual sale
+  const createSale = async () => {
+    if (payments.length === 0 || cartItems.length === 0) return;
+
+    const total = parseFloat(breakdown?.total || "0");
+
     try {
       setLoading(true);
       setError("");
@@ -202,6 +241,7 @@ export default function POSPage() {
           fees,
           payments,
           note: note || undefined,
+          customer_id: selectedCustomerId || undefined,
         }),
       });
 
@@ -216,8 +256,8 @@ export default function POSPage() {
       setFees([]);
       setBreakdown(null);
       setNote("");
+      setSelectedCustomerId(null);
 
-      // Show success message
       setTimeout(() => setSuccess(false), 5000);
     } catch (err: any) {
       setError(err.message);
@@ -322,6 +362,16 @@ export default function POSPage() {
                   onChange={setPayments} 
                 />
 
+                <CustomerSelector
+                  selectedCustomerId={selectedCustomerId}
+                  onSelect={(id) => {
+                    setSelectedCustomerId(id);
+                    if (id) {
+                      getCustomers().then(c => setCustomers(c));
+                    }
+                  }}
+                />
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{ARABIC.pos.note || 'ملاحظة'} (اختياري)</label>
                   <textarea
@@ -344,6 +394,19 @@ export default function POSPage() {
           </div>
         </div>
       </div>
+
+      <CreditWarningModal
+        isOpen={creditWarningOpen}
+        currentBalance={creditWarningData?.currentBalance || 0}
+        creditLimit={creditWarningData?.creditLimit || 0}
+        saleAmount={creditWarningData?.saleAmount || 0}
+        newBalance={creditWarningData?.newBalance || 0}
+        onConfirm={() => {
+          setCreditWarningOpen(false);
+          createSale();
+        }}
+        onCancel={() => setCreditWarningOpen(false)}
+      />
     </div>
   );
 }

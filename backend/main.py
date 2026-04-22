@@ -15,6 +15,9 @@ from app.modules.inventory.routes import router as inventory_router
 from app.modules.settings.routes import router as settings_router
 from app.modules.partners.routes import router as partners_router
 from app.modules.reports.routes import router as reports_router
+from app.modules.suppliers.routes import router as suppliers_router
+from app.modules.purchases.routes import router as purchases_router
+from app.modules.customers.routes import router as customers_router
 from app.api.routes.dashboard import router as dashboard_router
 import logging
 
@@ -64,6 +67,9 @@ app.include_router(inventory_router)
 app.include_router(settings_router)
 app.include_router(partners_router)
 app.include_router(reports_router)
+app.include_router(suppliers_router)
+app.include_router(purchases_router)
+app.include_router(customers_router)
 app.include_router(dashboard_router)
 
 
@@ -138,4 +144,5 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

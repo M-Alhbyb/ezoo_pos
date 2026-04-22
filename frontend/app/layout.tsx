@@ -11,11 +11,13 @@ import {
   History,
   Menu,
   X,
-  Plus
+  Plus,
+  Truck
 } from "lucide-react";
 import { Inter, Cairo } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
+import { ARABIC } from "@/lib/constants/arabic";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -94,7 +96,13 @@ export default function RootLayout({
                 <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
                    <Users className="w-5 h-5" />
                 </div>
-                الشركاء
+                {ARABIC.nav.partners}
+              </Link>
+              <Link href="/suppliers" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
+                <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">
+                   <Truck className="w-5 h-5" />
+                </div>
+                {ARABIC.nav.suppliers}
               </Link>
               <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 hover:text-blue-600 rounded-2xl transition-all duration-300 group">
                 <div className="p-2 bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl transition-colors">

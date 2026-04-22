@@ -61,6 +61,9 @@ class Sale(BaseModel):
         UUID(as_uuid=True), ForeignKey("sales.id"), nullable=True, index=True
     )
     is_reversal = Column(Boolean, nullable=False, default=False)
+    customer_id = Column(
+        UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True, index=True
+    )
 
     # Added properties for test backward compatibility
     @property
@@ -84,6 +87,7 @@ class Sale(BaseModel):
     payments = relationship(
         "SalePayment", back_populates="sale", cascade="all, delete-orphan"
     )
+    customer = relationship("Customer", back_populates="sales")
 
     # Extensibility (for future multi-user/multi-branch support)
     # user_id and branch_id inherited from BaseModel

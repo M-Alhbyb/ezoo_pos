@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { ARABIC } from "@/lib/constants/arabic";
+import NumberInput from "@/components/shared/NumberInput";
 
 interface Partner {
   id?: string;
   name: string;
-  share_percentage: string | number;
-  investment_amount: string | number;
+  share_percentage: number;
+  investment_amount: number;
 }
 
 interface PartnerModalProps {
@@ -16,16 +17,16 @@ interface PartnerModalProps {
 
 export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModalProps) {
   const [name, setName] = useState("");
-  const [sharePercentage, setSharePercentage] = useState("");
-  const [investmentAmount, setInvestmentAmount] = useState("");
+  const [sharePercentage, setSharePercentage] = useState(0);
+  const [investmentAmount, setInvestmentAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setName("");
-      setSharePercentage("0");
-      setInvestmentAmount("0.00");
+      setSharePercentage(0);
+      setInvestmentAmount(0);
       setError("");
     }
   }, [isOpen]);
@@ -40,8 +41,8 @@ export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModal
     try {
       await onSubmit({
         name,
-        share_percentage: parseFloat(sharePercentage),
-        investment_amount: parseFloat(investmentAmount),
+        share_percentage: sharePercentage,
+        investment_amount: investmentAmount,
       });
     } catch (err: any) {
       setError(err.message);
@@ -51,7 +52,7 @@ export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModal
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in text-start">
       <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl animate-scale-up">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h2 className="text-xl font-semibold text-slate-800">{ARABIC.partners.addPartner}</h2>
@@ -81,32 +82,20 @@ export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModal
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.partners.sharePercentage} (%)</label>
-              <input
-                type="number"
-                required
-                min="0"
-                max="100"
-                step="0.01"
-                value={sharePercentage}
-                onChange={(e) => setSharePercentage(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-800"
-              />
-            </div>
+            <NumberInput
+              label={ARABIC.partners.sharePercentage}
+              suffix="%"
+              value={sharePercentage}
+              onChange={setSharePercentage}
+              max={100}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{ARABIC.partners.investmentAmount} (ج.س)</label>
-              <input
-                type="number"
-                required
-                min="0"
-                step="0.01"
-                value={investmentAmount}
-                onChange={(e) => setInvestmentAmount(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-800"
-              />
-            </div>
+            <NumberInput
+              label={ARABIC.partners.investmentAmount}
+              suffix="ج.س"
+              value={investmentAmount}
+              onChange={setInvestmentAmount}
+            />
           </div>
 
           <div className="mt-8 flex justify-end gap-3">
@@ -120,7 +109,7 @@ export default function PartnerModal({ isOpen, onClose, onSubmit }: PartnerModal
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-primary text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm shadow-blue-200 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? ARABIC.common.saving : ARABIC.partners.addPartner}
             </button>
