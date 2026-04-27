@@ -5,9 +5,9 @@ import { FileText, FileSpreadsheet, FileDown } from 'lucide-react';
 import { ARABIC } from '@/lib/constants/arabic';
 
 export interface ExportButtonGroupProps {
-  reportType: 'sales' | 'projects' | 'partners' | 'inventory';
-  startDate: string;
-  endDate: string;
+  reportType: string;
+  startDate?: string;
+  endDate?: string;
   onExportStart?: () => void;
   onExportComplete?: () => void;
   onExportError?: (error: string) => void;
@@ -26,7 +26,8 @@ export function ExportButtonGroup({
   const [exportingFormat, setExportingFormat] = useState<string | null>(null);
 
   const handleExport = async (format: 'pdf' | 'csv' | 'xlsx') => {
-    if (!startDate || !endDate) {
+    const needsDates = ['sales', 'partners', 'inventory'].includes(reportType);
+    if (needsDates && (!startDate || !endDate)) {
       onExportError?.(ARABIC.reports.selectDateRange || 'اختر نطاق التاريخ');
       return;
     }
@@ -35,17 +36,15 @@ export function ExportButtonGroup({
     onExportStart?.();
 
     try {
-      const params = new URLSearchParams({
-        format: format,
-        start_date: startDate,
-        end_date: endDate
-      });
+      const params = new URLSearchParams({ format });
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
 
       const acceptHeader = format === 'pdf' ? 'application/pdf' :
                            format === 'csv' ? 'text/csv' :
                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-      const response = await fetch(`/api/reports/${reportType}/export?${params}`, {
+      const response = await fetch(`/api/reports/export/${reportType}?${params}`, {
         method: 'GET',
         headers: {
           'Accept': acceptHeader
@@ -90,18 +89,6 @@ export function ExportButtonGroup({
 
   return (
     <div className="flex flex-wrap gap-3">
-      <button
-        onClick={() => handleExport('csv')}
-        disabled={disabled || exportingFormat !== null}
-        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm shadow-emerald-200"
-      >
-        {exportingFormat === 'csv' ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-        ) : (
-          <FileDown className="w-4 h-4" />
-        )}
-        <span>{ARABIC.reports.export.csv}</span>
-      </button>
 
       <button
         onClick={() => handleExport('xlsx')}

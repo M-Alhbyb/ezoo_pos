@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+export const API_BASE = '/api';
 
 export interface Supplier {
   id: string;

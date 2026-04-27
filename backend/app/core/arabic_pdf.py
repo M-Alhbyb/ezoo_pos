@@ -23,12 +23,10 @@ def reshape_arabic(text: str) -> str:
         return text
 
     try:
-        reshaper = arabic_reshaper.ReshaperConfiguration(
-            arabic_reshaper.ENABLE_LIGATURES, arabic_reshaper.ENABLE_NO_LAMALEPH
-        )
-        return arabic_reshaper.reshape(text, reshaper.configuration)
-    except Exception:
+        # Use default configuration which is usually the most compatible
         return arabic_reshaper.reshape(text)
+    except Exception:
+        return text
 
 
 def apply_bidi(text: str) -> str:
@@ -113,11 +111,11 @@ def prepare_cell_value(value, for_pdf: bool = True) -> str:
 
     from decimal import Decimal
 
-    # Convert to string
+    # Convert to string with comma separators for numbers (T034)
     if isinstance(value, Decimal):
-        str_value = str(value)
+        str_value = f"{value:,.2f}"
     elif isinstance(value, (int, float)):
-        str_value = f"{value:.2f}" if isinstance(value, float) else str(value)
+        str_value = f"{value:,.2f}" if isinstance(value, (float, Decimal)) else f"{value:,}"
     else:
         str_value = str(value)
 

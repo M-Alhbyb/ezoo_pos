@@ -239,15 +239,34 @@ class SaleService:
 
         # 4.5 VALIDATE PAYMENT TOTAL
         if not sale_data.payments:
-            # Default to full amount for the single payment method
-            payments_to_create = [{"payment_method_id": payment_method_id, "amount": breakdown.total}]
+            if sale_data.customer_id:
+                # For customers, an empty payment list means full debt (0 payment)
+                payments_to_create = []
+                payment_total = Decimal("0")
+            else:
+                # For walk-in customers, default to full amount for the single payment method
+                payments_to_create = [{"payment_method_id": payment_method_id, "amount": breakdown.total}]
+                payment_total = breakdown.total
         else:
             payment_total = sum(p.amount for p in sale_data.payments)
+            payments_to_create = [p.model_dump() for p in sale_data.payments]
+
+        # Validation logic for payment total
+        if not sale_data.customer_id:
+            # For walk-in customers, payment must be exactly equal to total
             if payment_total != breakdown.total:
                 raise ValueError(
-                    f"Payment total ({payment_total}) does not match grand total ({breakdown.total})"
+                    f"Payment total ({payment_total}) does not match grand total ({breakdown.total}). "
+                    "For walk-in customers, full payment is required."
                 )
-            payments_to_create = [p.model_dump() for p in sale_data.payments]
+        else:
+            # For registered customers, payment can be less than total (debt/loan)
+            if payment_total > breakdown.total:
+                # Still don't allow overpayment in the POS for now unless specifically handled
+                raise ValueError(
+                    f"Payment total ({payment_total}) exceeds grand total ({breakdown.total})."
+                )
+            # payment_total < breakdown.total is allowed for customers (recorded as loan)
 
         # Calculate total cost and profit
         total_cost = Decimal("0")
@@ -336,38 +355,39 @@ class SaleService:
                 raise ValueError(f"Customer {sale_data.customer_id} not found")
 
             # T013: Check credit limit before creating ledger entry
-            debt_amount = breakdown.total
+            # Only check the portion that will actually be added to the debt (unpaid amount)
+            paid_amount = payment_total
+            credit_amount = breakdown.total - paid_amount
+            
             is_exceeded, current_balance, credit_limit = await customer_service.check_credit_limit(
-                sale_data.customer_id, debt_amount
+                sale_data.customer_id, credit_amount
             )
             if is_exceeded:
                 raise ValueError(
                     f"Credit limit exceeded. Current balance: {current_balance}, "
-                    f"Credit limit: {credit_limit}, Sale total: {debt_amount}"
+                    f"Credit limit: {credit_limit}, Unpaid portion: {credit_amount}"
                 )
-
-            # T015: Create SALE ledger entry (amount = grand_total - paid_amount)
-            paid_amount = sum(p.amount for p in sale_data.payments) if sale_data.payments else breakdown.total
-            credit_amount = breakdown.total - paid_amount
-            if credit_amount > 0:
-                await customer_service.record_ledger_entry(
-                    customer_id=sale_data.customer_id,
-                    type=LedgerTransactionType.SALE,
-                    amount=credit_amount,
-                    reference_id=sale.id,
-                    note=f"Credit sale {sale.id}",
-                )
-
+ 
+            # T015: Always create a SALE ledger entry for the full amount
+            # This ensures "Total Sales" in the summary is accurate
+            await customer_service.record_ledger_entry(
+                customer_id=sale_data.customer_id,
+                type=LedgerTransactionType.SALE,
+                amount=breakdown.total,
+                reference_id=sale.id,
+                note=f"بيع - فاتورة #{sale.id.hex[:8].upper()}",
+            )
+ 
             # T015.5: Create PAYMENT ledger entry for paid_amount (if any)
             if paid_amount > 0:
-                payment_method_name = payment_method.name if payment_method else "Unknown"
+                payment_method_name = payment_method.name if payment_method else "نقدي"
                 await customer_service.record_ledger_entry(
                     customer_id=sale_data.customer_id,
                     type=LedgerTransactionType.PAYMENT,
                     amount=paid_amount,
                     reference_id=sale.id,
                     payment_method=payment_method_name,
-                    note=f"Payment on sale {sale.id}",
+                    note=f"دفعة مقابل الفاتورة #{sale.id.hex[:8].upper()}",
                 )
 
         await self.db.commit()
@@ -481,13 +501,32 @@ class SaleService:
                 selectinload(Sale.items),
                 selectinload(Sale.fees),
                 selectinload(Sale.payment_method),
+                selectinload(Sale.customer),
                 selectinload(Sale.payments).joinedload(SalePayment.payment_method),
             )
             .where(Sale.id == sale_id)
         )
 
         result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        sale = result.scalar_one_or_none()
+        
+        if sale and not sale.is_reversal:
+            # Calculate remaining quantities by looking at reversals
+            rev_query = select(Sale).options(selectinload(Sale.items)).where(
+                and_(Sale.original_sale_id == sale_id, Sale.is_reversal == True)
+            )
+            rev_result = await self.db.execute(rev_query)
+            reversals = rev_result.scalars().all()
+            
+            reversed_qtys = {}
+            for rev in reversals:
+                for item in rev.items:
+                    reversed_qtys[item.product_id] = reversed_qtys.get(item.product_id, 0) + abs(item.quantity)
+            
+            for item in sale.items:
+                item.remaining_quantity = item.quantity - reversed_qtys.get(item.product_id, 0)
+        
+        return sale
 
     async def _get_product(self, product_id: UUID) -> Optional[Product]:
         """Get product by ID."""
@@ -536,9 +575,9 @@ class SaleService:
 
         return Decimal(setting.value)
 
-    async def reverse_sale(self, sale_id: UUID, reason: str) -> Sale:
+    async def reverse_sale(self, sale_id: UUID, reversal_data: "SaleReversalCreate") -> Sale:
         """
-        Reverse a sale and restore stock.
+        Reverse a sale (full or partial) and restore stock.
 
         Constitution IV (Immutable Financial Records):
         - Original sale remains unchanged
@@ -547,95 +586,176 @@ class SaleService:
 
         Args:
             sale_id: UUID of sale to reverse
-            reason: Reason for reversal (required)
+            reversal_data: Contains reason and optional items to reverse
 
         Returns:
             Sale instance representing the reversal
-
-        Raises:
-            ValueError: If sale not found or already reversed
         """
+        from app.schemas.sale import SaleReversalCreate
+        
         # Get sale with items
         original_sale = await self.get_sale_detail(sale_id)
         if not original_sale:
             raise ValueError(f"Sale {sale_id} not found")
 
-        # Check if already reversed
-        existing_reversa1 = await self._get_reversal_by_sale_id(sale_id)
-        if existing_reversa1:
-            raise ValueError(f"Sale {sale_id} is already reversed")
+        # Get all existing reversals for this sale to calculate remaining quantities
+        existing_reversals_query = select(Sale).options(selectinload(Sale.items)).where(
+            and_(Sale.original_sale_id == sale_id, Sale.is_reversal == True)
+        )
+        existing_reversals_result = await self.db.execute(existing_reversals_query)
+        existing_reversals = existing_reversals_result.scalars().all()
+
+        # Calculate already reversed quantities per product
+        reversed_quantities = {}
+        for rev in existing_reversals:
+            for item in rev.items:
+                reversed_quantities[item.product_id] = reversed_quantities.get(item.product_id, 0) + abs(item.quantity)
+
+        # Determine what to reverse
+        items_to_process = []
+        if reversal_data.items:
+            # Partial reversal
+            for rev_item in reversal_data.items:
+                # Find original item
+                orig_item = next((i for i in original_sale.items if i.product_id == rev_item.product_id), None)
+                if not orig_item:
+                    raise ValueError(f"Product {rev_item.product_id} was not part of original sale {sale_id}")
+                
+                already_reversed = reversed_quantities.get(rev_item.product_id, 0)
+                remaining = orig_item.quantity - already_reversed
+                
+                if rev_item.quantity > remaining:
+                    raise ValueError(
+                        f"Cannot reverse {rev_item.quantity} of {orig_item.product_name}. "
+                        f"Only {remaining} remaining (Sold: {orig_item.quantity}, Already Reversed: {already_reversed})"
+                    )
+                
+                items_to_process.append({
+                    "orig_item": orig_item,
+                    "quantity": rev_item.quantity
+                })
+        else:
+            # Full reversal (of remaining items)
+            has_remaining = False
+            for orig_item in original_sale.items:
+                already_reversed = reversed_quantities.get(orig_item.product_id, 0)
+                remaining = orig_item.quantity - already_reversed
+                if remaining > 0:
+                    items_to_process.append({
+                        "orig_item": orig_item,
+                        "quantity": remaining
+                    })
+                    has_remaining = True
+            
+            if not has_remaining:
+                raise ValueError(f"Sale {sale_id} has already been fully reversed")
+
+        # Calculate financial values for the reversal
+        rev_subtotal = Decimal("0")
+        rev_total_cost = Decimal("0")
+        
+        for proc in items_to_process:
+            orig_item = proc["orig_item"]
+            qty = proc["quantity"]
+            
+            # Use original unit price ("taking price")
+            line_total = calculate_line_total(qty, orig_item.unit_price)
+            rev_subtotal += line_total
+            rev_total_cost += Decimal(qty) * (orig_item.base_cost or Decimal("0"))
+
+        # VAT calculation for the reversed portion
+        rev_vat_total = Decimal("0")
+        if original_sale.vat_rate:
+            # Simple proportional VAT calculation
+            # In a more complex system, we might recalculate fees first
+            rev_vat_total = round_currency(rev_subtotal * (original_sale.vat_rate / Decimal("100")))
+
+        # Fees calculation
+        # Only reverse fees if it's a full reversal AND no previous reversals exist
+        # This is a simplification. Usually fees are non-refundable for partials.
+        rev_fees_total = Decimal("0")
+        is_full_reversal = len(items_to_process) == len(original_sale.items) and \
+                          all(proc["quantity"] == original_sale.items[i].quantity for i, proc in enumerate(items_to_process))
+        
+        if is_full_reversal and not existing_reversals:
+            rev_fees_total = original_sale.fees_total
+
+        rev_grand_total = rev_subtotal + rev_fees_total + rev_vat_total
+        rev_profit = rev_grand_total - rev_total_cost
 
         # Create reversal record
         reversal = Sale(
             payment_method_id=original_sale.payment_method_id,
-            subtotal=-original_sale.subtotal,
-            fees_total=-original_sale.fees_total,
+            subtotal=-rev_subtotal,
+            fees_total=-rev_fees_total,
             vat_rate=original_sale.vat_rate,
-            vat_total=-original_sale.vat_total if original_sale.vat_total else None,
-            grand_total=-original_sale.grand_total,
-            total_cost=-original_sale.total_cost,
-            profit=-original_sale.profit,
-            note=reason,
+            vat_total=-rev_vat_total if rev_vat_total > 0 else None,
+            grand_total=-rev_grand_total,
+            total_cost=-rev_total_cost,
+            profit=-rev_profit,
+            note=reversal_data.reason,
             is_reversal=True,
             original_sale_id=original_sale.id,
+            customer_id=original_sale.customer_id
         )
 
         self.db.add(reversal)
         await self.db.flush()  # Get reversal ID
 
         # Create reversed sale items
-        for item in original_sale.items:
+        for proc in items_to_process:
+            orig_item = proc["orig_item"]
+            qty = proc["quantity"]
+            
             reversal_item = SaleItem(
                 sale_id=reversal.id,
-                product_id=item.product_id,
-                product_name=item.product_name,
-                quantity=-item.quantity,
-                unit_price=item.unit_price,  # Base and unit remain positive
-                base_cost=item.base_cost,
-                vat_rate=item.vat_rate,
-                line_total=-item.line_total,
+                product_id=orig_item.product_id,
+                product_name=orig_item.product_name,
+                quantity=-qty,
+                unit_price=orig_item.unit_price,
+                base_cost=orig_item.base_cost,
+                vat_rate=orig_item.vat_rate,
+                line_total=-calculate_line_total(qty, orig_item.unit_price),
             )
             self.db.add(reversal_item)
 
-        # Create reversed sale fees
-        for fee in original_sale.fees:
-            reversal_fee = SaleFee(
-                sale_id=reversal.id,
-                fee_type=fee.fee_type,
-                fee_label=fee.fee_label,
-                fee_value_type=fee.fee_value_type,
-                fee_value=fee.fee_value,  # Retain original config values
-                calculated_amount=-fee.calculated_amount,
-            )
-            self.db.add(reversal_fee)
+        # Create reversed sale fees if any
+        if rev_fees_total > 0:
+            for fee in original_sale.fees:
+                reversal_fee = SaleFee(
+                    sale_id=reversal.id,
+                    fee_type=fee.fee_type,
+                    fee_label=fee.fee_label,
+                    fee_value_type=fee.fee_value_type,
+                    fee_value=fee.fee_value,
+                    calculated_amount=-fee.calculated_amount,
+                )
+                self.db.add(reversal_fee)
 
-        # Restore stock for each item using the original positive quantity
-        for item in original_sale.items:
+        # Restore stock
+        for proc in items_to_process:
             await self.inventory_service.restore_stock(
-                product_id=item.product_id,
-                quantity=item.quantity,
+                product_id=proc["orig_item"].product_id,
+                quantity=proc["quantity"],
                 reason="reversal",
                 reference_id=reversal.id,
             )
 
-        # T022-T023: Create RETURN ledger entry if this was a customer-linked sale
+        # Update customer ledger if applicable
         if original_sale.customer_id:
             customer_service = CustomerService(self.db)
             await customer_service.record_ledger_entry(
                 customer_id=original_sale.customer_id,
                 type=LedgerTransactionType.RETURN,
-                amount=abs(original_sale.grand_total),
-                reference_id=original_sale.id,
-                note=f"إلغاء البيع {original_sale.id}",
+                amount=rev_grand_total,
+                reference_id=reversal.id,
+                note=f"إرجاع منتجات - فاتورة #{original_sale.id.hex[:8].upper()}",
             )
 
         await self.db.commit()
 
         # Fetch eagerly avoiding context errors
         reversal_detail = await self.get_sale_detail(reversal.id)
-        if not reversal_detail:
-            raise ValueError(f"Sale {reversal.id} not found after creation")
-
         return reversal_detail
 
     async def _get_reversal_by_sale_id(self, sale_id: UUID) -> Optional[Sale]:

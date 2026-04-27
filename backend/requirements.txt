@@ -30,6 +30,7 @@ testcontainers==3.7.1
 # Export and Dashboard dependencies
 pandas==3.0.2
 ReportLab==4.0.7
+xlsxwriter==3.2.0
 slowapi==0.1.9
 
 # Arabic text support for PDF exports

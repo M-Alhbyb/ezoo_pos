@@ -433,7 +433,7 @@ class ReportService:
         for row in result:
             log = row.InventoryLog
             movement_type = (
-                "In" if log.delta > 0 else ("Out" if log.delta < 0 else "None")
+                "داخل" if log.delta > 0 else ("خارج" if log.delta < 0 else "لا شيء")
             )
             data.append(
                 {

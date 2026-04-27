@@ -24,7 +24,7 @@ export function ExportButton({
   onExportError,
   disabled = false
 }: ExportButtonProps) {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('csv');
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('xlsx');
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -46,9 +46,7 @@ export function ExportButton({
       const response = await fetch(`/api/dashboard/${dashboardType}?${params}`, {
         method: 'GET',
         headers: {
-          'Accept': selectedFormat === 'csv' 
-            ? 'text/csv' 
-            : selectedFormat === 'xlsx' 
+          'Accept': selectedFormat === 'xlsx' 
               ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
               : 'application/pdf'
         }
@@ -89,7 +87,6 @@ export function ExportButton({
   };
 
   const formatIcons = {
-    csv: FileText,
     xlsx: FileSpreadsheet,
     pdf: File
   };
@@ -104,7 +101,6 @@ export function ExportButton({
         disabled={disabled || isExporting}
         className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
       >
-        <option value="csv">CSV</option>
         <option value="xlsx">Excel</option>
         <option value="pdf">PDF</option>
       </select>

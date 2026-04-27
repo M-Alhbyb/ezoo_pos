@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Decimal } from "decimal.js";
 import { ARABIC } from "@/lib/constants/arabic";
 
@@ -15,6 +16,7 @@ import ConfirmButton from "@/components/pos/ConfirmButton";
 import CustomerSelector from "@/components/pos/CustomerSelector";
 import CreditWarningModal from "@/components/pos/CreditWarningModal";
 import { getCustomers, CustomerWithBalance } from "@/lib/api/customers";
+import { printInvoice } from "@/lib/utils/print-utils";
 
 // Types
 interface CartItem {
@@ -53,7 +55,8 @@ interface Breakdown {
   total: string;
 }
 
-export default function POSPage() {
+function POSContent() {
+  const searchParams = useSearchParams();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
   const [payments, setPayments] = useState<SalePayment[]>([]);
@@ -62,7 +65,7 @@ export default function POSPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(searchParams.get("customerId"));
   const [customers, setCustomers] = useState<CustomerWithBalance[]>([]);
   const [creditWarningOpen, setCreditWarningOpen] = useState(false);
   const [creditWarningData, setCreditWarningData] = useState<{
@@ -192,9 +195,19 @@ export default function POSPage() {
 
     const total = parseFloat(breakdown?.total || "0");
     const currentSum = payments.reduce((sum, p) => sum + p.amount, 0);
-    if (Math.abs(currentSum - total) > 0.01) {
-      setError("Payment total must match grand total");
-      return;
+    
+    if (!selectedCustomerId) {
+      // Walk-in customer: Must match exactly
+      if (Math.abs(currentSum - total) > 0.01) {
+        setError("Payment total must match grand total for walk-in sales");
+        return;
+      }
+    } else {
+      // Registered customer: Can be less than total (debt), but not more
+      if (currentSum > total + 0.01) {
+        setError("Payment total cannot exceed grand total");
+        return;
+      }
     }
 
     // If customer selected, check credit limit
@@ -251,12 +264,18 @@ export default function POSPage() {
       }
 
       // Success
+      const data = await response.json();
       setSuccess(true);
       setCartItems([]);
       setFees([]);
       setBreakdown(null);
       setNote("");
       setSelectedCustomerId(null);
+
+      // Auto print invoice
+      if (data && data.id) {
+        printInvoice(data.id);
+      }
 
       setTimeout(() => setSuccess(false), 5000);
     } catch (err: any) {
@@ -408,5 +427,13 @@ export default function POSPage() {
         onCancel={() => setCreditWarningOpen(false)}
       />
     </div>
+  );
+}
+
+export default function POSPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">{ARABIC.common.loading}</div>}>
+      <POSContent />
+    </Suspense>
   );
 }

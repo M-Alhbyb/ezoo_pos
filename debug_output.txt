@@ -1,0 +1,2 @@
+Testing invoice generation for sale e9f10a05-108d-43ca-9302-fcca0af313c3
+PDF generated successfully, size: 1739731 bytes

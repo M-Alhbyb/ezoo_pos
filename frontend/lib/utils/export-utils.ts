@@ -1,6 +1,6 @@
 import { api } from '@/lib/api-client';
 
-export type ExportFormat = 'csv' | 'xlsx' | 'pdf';
+export type ExportFormat = 'xlsx' | 'pdf';
 
 export interface ExportRequest {
   format: ExportFormat;
@@ -60,7 +60,6 @@ export function downloadFile(
 
 export function getMimeType(format: ExportFormat): string {
   const mimeTypes: Record<ExportFormat, string> = {
-    csv: 'text/csv',
     xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     pdf: 'application/pdf'
   };
@@ -80,5 +79,5 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function validateExportFormat(format: string): format is ExportFormat {
-  return ['csv', 'xlsx', 'pdf'].includes(format);
+  return ['xlsx', 'pdf'].includes(format);
 }

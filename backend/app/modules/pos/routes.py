@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.modules.pos.service import SaleService
+from app.modules.reports.export_service import ExportService
 from app.schemas.sale import (
     SaleCreate,
     SaleCalculationRequest,
@@ -26,6 +27,11 @@ router = APIRouter(prefix="/api/sales", tags=["sales"])
 def get_sale_service(db: AsyncSession = Depends(get_db)) -> SaleService:
     """Dependency injection for SaleService."""
     return SaleService(db)
+
+
+def get_export_service(db: AsyncSession = Depends(get_db)) -> ExportService:
+    """Dependency injection for ExportService."""
+    return ExportService(db)
 
 
 @router.post(
@@ -267,7 +273,7 @@ async def reverse_sale(
         HTTPException 400: Sale already reversed
     """
     try:
-        reversal = await service.reverse_sale(sale_id, reversal_data.reason)
+        reversal = await service.reverse_sale(sale_id, reversal_data)
         return await _prepare_sale_response(reversal)
     except ValueError as e:
         error_msg = str(e)
@@ -328,6 +334,7 @@ async def _prepare_sale_response(sale) -> dict:
                 base_cost=item.base_cost,
                 vat_rate=item.vat_rate,
                 line_total=item.line_total,
+                remaining_quantity=getattr(item, "remaining_quantity", None),
             )
         )
 
@@ -384,3 +391,40 @@ async def _prepare_sale_response(sale) -> dict:
         "original_sale_id": str(sale.original_sale_id) if sale.original_sale_id else None,
         "created_at": sale.created_at,
     }
+
+
+@router.get("/{sale_id}/invoice")
+async def get_sale_invoice(
+    sale_id: UUID,
+    service: SaleService = Depends(get_sale_service),
+    export_service: ExportService = Depends(get_export_service),
+):
+    """
+    Get sale invoice as PDF.
+    """
+    from fastapi.responses import Response
+    import io
+
+    sale = await service.get_sale_detail(sale_id)
+    if not sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"code": "NOT_FOUND", "message": "Sale not found"}},
+        )
+
+    # Prepare data for invoice generator
+    sale_data = await _prepare_sale_response(sale)
+    
+    # Add customer name if available
+    if sale.customer:
+        sale_data["customer_name"] = sale.customer.name
+
+    pdf_content = await export_service.generate_sale_invoice_pdf(sale_data)
+
+    return Response(
+        content=pdf_content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="invoice_{sale_id.hex[:8].upper()}.pdf"'
+        },
+    )

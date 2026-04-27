@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
 
     # Export limits (FR-040)
-    csv_max_rows: int = 100000
     xlsx_max_rows: int = 50000
     pdf_max_rows: int = 10000
 

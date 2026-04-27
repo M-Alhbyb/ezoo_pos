@@ -6,7 +6,6 @@ from typing import Optional
 
 
 class ExportFormat(str, Enum):
-    CSV = "csv"
     XLSX = "xlsx"
     PDF = "pdf"
 
@@ -48,7 +47,6 @@ class ExportResponse(BaseModel):
 
 
 class ExportLimits(BaseModel):
-    csv_max_rows: int = 100000
     xlsx_max_rows: int = 50000
     pdf_max_rows: int = 10000
     rate_limit_threshold: int = 5000

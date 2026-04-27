@@ -17,7 +17,7 @@ from app.schemas.customer import (
 from app.modules.customers.service import CustomerService
 from app.core.constants import LedgerTransactionType
 
-router = APIRouter(prefix="/customers", tags=["Customers"])
+router = APIRouter(prefix="/api/customers", tags=["Customers"])
 
 
 @router.post("", response_model=CustomerResponse)
@@ -33,7 +33,7 @@ async def create_customer(
 @router.get("", response_model=CustomerListResponse)
 async def list_customers(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = Query(50, ge=1, le=2000),
     db: AsyncSession = Depends(get_db)
 ):
     """List all customers with balances."""
@@ -65,7 +65,7 @@ async def get_customer(
 async def list_ledger(
     customer_id: UUID,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = Query(50, ge=1, le=2000),
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db)

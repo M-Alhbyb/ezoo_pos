@@ -6,6 +6,8 @@ import { ARABIC } from '@/lib/constants/arabic';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { getCustomer, getCustomerLedger, recordCustomerPayment, CustomerDetail, LedgerEntry } from '@/lib/api/customers';
 import CustomerPaymentModal from '@/components/customers/PaymentModal';
+import { ExportButtonGroup } from '@/components/reports/ExportButtonGroup';
+import SaleDetailModal from '@/components/pos/SaleDetailModal';
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -17,17 +19,23 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSaleDetailModalOpen, setIsSaleDetailModalOpen] = useState(false);
+  const [isReturnAction, setIsReturnAction] = useState(false);
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     loadCustomer();
-  }, [customerId]);
+  }, [customerId, startDate, endDate]);
 
   async function loadCustomer() {
     try {
       setLoading(true);
       const [customerData, ledgerData] = await Promise.all([
         getCustomer(customerId),
-        getCustomerLedger(customerId),
+        getCustomerLedger(customerId, 1, 2000, startDate || undefined, endDate || undefined),
       ]);
       setCustomer(customerData);
       setLedger(ledgerData.entries);
@@ -44,7 +52,7 @@ export default function CustomerDetailPage() {
     setIsPaymentModalOpen(false);
   }
 
-  if (loading) {
+  if (loading && !customer) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400">
         <svg className="animate-spin w-8 h-8 mb-4 text-indigo-500" viewBox="0 0 24 24">
@@ -71,51 +79,95 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-4 mb-2">
-            <button
-              onClick={() => router.back()}
-              className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-100">
+            {customer.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{customer.name}</h1>
+            <p className="text-slate-500 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
               </svg>
-            </button>
-            <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-100">
-              {customer.name.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{customer.name}</h1>
-              <p className="text-slate-500 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                </svg>
-                {customer.phone || ARABIC.common.none}
-              </p>
-            </div>
+              {customer.phone || ARABIC.common.none}
+            </p>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsPaymentModalOpen(true)}
-          className="flex items-center px-6 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
-        >
-          <svg className="w-5 h-5 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-          {ARABIC.customers.recordPayment}
-        </button>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold text-slate-600 focus:ring-0 cursor-pointer"
+            />
+            <span className="text-slate-300 text-[10px]">●</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold text-slate-600 focus:ring-0 cursor-pointer"
+            />
+          </div>
 
-        <button
-          onClick={() => window.print()}
-          className="flex items-center px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-        >
-          <svg className="w-5 h-5 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-          </svg>
-          {ARABIC.customers.printStatement || 'طباعة الكشف'}
-        </button>
+          <button
+            onClick={() => router.push(`/pos?customerId=${customerId}`)}
+            className="flex items-center px-5 py-2.5 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100 text-sm"
+          >
+            <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            {ARABIC.sales.newSale || "بيع منتجات"}
+          </button>
+
+          <button
+            onClick={() => {
+              const latestSale = ledger.find(e => e.type === 'SALE' && e.reference_id);
+              if (latestSale) {
+                setSelectedSaleId(latestSale.reference_id!);
+                setIsReturnAction(true);
+                setIsSaleDetailModalOpen(true);
+              } else {
+                setError("لا توجد عمليات بيع لهذا العميل لإرجاعها");
+              }
+            }}
+            className="flex items-center px-5 py-2.5 bg-rose-100 text-rose-700 font-bold rounded-2xl hover:bg-rose-200 transition-all border border-rose-200 text-sm"
+          >
+            <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 15L12 19L8 15M12 19V5"></path>
+            </svg>
+            {ARABIC.pos.returnItems || "إرجاع منتجات"}
+          </button>
+
+          <button
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="flex items-center px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 text-sm"
+          >
+            <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            {ARABIC.customers.recordPayment}
+          </button>
+
+          {/* New Dynamic Export Group */}
+          <div className="border-s border-slate-200 ps-3 ms-1 hidden md:block">
+            <ExportButtonGroup 
+              reportType={`customers/${customerId}`}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -191,6 +243,7 @@ export default function CustomerDetailPage() {
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-start">{ARABIC.customers.type}</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-end">{ARABIC.customers.amount}</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-start">{ARABIC.customers.note}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">{ARABIC.common.actions || "الإجراءات"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white/50">
@@ -226,11 +279,28 @@ export default function CustomerDetailPage() {
                       </div>
                     )}
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    {entry.type === 'SALE' && entry.reference_id && (
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedSaleId(entry.reference_id);
+                            setIsReturnAction(false);
+                            setIsSaleDetailModalOpen(true);
+                          }}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shadow-sm border border-blue-100"
+                          title="التفاصيل والطباعة"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
               {ledger.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-12 text-center text-slate-400">
+                  <td colSpan={5} className="p-12 text-center text-slate-400">
                     <div className="flex flex-col items-center">
                       <svg className="w-12 h-12 mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -249,6 +319,17 @@ export default function CustomerDetailPage() {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onSubmit={handlePayment}
+      />
+
+      <SaleDetailModal
+        isOpen={isSaleDetailModalOpen}
+        onClose={() => {
+          setIsSaleDetailModalOpen(false);
+          setIsReturnAction(false);
+        }}
+        saleId={selectedSaleId}
+        onSaleReversed={loadCustomer}
+        initialReturnMode={isReturnAction}
       />
     </div>
   );

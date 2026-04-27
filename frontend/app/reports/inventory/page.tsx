@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { FileText, Package } from 'lucide-react';
-import { ExportCSVButton } from '../../components/reports/ExportCSVButton';
+import { ExportExcelButton } from '../../components/reports/ExportExcelButton';
 import { ExportPDFButton } from '../../components/reports/ExportPDFButton';
 import { ExportProgressModal } from '../../components/reports/ExportProgressModal';
+import { ARABIC } from '../../lib/constants/arabic';
 
 export default function InventoryReportPage() {
   const [startDate, setStartDate] = useState<string>('');
@@ -47,21 +48,21 @@ export default function InventoryReportPage() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6" dir="rtl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Inventory Movements Report</h1>
-        <p className="text-gray-600">Export inventory movement data with proper CSV escaping for system integration</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">تقرير حركة المخزون</h1>
+        <p className="text-gray-600">تصدير بيانات حركة المخزون بصيغة Excel أو PDF</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Package className="w-5 h-5" />
-          Date Range Selection
+          اختيار النطاق الزمني
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ البدء</label>
             <input
               type="date"
               value={startDate}
@@ -71,7 +72,7 @@ export default function InventoryReportPage() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
             <input
               type="date"
               value={endDate}
@@ -82,7 +83,7 @@ export default function InventoryReportPage() {
         </div>
 
         <div className="flex gap-4">
-          <ExportCSVButton
+          <ExportExcelButton
             reportType="inventory"
             startDate={startDate}
             endDate={endDate}
@@ -117,12 +118,12 @@ export default function InventoryReportPage() {
       />
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">Export Features</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">مميزات التصدير</h3>
         <ul className="text-blue-800 space-y-2">
-          <li>• CSV export with proper escaping for system integration</li>
-          <li>• Special characters in product names handled correctly</li>
-          <li>• PDF available for human-readable reports</li>
-          <li>• Row limit: 100,000 records (CSV), 10,000 records (PDF)</li>
+          <li>• تصدير Excel متوافق مع كافة الأنظمة</li>
+          <li>• معالجة النصوص العربية بشكل صحيح</li>
+          <li>• تقارير PDF جاهزة للطباعة</li>
+          <li>• الحد الأقصى: 50,000 سجل (Excel)، 10,000 سجل (PDF)</li>
         </ul>
       </div>
     </div>

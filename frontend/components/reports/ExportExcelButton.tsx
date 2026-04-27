@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FileSpreadsheet, Download } from 'lucide-react';
-import { exportReport } from '../../lib/utils/export-utils';
+import { ExportFormat } from '../../lib/utils/export-utils';
 import { ARABIC } from '../../lib/constants/arabic';
 
 export interface ExportExcelButtonProps {
@@ -36,7 +36,44 @@ export function ExportExcelButton({
     onExportStart?.();
 
     try {
-      await exportReport(reportType, 'xlsx', startDate, endDate);
+      const params = new URLSearchParams({
+        format: 'xlsx',
+        start_date: startDate,
+        end_date: endDate
+      });
+
+      const response = await fetch(`/api/reports/export/${reportType}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || ARABIC.reports.export.exportFailed);
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `${reportType}_report_${startDate}_${endDate}.xlsx`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       onExportComplete?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : ARABIC.common.error;

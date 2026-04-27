@@ -122,6 +122,7 @@ class SaleItemResponse(SaleItemBase):
     base_cost: Optional[Decimal] = Field(None, description="Snapshot of product base cost")
     vat_rate: Optional[Decimal] = Field(None, description="Snapshot of VAT rate")
     line_total: Decimal = Field(..., description="Line total (quantity × unit_price)")
+    remaining_quantity: Optional[int] = Field(None, description="Remaining quantity available for reversal")
 
     class Config:
         from_attributes = True
@@ -183,11 +184,21 @@ class SaleResponse(BaseModel):
         from_attributes = True
 
 
+class SaleReversalItem(BaseModel):
+    """Schema for individual item reversal."""
+
+    product_id: UUID = Field(..., description="Product ID to reverse")
+    quantity: int = Field(..., gt=0, description="Quantity to reverse")
+
+
 class SaleReversalCreate(BaseModel):
     """Schema for creating a sale reversal."""
 
     reason: str = Field(
         default="Manual Reversal", min_length=1, max_length=500, description="Reason for reversal"
+    )
+    items: Optional[list[SaleReversalItem]] = Field(
+        None, description="Specific items and quantities to reverse. If None, reverses entire sale."
     )
 
 

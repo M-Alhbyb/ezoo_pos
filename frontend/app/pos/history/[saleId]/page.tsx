@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
-import { ArrowRight, Package, Receipt, AlertTriangle, AlertCircle } from "lucide-react";
+import { ArrowRight, Package, Receipt, AlertTriangle, AlertCircle, Printer } from "lucide-react";
+import { printInvoice } from "@/lib/utils/print-utils";
 
 interface SaleDetail {
   id: string;
@@ -81,6 +82,16 @@ export default function SaleDetailPage({ params }: { params: { saleId: string } 
           </Link>
           <h1 className="text-3xl font-bold font-heading text-slate-800 tracking-tight">{ARABIC.pos.saleDetails}</h1>
         </div>
+        
+        {sale && (
+          <button 
+            onClick={() => printInvoice(sale.id)}
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all shadow-md active:scale-95 font-semibold"
+          >
+            <Printer className="w-5 h-5" />
+            <span>{ARABIC.pos.print || 'طباعة الإيصال'}</span>
+          </button>
+        )}
       </div>
 
       {error && (

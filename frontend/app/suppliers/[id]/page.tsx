@@ -11,6 +11,7 @@ import PaymentModal from '@/components/suppliers/PaymentModal';
 import PurchaseModal from '@/components/suppliers/PurchaseModal';
 import ReturnModal from '@/components/suppliers/ReturnModal';
 import LedgerDetailsModal from '@/components/suppliers/LedgerDetailsModal';
+import { ExportButtonGroup } from '@/components/reports/ExportButtonGroup';
 
 export default function SupplierDetailPage() {
   const params = useParams();
@@ -21,6 +22,8 @@ export default function SupplierDetailPage() {
   const [statement, setStatement] = useState<SupplierStatement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
@@ -31,14 +34,14 @@ export default function SupplierDetailPage() {
 
   useEffect(() => {
     loadSupplier();
-  }, [supplierId]);
+  }, [supplierId, startDate, endDate]);
 
   async function loadSupplier() {
     try {
       setLoading(true);
       const [detail, stmt] = await Promise.all([
         getSupplier(supplierId),
-        getSupplierStatement(supplierId),
+        getSupplierStatement(supplierId, startDate, endDate),
       ]);
       setSupplier(detail);
       setStatement(stmt);
@@ -129,6 +132,29 @@ export default function SupplierDetailPage() {
         </div>
         
         <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              className="text-xs font-bold text-slate-600 focus:outline-none bg-transparent"
+            />
+            <span className="text-slate-300">-</span>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="text-xs font-bold text-slate-600 focus:outline-none bg-transparent"
+            />
+          </div>
+
+          <ExportButtonGroup 
+            reportType={`suppliers/${supplierId}`}
+            startDate={startDate}
+            endDate={endDate}
+            onExportError={(err) => setError(err)}
+          />
+
           <button 
             onClick={() => setIsPurchaseModalOpen(true)}
             className="flex items-center px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"

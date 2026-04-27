@@ -42,7 +42,7 @@ export function ExportPDFButton({
         end_date: endDate
       });
 
-      const response = await fetch(`/api/reports/${reportType}/export?${params}`, {
+      const response = await fetch(`/api/reports/export/${reportType}?${params}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/pdf'

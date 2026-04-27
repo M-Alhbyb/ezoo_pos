@@ -57,9 +57,7 @@ export default function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       >
         <div className="p-3 flex flex-col items-center relative border-b border-slate-100">
           <Image src="/logo.png" alt="RAYON energy Logo" width={40} height={40} className="rounded-lg" />
-          <div className="mt-2 text-center">
-            <h2 className="text-sm font-bold text-slate-900 font-heading">RAYON energy</h2>
-          </div>
+
         </div>
 
         <nav className="flex-1 px-2 py-2 text-slate-600 font-medium tracking-wide overflow-y-auto custom-scrollbar">

@@ -17,19 +17,36 @@ interface CustomerPaymentModalProps {
 
 export default function CustomerPaymentModal({ isOpen, onClose, onSubmit, loading: externalLoading }: CustomerPaymentModalProps) {
   const [amount, setAmount] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [availableMethods, setAvailableMethods] = useState<any[]>([]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Fetch payment methods from settings
+    import("@/lib/api/settings").then(({ getPaymentMethods }) => {
+      getPaymentMethods().then((methods) => {
+        setAvailableMethods(methods);
+        if (methods.length > 0 && !paymentMethod) {
+          setPaymentMethod(methods[0].name);
+        }
+      });
+    });
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
       setAmount(0);
-      setPaymentMethod("Cash");
+      if (availableMethods.length > 0) {
+        setPaymentMethod(availableMethods[0].name);
+      } else {
+        setPaymentMethod("Cash");
+      }
       setNote("");
       setError("");
     }
-  }, [isOpen]);
+  }, [isOpen, availableMethods]);
 
   if (!isOpen) return null;
 
@@ -96,9 +113,15 @@ export default function CustomerPaymentModal({ isOpen, onClose, onSubmit, loadin
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium text-slate-800"
               >
-                <option value="Cash">نقداً</option>
-                <option value="Bank Transfer">تحويل بنكي</option>
-                <option value="Check">شيك</option>
+                {availableMethods.length > 0 ? (
+                  availableMethods.map((pm) => (
+                    <option key={pm.id} value={pm.name}>
+                      {pm.name === "Cash" ? "نقداً" : pm.name === "Bank Transfer" ? "تحويل بنكي" : pm.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="Cash">نقداً</option>
+                )}
               </select>
             </div>
 
