@@ -42,8 +42,8 @@ app = FastAPI(
         '## Limits\n\n'
         f'- XLSX max rows: {settings.xlsx_max_rows:,}\n'
         f'- PDF max rows: {settings.pdf_max_rows:,}\n'
-        n'- Dashboard max points: {settings.dashboard_max_points:,}\n'
-        n'- Rate limit threshold: {settings.export_rate_limit_threshold:,} rows\n'
+        f'- Dashboard max points: {settings.dashboard_max_points:,}\n'
+        f'- Rate limit threshold: {settings.export_rate_limit_threshold:,} rows\n'
     ),
 )
 
