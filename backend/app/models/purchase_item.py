@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, Numeric, ForeignKey, text
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
+import uuid
 
 from app.core.database import Base
 
@@ -9,18 +10,18 @@ class PurchaseItem(Base):
     __tablename__ = "purchase_items"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
-        server_default=text("gen_random_uuid()"),
+        default=uuid.uuid4,
     )
     purchase_id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("purchases.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     product_id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("products.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,

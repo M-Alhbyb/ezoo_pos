@@ -5,7 +5,7 @@ Defines the Category entity for the EZOO POS system.
 """
 
 from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 import uuid
 
 from app.core.database import BaseModel

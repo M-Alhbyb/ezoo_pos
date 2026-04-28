@@ -10,6 +10,7 @@ Constitution compliance:
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
+import uuid
 
 from sqlalchemy import (
     Column,
@@ -23,7 +24,7 @@ from sqlalchemy import (
     text,
     Integer,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -51,9 +52,9 @@ class PartnerWalletTransaction(Base):
 
     # Primary key
     id = Column(
-        PG_UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
-        server_default=text("gen_random_uuid()"),
+        default=uuid.uuid4,
     )
 
     # Foreign keys
@@ -79,7 +80,7 @@ class PartnerWalletTransaction(Base):
     )
 
     reference_id = Column(
-        PG_UUID(as_uuid=True),
+        GUID(),
         nullable=True,
         comment="FK to sale_id or NULL for manual",
     )
@@ -106,13 +107,13 @@ class PartnerWalletTransaction(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
         comment="Transaction timestamp",
     )
 
     # Extensibility (for future multi-user support)
     created_by = Column(
-        PG_UUID(as_uuid=True),
+        GUID(),
         nullable=True,
         comment="User who initiated transaction",
     )

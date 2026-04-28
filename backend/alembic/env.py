@@ -8,7 +8,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import Base
-# Import all models to ensure they are registered with Base.metadata
 from app.models.sale_fee import SaleFee
 from app.models.category import Category
 from app.models.settings import Settings
@@ -16,6 +15,12 @@ from app.models.inventory_log import InventoryLog
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
 from app.models.partner_wallet_transaction import PartnerWalletTransaction
+from app.models.supplier import Supplier
+from app.models.purchase import Purchase
+from app.models.purchase_item import PurchaseItem
+from app.models.supplier_ledger import SupplierLedger
+from app.models.customer import Customer, CustomerLedger
+from app.models.sale_payment import SalePayment
 import app.models.payment_method
 import app.models.product
 import app.models.sale
@@ -40,6 +45,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -54,7 +60,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=True,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

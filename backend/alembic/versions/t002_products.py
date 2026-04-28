@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "t002_products"
@@ -23,15 +22,14 @@ def upgrade() -> None:
         "products",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column("sku", sa.String(50), unique=True, nullable=True),
         sa.Column(
             "category_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("categories.id"),
             nullable=False,
         ),
@@ -43,25 +41,19 @@ def upgrade() -> None:
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("branch_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-
-    # Add CHECK constraints
-    op.create_check_constraint("chk_base_price_positive", "products", "base_price >= 0")
-    op.create_check_constraint(
-        "chk_selling_price_gte_base", "products", "selling_price >= base_price"
-    )
-    op.create_check_constraint(
-        "chk_stock_non_negative", "products", "stock_quantity >= 0"
+        sa.Column("user_id", sa.String(length=36), nullable=True),
+        sa.Column("branch_id", sa.String(length=36), nullable=True),
+        sa.CheckConstraint("base_price >= 0", name="chk_base_price_positive"),
+        sa.CheckConstraint("selling_price >= base_price", name="chk_selling_price_gte_base"),
+        sa.CheckConstraint("stock_quantity >= 0", name="chk_stock_non_negative"),
     )
 
     # Create indexes

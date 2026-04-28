@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "t007_sale_reversals"
 down_revision = "t006_sale_fees"
@@ -21,19 +20,18 @@ def upgrade() -> None:
         "sale_reversals",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
             "original_sale_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("sales.id", ondelete="RESTRICT"),
             nullable=False,
         ),
         sa.Column(
             "reversal_sale_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("sales.id", ondelete="SET NULL"),
             nullable=True,
         ),
@@ -42,10 +40,10 @@ def upgrade() -> None:
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("branch_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("user_id", sa.String(length=36), nullable=True),
+        sa.Column("branch_id", sa.String(length=36), nullable=True),
     )
 
     # Create index

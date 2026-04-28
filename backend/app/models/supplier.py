@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime, text
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
+import uuid
 
 from app.core.database import Base
 
@@ -8,9 +9,9 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
-        server_default=text("gen_random_uuid()"),
+        default=uuid.uuid4,
     )
     name = Column(String(255), nullable=False)
     phone = Column(String(50), nullable=True)
@@ -18,5 +19,5 @@ class Supplier(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
     )

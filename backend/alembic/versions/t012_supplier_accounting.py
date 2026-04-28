@@ -8,7 +8,6 @@ Create Date: 2026-04-20
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "t012_supplier_accounting"
@@ -23,8 +22,7 @@ def upgrade():
         "suppliers",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
+            sa.String(length=36),
             primary_key=True,
         ),
         sa.Column("name", sa.String(255), nullable=False),
@@ -33,7 +31,7 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
     )
@@ -43,21 +41,21 @@ def upgrade():
         "purchases",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
+            sa.String(length=36),
             primary_key=True,
         ),
         sa.Column(
             "supplier_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("suppliers.id", ondelete="RESTRICT"),
             nullable=False,
         ),
         sa.Column("total_amount", sa.Numeric(12, 2), nullable=False),
+        sa.CheckConstraint("total_amount >= 0", name="check_purchase_total_amount_positive"),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
     )
@@ -67,25 +65,26 @@ def upgrade():
         "purchase_items",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
+            sa.String(length=36),
             primary_key=True,
         ),
         sa.Column(
             "purchase_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("purchases.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column(
             "product_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("products.id", ondelete="RESTRICT"),
             nullable=False,
         ),
         sa.Column("quantity", sa.Integer(), nullable=False),
         sa.Column("unit_cost", sa.Numeric(12, 2), nullable=False),
         sa.Column("total_cost", sa.Numeric(12, 2), nullable=False),
+        sa.CheckConstraint("quantity > 0", name="check_purchase_item_quantity_positive"),
+        sa.CheckConstraint("unit_cost >= 0 AND total_cost >= 0", name="check_purchase_item_costs_positive"),
     )
 
     # Create supplier_ledger table
@@ -93,13 +92,12 @@ def upgrade():
         "supplier_ledger",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
+            sa.String(length=36),
             primary_key=True,
         ),
         sa.Column(
             "supplier_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("suppliers.id", ondelete="RESTRICT"),
             nullable=False,
         ),
@@ -107,16 +105,18 @@ def upgrade():
         sa.Column("amount", sa.Numeric(12, 2), nullable=False),
         sa.Column(
             "reference_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             nullable=True,
         ),
         sa.Column("note", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
+        sa.CheckConstraint("type IN ('PURCHASE', 'PAYMENT', 'RETURN')", name="check_supplier_ledger_type"),
+        sa.CheckConstraint("amount > 0", name="check_supplier_ledger_amount_positive"),
     )
 
     # Add indexes
@@ -128,33 +128,6 @@ def upgrade():
     )
     op.create_index(
         "idx_supplier_ledger_type", "supplier_ledger", ["supplier_id", "type"]
-    )
-
-    # Add CHECK constraints
-    op.create_check_constraint(
-        "check_supplier_ledger_type",
-        "supplier_ledger",
-        "type IN ('PURCHASE', 'PAYMENT', 'RETURN')",
-    )
-    op.create_check_constraint(
-        "check_supplier_ledger_amount_positive",
-        "supplier_ledger",
-        "amount > 0",
-    )
-    op.create_check_constraint(
-        "check_purchase_total_amount_positive",
-        "purchases",
-        "total_amount >= 0",
-    )
-    op.create_check_constraint(
-        "check_purchase_item_quantity_positive",
-        "purchase_items",
-        "quantity > 0",
-    )
-    op.create_check_constraint(
-        "check_purchase_item_costs_positive",
-        "purchase_items",
-        "unit_cost >= 0 AND total_cost >= 0",
     )
 
 

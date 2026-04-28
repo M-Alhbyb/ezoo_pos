@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "t004_sales"
 down_revision = "t003_inventory_log"
@@ -21,13 +20,12 @@ def upgrade() -> None:
         "sales",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
             "payment_method_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("payment_methods.id"),
             nullable=False,
         ),
@@ -41,22 +39,20 @@ def upgrade() -> None:
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("branch_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("user_id", sa.String(length=36), nullable=True),
+        sa.Column("branch_id", sa.String(length=36), nullable=True),
+        sa.CheckConstraint("subtotal >= 0", name="chk_subtotal_positive"),
+        sa.CheckConstraint("fees_total >= 0", name="chk_fees_positive"),
+        sa.CheckConstraint("total >= 0", name="chk_total_positive"),
     )
-
-    # Add CHECK constraints
-    op.create_check_constraint("chk_subtotal_positive", "sales", "subtotal >= 0")
-    op.create_check_constraint("chk_fees_positive", "sales", "fees_total >= 0")
-    op.create_check_constraint("chk_total_positive", "sales", "total >= 0")
 
     # Create indexes
     op.create_index("idx_sales_created_at", "sales", [sa.text("created_at DESC")])

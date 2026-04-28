@@ -1,15 +1,6 @@
-"""migrate_partner_id_to_int
-
-Revision ID: 9533b1dbbe0c
-Revises: t011_add_category_color
-Create Date: 2026-04-14 13:35:39.794627
-
-"""
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision = '9533b1dbbe0c'
 down_revision = 't011_add_category_color'
 branch_labels = None
@@ -17,82 +8,90 @@ depends_on = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    is_postgres = bind.dialect.name == 'postgresql'
+
     # 1. Drop the defunct product_assignments table
     op.drop_table('product_assignments')
 
-    # 2. Drop Foreign Key constraints referencing partners(id)
-    op.drop_constraint('partner_distributions_partner_id_fkey', 'partner_distributions', type_='foreignkey')
-    op.drop_constraint('partner_wallet_transactions_partner_id_fkey', 'partner_wallet_transactions', type_='foreignkey')
-    op.drop_constraint('products_partner_id_fkey', 'products', type_='foreignkey')
+    # 2. Drop Foreign Key constraints
+    if is_postgres:
+        op.drop_constraint('partner_distributions_partner_id_fkey', 'partner_distributions', type_='foreignkey')
+        op.drop_constraint('partner_wallet_transactions_partner_id_fkey', 'partner_wallet_transactions', type_='foreignkey')
+        op.drop_constraint('products_partner_id_fkey', 'products', type_='foreignkey')
+    # For SQLite, skip explicit constraint drops - the batch alter_column will recreate tables without constraints
+    # and we'll re-add them afterward
 
     # 3. Drop Primary Key on partners(id)
-    op.drop_constraint('partners_pkey', 'partners', type_='primary')
+    if is_postgres:
+        op.drop_constraint('partners_pkey', 'partners', type_='primary')
+    # For SQLite, skip explicit PK drop - batch alter_column will handle table recreation
 
     # 4. Alter column types to Integer
-    # Since tables are empty (truncated), we use a simple cast.
-    # We must drop the UUID default before changing the type of partners.id
-    op.execute('ALTER TABLE partners ALTER COLUMN id DROP DEFAULT')
-    op.execute('ALTER TABLE partners ALTER COLUMN id TYPE INTEGER USING 0')
-    op.execute('CREATE SEQUENCE partners_id_seq')
-    op.execute("ALTER TABLE partners ALTER COLUMN id SET DEFAULT nextval('partners_id_seq')")
-    op.execute('ALTER SEQUENCE partners_id_seq OWNED BY partners.id')
-    
-    # Other partner_id columns
-    op.execute('ALTER TABLE partner_distributions ALTER COLUMN partner_id TYPE INTEGER USING 0')
-    op.execute('ALTER TABLE partner_wallet_transactions ALTER COLUMN partner_id TYPE INTEGER USING 0')
-    op.execute('ALTER TABLE products ALTER COLUMN partner_id TYPE INTEGER USING 0')
+    if is_postgres:
+        op.execute('ALTER TABLE partners ALTER COLUMN id DROP DEFAULT')
+        op.execute('ALTER TABLE partners ALTER COLUMN id TYPE INTEGER USING 0')
+        op.execute('CREATE SEQUENCE partners_id_seq')
+        op.execute('ALTER TABLE partners ALTER COLUMN id SET DEFAULT nextval(\'partners_id_seq\')')
+        op.execute('ALTER SEQUENCE partners_id_seq OWNED BY partners.id')
+        op.execute('ALTER TABLE partner_distributions ALTER COLUMN partner_id TYPE INTEGER USING 0')
+        op.execute('ALTER TABLE partner_wallet_transactions ALTER COLUMN partner_id TYPE INTEGER USING 0')
+        op.execute('ALTER TABLE products ALTER COLUMN partner_id TYPE INTEGER USING 0')
+    else:
+        with op.batch_alter_table('partners') as batch_op:
+            batch_op.alter_column('id', type_=sa.Integer(), existing_type=sa.String(length=36), existing_nullable=False)
+        with op.batch_alter_table('partner_distributions') as batch_op:
+            batch_op.alter_column('partner_id', type_=sa.Integer(), existing_type=sa.String(length=36), existing_nullable=False)
+        with op.batch_alter_table('partner_wallet_transactions') as batch_op:
+            batch_op.alter_column('partner_id', type_=sa.Integer(), existing_type=sa.String(length=36), existing_nullable=False)
+        with op.batch_alter_table('products') as batch_op:
+            batch_op.alter_column('partner_id', type_=sa.Integer(), existing_type=sa.String(length=36), existing_nullable=True)
 
     # 5. Re-add Primary Key
-    op.create_primary_key('partners_pkey', 'partners', ['id'])
+    with op.batch_alter_table('partners') as batch_op:
+        batch_op.create_primary_key('partners_pkey', ['id'])
 
     # 6. Re-add Foreign Key constraints
-    op.create_foreign_key('partner_distributions_partner_id_fkey', 'partner_distributions', 'partners', ['partner_id'], ['id'])
-    op.create_foreign_key('partner_wallet_transactions_partner_id_fkey', 'partner_wallet_transactions', 'partners', ['partner_id'], ['id'], ondelete='RESTRICT')
-    op.create_foreign_key('products_partner_id_fkey', 'products', 'partners', ['partner_id'], ['id'], ondelete='SET NULL')
+    with op.batch_alter_table('partner_distributions') as batch_op:
+        batch_op.create_foreign_key('partner_distributions_partner_id_fkey', 'partners', ['partner_id'], ['id'])
+    with op.batch_alter_table('partner_wallet_transactions') as batch_op:
+        batch_op.create_foreign_key('partner_wallet_transactions_partner_id_fkey', 'partners', ['partner_id'], ['id'], ondelete='RESTRICT')
+    with op.batch_alter_table('products') as batch_op:
+        batch_op.create_foreign_key('products_partner_id_fkey', 'partners', ['partner_id'], ['id'], ondelete='SET NULL')
 
 
 def downgrade() -> None:
-    # ### commands auto generated by Alembic - please adjust! ###
-    op.alter_column('products', 'partner_id',
-               existing_type=sa.Integer(),
-               type_=sa.UUID(),
-               existing_nullable=True)
-    op.alter_column('partners', 'id',
-               existing_type=sa.Integer(),
-               type_=sa.UUID(),
-               existing_nullable=False,
-               autoincrement=True,
-               existing_server_default=sa.text('gen_random_uuid()'))
-    op.alter_column('partner_wallet_transactions', 'partner_id',
-               existing_type=sa.Integer(),
-               type_=sa.UUID(),
-               existing_comment='Partner whose wallet changed',
-               existing_nullable=False)
-    op.alter_column('partner_distributions', 'partner_id',
-               existing_type=sa.Integer(),
-               type_=sa.UUID(),
-               existing_nullable=False)
+    # Restore columns
+    with op.batch_alter_table('products') as batch_op:
+        batch_op.alter_column('partner_id', type_=sa.String(length=36), existing_type=sa.Integer(), existing_nullable=True)
+    with op.batch_alter_table('partners') as batch_op:
+        batch_op.alter_column('id', type_=sa.String(length=36), existing_type=sa.Integer(), existing_nullable=False, autoincrement=True)
+    with op.batch_alter_table('partner_wallet_transactions') as batch_op:
+        batch_op.alter_column('partner_id', type_=sa.String(length=36), existing_type=sa.Integer(), existing_comment='Partner whose wallet changed', existing_nullable=False)
+    with op.batch_alter_table('partner_distributions') as batch_op:
+        batch_op.alter_column('partner_id', type_=sa.String(length=36), existing_type=sa.Integer(), existing_nullable=False)
+
+    # Recreate product_assignments table
     op.create_table('product_assignments',
-    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), autoincrement=False, nullable=False),
-    sa.Column('partner_id', sa.UUID(), autoincrement=False, nullable=False, comment='Partner receiving profit share'),
-    sa.Column('product_id', sa.UUID(), autoincrement=False, nullable=False, comment='Product assigned to partner'),
-    sa.Column('assigned_quantity', sa.INTEGER(), autoincrement=False, nullable=False, comment='Original quantity assigned'),
-    sa.Column('remaining_quantity', sa.INTEGER(), server_default=sa.text('0'), autoincrement=False, nullable=False, comment='Quantity remaining unsold'),
-    sa.Column('share_percentage', sa.NUMERIC(precision=5, scale=2), autoincrement=False, nullable=False, comment='Profit share (overrides partner default)'),
-    sa.Column('status', sa.VARCHAR(length=20), server_default=sa.text("'active'::character varying"), autoincrement=False, nullable=False, comment="'active' or 'fulfilled'"),
-    sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), autoincrement=False, nullable=False, comment='Creation timestamp'),
-    sa.Column('updated_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), autoincrement=False, nullable=False, comment='Last update timestamp'),
-    sa.Column('fulfilled_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=True, comment='When remaining_quantity hit 0'),
-    sa.Column('created_by', sa.UUID(), autoincrement=False, nullable=True, comment='User who created assignment'),
-    sa.Column('branch_id', sa.UUID(), autoincrement=False, nullable=True, comment='Branch for multi-branch support'),
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('partner_id', sa.String(length=36), nullable=False),
+    sa.Column('product_id', sa.String(length=36), nullable=False),
+    sa.Column('assigned_quantity', sa.Integer(), nullable=False),
+    sa.Column('remaining_quantity', sa.Integer(), server_default='0', nullable=False),
+    sa.Column('share_percentage', sa.Numeric(5, 2), nullable=False),
+    sa.Column('status', sa.String(20), server_default='active', nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('fulfilled_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_by', sa.String(length=36), nullable=True),
+    sa.Column('branch_id', sa.String(length=36), nullable=True),
     sa.CheckConstraint('remaining_quantity >= 0', name='check_remaining_nonnegative'),
-    sa.CheckConstraint('share_percentage >= 0::numeric AND share_percentage <= 100::numeric', name='check_share_percentage_range'),
-    sa.ForeignKeyConstraint(['partner_id'], ['partners.id'], name='product_assignments_partner_id_fkey', ondelete='RESTRICT'),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], name='product_assignments_product_id_fkey', ondelete='RESTRICT'),
-    sa.PrimaryKeyConstraint('id', name='product_assignments_pkey')
+    sa.CheckConstraint('share_percentage >= 0 AND share_percentage <= 100', name='check_share_percentage_range'),
+    sa.ForeignKeyConstraint(['partner_id'], ['partners.id']),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id']),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_product_assignments_product_id', 'product_assignments', ['product_id'], unique=False)
     op.create_index('ix_product_assignments_partner_id', 'product_assignments', ['partner_id'], unique=False)
     op.create_index('idx_product_assignment_active', 'product_assignments', ['product_id', 'status', 'remaining_quantity'], unique=False)
     op.create_index('idx_partner_assignments', 'product_assignments', ['partner_id'], unique=False)
-    # ### end Alembic commands ###

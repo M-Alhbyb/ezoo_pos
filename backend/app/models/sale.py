@@ -15,7 +15,7 @@ from sqlalchemy import (
     Boolean,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -40,12 +40,12 @@ class Sale(BaseModel):
 
     # Primary fields
     payment_method_id = Column(
-        UUID(as_uuid=True), ForeignKey("payment_methods.id"), nullable=False, index=True
+        GUID(), ForeignKey("payment_methods.id"), nullable=False, index=True
     )
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
         index=True,
     )
     subtotal = Column(Numeric(12, 2), nullable=False)
@@ -58,11 +58,11 @@ class Sale(BaseModel):
     note = Column(Text, nullable=True)
     idempotency_key = Column(String(255), unique=True, nullable=True, index=True)
     original_sale_id = Column(
-        UUID(as_uuid=True), ForeignKey("sales.id"), nullable=True, index=True
+        GUID(), ForeignKey("sales.id"), nullable=True, index=True
     )
     is_reversal = Column(Boolean, nullable=False, default=False)
     customer_id = Column(
-        UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True, index=True
+        GUID(), ForeignKey("customers.id"), nullable=True, index=True
     )
 
     # Added properties for test backward compatibility

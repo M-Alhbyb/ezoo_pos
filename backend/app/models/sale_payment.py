@@ -5,7 +5,7 @@ Defines the breakdown of payments for a Sale.
 """
 
 from sqlalchemy import Column, Numeric, DateTime, ForeignKey, text
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -23,16 +23,16 @@ class SalePayment(BaseModel):
     __tablename__ = "sale_payments"
 
     sale_id = Column(
-        UUID(as_uuid=True), ForeignKey("sales.id"), nullable=False, index=True
+        GUID(), ForeignKey("sales.id"), nullable=False, index=True
     )
     payment_method_id = Column(
-        UUID(as_uuid=True), ForeignKey("payment_methods.id"), nullable=False, index=True
+        GUID(), ForeignKey("payment_methods.id"), nullable=False, index=True
     )
     amount = Column(Numeric(12, 2), nullable=False)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
     )
 
     # Relationships

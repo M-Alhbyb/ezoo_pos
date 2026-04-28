@@ -13,7 +13,7 @@ from sqlalchemy import (
     CheckConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -34,19 +34,19 @@ class InventoryLog(BaseModel):
 
     # Primary fields
     product_id = Column(
-        UUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+        GUID(), ForeignKey("products.id"), nullable=False, index=True
     )
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
         index=True,
     )
     delta = Column(Integer, nullable=False)  # Quantity change (+/-)
     reason = Column(
         String(20), nullable=False
     )  # 'sale', 'reversal', 'restock', 'adjustment'
-    reference_id = Column(UUID(as_uuid=True), nullable=True)  # FK to sale or reversal
+    reference_id = Column(GUID(), nullable=True)  # FK to sale or reversal
     balance_after = Column(Integer, nullable=False)  # Stock level after change
 
     # Relationships

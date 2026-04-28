@@ -1,41 +1,48 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import Optional
+from typing import Optional, List
+import os
+
+
+def get_default_database_path():
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'ezoo_pos.db')
 
 
 class Settings(BaseSettings):
-    app_name: str = "EZOO POS"
-    app_version: str = "1.0.0"
+    app_name: str = 'EZOO POS'
+    app_version: str = '1.0.0'
     app_description: str = (
-        "Core POS system with product catalog, inventory tracking, and sale processing"
+        'Core POS system with product catalog, inventory tracking, and sale processing'
     )
 
-    async_database_url: str
-    sync_database_url: str
+    database_path: str = get_default_database_path()
 
-    database_host: Optional[str] = None
-    database_port: Optional[int] = None
-    database_name: Optional[str] = None
+    cors_origins: str = 'http://localhost:3000'
 
-    cors_origins: list[str] = ["http://localhost:3000"]
-
-    # Export limits (FR-040)
     xlsx_max_rows: int = 50000
     pdf_max_rows: int = 10000
 
-    # Rate limiting (FR-039)
     export_rate_limit_threshold: int = 5000
     export_rate_limit_per_hour: int = 10
 
-    # Dashboard limits (FR-028)
     dashboard_max_points: int = 1000
 
-    # Performance thresholds (FR-035)
     export_timeout_seconds: int = 30
     dashboard_timeout_seconds: int = 3
 
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(',')]
+
+    @property
+    def async_database_url(self) -> str:
+        return f'sqlite+aiosqlite:///{self.database_path}'
+
+    @property
+    def sync_database_url(self) -> str:
+        return f'sqlite:///{self.database_path}'
+
     class Config:
-        env_file = ".env"
+        env_file = '.env'
         case_sensitive = False
 
 

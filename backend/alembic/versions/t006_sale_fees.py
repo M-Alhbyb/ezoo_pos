@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "t006_sale_fees"
 down_revision = "t005_sale_items"
@@ -21,13 +20,12 @@ def upgrade() -> None:
         "sale_fees",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
             "sale_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("sales.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -40,16 +38,12 @@ def upgrade() -> None:
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("branch_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-
-    # Add CHECK constraints
-    op.create_check_constraint("chk_fee_value_positive", "sale_fees", "fee_value >= 0")
-    op.create_check_constraint(
-        "chk_calculated_amount_positive", "sale_fees", "calculated_amount >= 0"
+        sa.Column("user_id", sa.String(length=36), nullable=True),
+        sa.Column("branch_id", sa.String(length=36), nullable=True),
+        sa.CheckConstraint("fee_value >= 0", name="chk_fee_value_positive"),
+        sa.CheckConstraint("calculated_amount >= 0", name="chk_calculated_amount_positive"),
     )
 
     # Create index

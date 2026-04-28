@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "t000_settings"
 down_revision = "t000_payment_methods"
@@ -22,23 +21,22 @@ def upgrade() -> None:
         "settings",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column("key", sa.String(50), nullable=False, unique=True),
-        sa.Column("value", postgresql.JSONB, nullable=False),
+        sa.Column("value", sa.Text(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
     )
 

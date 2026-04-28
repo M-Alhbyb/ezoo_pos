@@ -5,7 +5,7 @@ Defines the SaleFee entity for the EZOO POS system.
 """
 
 from sqlalchemy import Column, String, Numeric, ForeignKey, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -25,7 +25,7 @@ class SaleFee(BaseModel):
 
     # Primary fields
     sale_id = Column(
-        UUID(as_uuid=True), ForeignKey("sales.id"), nullable=False, index=True
+        GUID(), ForeignKey("sales.id"), nullable=False, index=True
     )
     fee_type = Column(
         String(20), nullable=False

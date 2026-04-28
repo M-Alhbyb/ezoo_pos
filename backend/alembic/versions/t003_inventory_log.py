@@ -8,7 +8,6 @@ Create Date: 2026-04-04
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "t003_inventory_log"
 down_revision = "t002_products"
@@ -21,33 +20,28 @@ def upgrade() -> None:
         "inventory_log",
         sa.Column(
             "id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
             "product_id",
-            postgresql.UUID(as_uuid=True),
+            sa.String(length=36),
             sa.ForeignKey("products.id"),
             nullable=False,
         ),
         sa.Column("delta", sa.Integer, nullable=False),
         sa.Column("reason", sa.String(20), nullable=False),
-        sa.Column("reference_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("reference_id", sa.String(length=36), nullable=True),
         sa.Column("balance_after", sa.Integer, nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("branch_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-
-    # Add CHECK constraint
-    op.create_check_constraint(
-        "chk_balance_non_negative", "inventory_log", "balance_after >= 0"
+        sa.Column("user_id", sa.String(length=36), nullable=True),
+        sa.Column("branch_id", sa.String(length=36), nullable=True),
+        sa.CheckConstraint("balance_after >= 0", name="chk_balance_non_negative"),
     )
 
     # Create indexes

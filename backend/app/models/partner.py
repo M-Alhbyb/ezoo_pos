@@ -1,6 +1,6 @@
 from decimal import Decimal
 from sqlalchemy import Column, String, Numeric, DateTime, text
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy import Integer
 
 from app.core.database import Base
@@ -19,5 +19,5 @@ class Partner(Base):
     share_percentage = Column(Numeric(5, 2), nullable=False)
 
     created_at = Column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
+        DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )

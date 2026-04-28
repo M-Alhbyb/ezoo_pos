@@ -5,7 +5,7 @@ Defines the SaleItem entity for the EZOO POS system.
 """
 
 from sqlalchemy import Column, String, Integer, Numeric, ForeignKey, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -26,10 +26,10 @@ class SaleItem(BaseModel):
 
     # Primary fields
     sale_id = Column(
-        UUID(as_uuid=True), ForeignKey("sales.id"), nullable=False, index=True
+        GUID(), ForeignKey("sales.id"), nullable=False, index=True
     )
     product_id = Column(
-        UUID(as_uuid=True), ForeignKey("products.id"), nullable=False, index=True
+        GUID(), ForeignKey("products.id"), nullable=False, index=True
     )
     product_name = Column(String(200), nullable=False)  # Snapshot
     quantity = Column(Integer, nullable=False)

@@ -5,7 +5,7 @@ Defines the Product entity for the EZOO POS system.
 """
 
 from sqlalchemy import Column, String, Integer, Boolean, Numeric, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -28,7 +28,7 @@ class Product(BaseModel):
     name = Column(String(200), nullable=False, index=True)
     sku = Column(String(50), unique=True, nullable=True, index=True)
     category_id = Column(
-        UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False, index=True
+        GUID(), ForeignKey("categories.id"), nullable=False, index=True
     )
 
     # Pricing

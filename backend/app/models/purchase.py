@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Numeric, DateTime, ForeignKey, text
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
+import uuid
 
 from app.core.database import Base
 
@@ -9,12 +10,12 @@ class Purchase(Base):
     __tablename__ = "purchases"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
-        server_default=text("gen_random_uuid()"),
+        default=uuid.uuid4,
     )
     supplier_id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("suppliers.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
@@ -23,7 +24,7 @@ class Purchase(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
+        server_default=text("CURRENT_TIMESTAMP"),
     )
 
     supplier = relationship("Supplier", backref="purchases")
