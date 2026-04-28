@@ -37,3 +37,4 @@ slowapi==0.1.9
 arabic-reshaper==3.0.0
 python-bidi==0.4.2
 aiosqlite
+pyinstaller

@@ -42,8 +42,8 @@ app = FastAPI(
         '## Limits\n\n'
         f'- XLSX max rows: {settings.xlsx_max_rows:,}\n'
         f'- PDF max rows: {settings.pdf_max_rows:,}\n'
-        f'- Dashboard max points: {settings.dashboard_max_points:,}\n'
-        f'- Rate limit threshold: {settings.export_rate_limit_threshold:,} rows\n'
+        n'- Dashboard max points: {settings.dashboard_max_points:,}\n'
+        n'- Rate limit threshold: {settings.export_rate_limit_threshold:,} rows\n'
     ),
 )
 
@@ -123,4 +123,4 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == '__main__':
     import uvicorn
 
-    uvicorn.run('main:app', host='0.0.0.0', port=8001, reload=True)
+    uvicorn.run('main:app', host='0.0.0.0', port=8001, reload=False)
