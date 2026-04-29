@@ -14,8 +14,8 @@ Core POS system with product catalog, inventory tracking, and sale processing.
 
 1. Create virtual environment:
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 2. Install dependencies:
