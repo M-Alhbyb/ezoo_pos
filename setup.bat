@@ -20,8 +20,19 @@ if %errorlevel% neq 0 (
 :: Check for Python
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Python is not installed or not in your system PATH.
-    echo Please install Python 3.11+ from https://www.python.org/
+    echo [!] Python not found. Attempting to install via winget...
+    winget --version >nul 2>&1
+    if !errorlevel! equ 0 (
+        echo [*] Installing Python 3.11...
+        winget install --id Python.Python.3.11 --exact --silent --accept-package-agreements --accept-source-agreements
+        if !errorlevel! equ 0 (
+            echo [SUCCESS] Python installation triggered. 
+            echo [!] IMPORTANT: You MUST restart this terminal window after installation finishes.
+            pause
+            exit /b 0
+        )
+    )
+    echo [ERROR] Python is not installed. Please install Python 3.11+ from https://www.python.org/
     pause
     exit /b 1
 )
@@ -29,8 +40,19 @@ if %errorlevel% neq 0 (
 :: Check for Node.js/NPM
 npm --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Node.js/NPM is not installed or not in your system PATH.
-    echo Please install Node.js from https://nodejs.org/
+    echo [!] Node.js not found. Attempting to install via winget...
+    winget --version >nul 2>&1
+    if !errorlevel! equ 0 (
+        echo [*] Installing Node.js...
+        winget install --id OpenJS.NodeJS --exact --silent --accept-package-agreements --accept-source-agreements
+        if !errorlevel! equ 0 (
+            echo [SUCCESS] Node.js installation triggered.
+            echo [!] IMPORTANT: You MUST restart this terminal window after installation finishes.
+            pause
+            exit /b 0
+        )
+    )
+    echo [ERROR] Node.js is not installed. Please install Node.js from https://nodejs.org/
     pause
     exit /b 1
 )
