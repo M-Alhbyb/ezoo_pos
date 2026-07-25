@@ -1,362 +1,321 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
-const path = require('path');
-const { spawn, exec } = require('child_process');
-const fs = require('fs');
-const http = require('http');
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { spawn, exec } = require("child_process");
+const net = require("net");
+const path = require("path");
+const fs = require("fs");
+const http = require("http");
 
 const isDev = !app.isPackaged;
-
-const BACKEND_PORT = 8000;
-const FRONTEND_PORT = 3000;
-const STARTUP_TIMEOUT = 60000;
+const STARTUP_TIMEOUT = 60_000;
 
 let mainWindow = null;
-let backendProcess = null;
-let frontendProcess = null;
+let backend = null;
+let port = null;
 
-const userDataPath = app.getPath('userData');
-const logsPath = path.join(userDataPath, 'logs');
-const dbPath = path.join(userDataPath, 'database.db');
+const userDataPath = app.getPath("userData");
+const logsPath = path.join(userDataPath, "logs");
+const dbDir = path.join(userDataPath);
 
 function log(message) {
-  if (!fs.existsSync(logsPath)) {
-    fs.mkdirSync(logsPath, { recursive: true });
-  }
-  const logFile = path.join(logsPath, `ezoo-pos-${new Date().toISOString().split('T')[0]}.log`);
-  const timestamp = new Date().toISOString();
-  fs.appendFileSync(logFile, `[${timestamp}] ${message}\n`);
-  console.log(`[${timestamp}] ${message}`);
+  try {
+    if (!fs.existsSync(logsPath)) {
+      fs.mkdirSync(logsPath, { recursive: true });
+    }
+    const logFile = path.join(
+      logsPath,
+      `ezoo-pos-${new Date().toISOString().split("T")[0]}.log`
+    );
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(logFile, `[${timestamp}] ${message}\n`);
+  } catch (_) {}
+  console.log(message);
 }
 
-function getResourcePath(relativePath) {
-  if (isDev) {
-    return path.join(__dirname, '..', '..', relativePath);
-  }
-  return path.join(process.resourcesPath, relativePath);
+function findFreePort() {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.unref();
+    srv.on("error", reject);
+    srv.listen(0, "127.0.0.1", () => {
+      const { port: p } = srv.address();
+      srv.close(() => resolve(p));
+    });
+  });
 }
 
-function killProcessTree(pid) {
+function backendExe() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "backend", "ezoo-pos.exe");
+  }
+  return path.join(
+    __dirname,
+    "..",
+    "..",
+    "backend",
+    "dist",
+    "ezoo-pos",
+    "ezoo-pos.exe"
+  );
+}
+
+function killTree(pid) {
   return new Promise((resolve) => {
-    exec(`taskkill /T /F /PID ${pid}`, (error) => {
-      if (error) {
-        log(`Process termination warning: ${error.message}`);
+    exec(`taskkill /T /F /PID ${pid}`, () => resolve());
+  });
+}
+
+function killStaleBackend() {
+  return new Promise((resolve) => {
+    if (process.platform !== "win32") return resolve();
+    exec(
+      'tasklist /FI "IMAGENAME eq ezoo-pos.exe" /NH',
+      (err, stdout) => {
+        if (err) return resolve();
+        const lines = stdout
+          .split("\n")
+          .filter((l) => l.includes("ezoo-pos.exe"));
+        for (const line of lines) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parseInt(parts[1], 10);
+          if (pid && pid !== process.pid) {
+            log(`Killing stale backend PID ${pid}`);
+            exec(`taskkill /T /F /PID ${pid}`);
+          }
+        }
+        resolve();
       }
-      resolve();
-    });
+    );
   });
 }
 
-function checkPort(port) {
+function checkHealth(targetPort) {
   return new Promise((resolve) => {
-    const req = http.get(`http://127.0.0.1:${port}`, (res) => {
-      resolve(res.statusCode === 200);
-    });
-    req.on('error', () => resolve(false));
-    req.setTimeout(1000, () => {
+    const req = http.get(
+      `http://127.0.0.1:${targetPort}/health`,
+      (res) => {
+        resolve(res.statusCode === 200);
+        res.resume();
+      }
+    );
+    req.on("error", () => resolve(false));
+    req.setTimeout(3000, () => {
       req.destroy();
       resolve(false);
     });
   });
 }
 
-function checkHealth(url, expectedStatus = 200) {
-  return new Promise((resolve) => {
-    const req = http.get(url, (res) => {
-      resolve(res.statusCode === expectedStatus);
-    });
-    req.on('error', () => resolve(false));
-    req.setTimeout(5000, () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
-}
-
-async function waitForBackend() {
-  const startTime = Date.now();
-  while (Date.now() - startTime < STARTUP_TIMEOUT) {
-    const healthy = await checkHealth(`http://127.0.0.1:${BACKEND_PORT}/health`);
-    if (healthy) {
-      log('Backend is ready');
-      return true;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  return false;
-}
-
-async function waitForFrontend() {
-  const startTime = Date.now();
-  while (Date.now() - startTime < STARTUP_TIMEOUT) {
-    const healthy = await checkHealth(`http://127.0.0.1:${FRONTEND_PORT}/`);
-    if (healthy) {
-      log('Frontend is ready');
-      return true;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
+async function waitForHealth(targetPort) {
+  const deadline = Date.now() + STARTUP_TIMEOUT;
+  while (Date.now() < deadline) {
+    if (await checkHealth(targetPort)) return true;
+    await new Promise((r) => setTimeout(r, 500));
   }
   return false;
 }
 
 async function startBackend() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const backendExe = getResourcePath('backend/dist/ezoo-pos.exe');
-      log(`Starting backend: ${backendExe}`);
+  await killStaleBackend();
 
-      const dbDir = path.dirname(dbPath);
-      if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
-      }
+  port = await findFreePort();
+  const dbPath = path.join(dbDir, "ezoo_pos.db");
 
-      const env = { ...process.env, DATABASE_URL: `sqlite:///${dbPath}` };
+  const exe = backendExe();
+  log(`Starting backend: ${exe} on port ${port}`);
 
-      backendProcess = spawn(backendExe, [], {
-        env,
-        cwd: path.dirname(backendExe),
-        detached: false,
-        stdio: 'pipe'
-      });
-
-      backendProcess.stdout.on('data', (data) => log(`Backend: ${data}`));
-      backendProcess.stderr.on('data', (data) => log(`Backend error: ${data}`));
-
-      backendProcess.on('error', (err) => {
-        log(`Backend spawn error: ${err.message}`);
-        reject(err);
-      });
-
-      const ready = await waitForBackend();
-      if (ready) {
-        resolve();
-      } else {
-        reject(new Error('Backend failed to start within timeout'));
-      }
-    } catch (err) {
-      reject(err);
-    }
+  backend = spawn(exe, [], {
+    env: {
+      ...process.env,
+      EZOO_PORT: String(port),
+      DATABASE_PATH: dbPath,
+    },
+    cwd: path.dirname(exe),
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
   });
-}
 
-async function startFrontend() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const frontendDir = getResourcePath('frontend/.next/standalone');
-      const serverJs = path.join(frontendDir, 'server.js');
-
-      if (!fs.existsSync(serverJs)) {
-        reject(new Error(`Frontend not found: ${serverJs}`));
-        return;
-      }
-
-      log(`Starting frontend: ${serverJs}`);
-
-      const env = { ...process.env, PORT: FRONTEND_PORT.toString() };
-
-      frontendProcess = spawn('node', [serverJs], {
-        env,
-        cwd: frontendDir,
-        detached: false,
-        stdio: 'pipe'
-      });
-
-      frontendProcess.stdout.on('data', (data) => log(`Frontend: ${data}`));
-      frontendProcess.stderr.on('data', (data) => log(`Frontend error: ${data}`));
-
-      frontendProcess.on('error', (err) => {
-        log(`Frontend spawn error: ${err.message}`);
-        reject(err);
-      });
-
-      const ready = await waitForFrontend();
-      if (ready) {
-        resolve();
-      } else {
-        reject(new Error('Frontend failed to start within timeout'));
-      }
-    } catch (err) {
-      reject(err);
-    }
+  backend.stdout.on("data", (d) => log(`[api] ${d.toString().trim()}`));
+  backend.stderr.on("data", (d) => log(`[api:err] ${d.toString().trim()}`));
+  backend.on("exit", (code) => {
+    log(`Backend exited with code ${code}`);
+    backend = null;
   });
-}
 
-async function cleanupProcesses() {
-  log('Cleaning up processes...');
-
-  if (frontendProcess && !frontendProcess.killed) {
-    try {
-      await killProcessTree(frontendProcess.pid);
-    } catch (e) {}
+  if (!(await waitForHealth(port))) {
+    throw new Error("Backend failed to start within timeout");
   }
-
-  if (backendProcess && !backendProcess.killed) {
-    try {
-      await killProcessTree(backendProcess.pid);
-    } catch (e) {}
-  }
-
-  log('Cleanup complete');
+  log("Backend is healthy");
 }
 
 function createWindow() {
+  const windowState = loadWindowState();
+
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: windowState.width,
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
+    show: false,
+    backgroundColor: "#ffffff",
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: isDev
+      devTools: isDev,
     },
-    show: false,
-    backgroundColor: '#ffffff'
   });
 
-  const menuTemplate = [
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Logs',
-          click: () => {
-            const logsWindow = new BrowserWindow({
-              width: 900,
-              height: 600,
-              parent: mainWindow,
-              modal: false,
-              webPreferences: {
-                preload: path.join(__dirname, 'preload.js'),
-                contextIsolation: true,
-                nodeIntegration: false
-              }
-            });
-            logsWindow.loadFile(path.join(__dirname, 'renderer', 'logs.html'));
-          }
-        },
-        { type: 'separator' },
-        { role: 'toggleDevTools' },
-        { role: 'reload' }
-      ]
-    }
-  ];
+  if (windowState.maximized) mainWindow.maximize();
 
-  const menu = Menu.buildFromTemplate(menuTemplate);
-  Menu.setApplicationMenu(menu);
-
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once("ready-to-show", () => {
     mainWindow.show();
-    if (app.isPackaged) {
-      mainWindow.maximize();
-    }
   });
 
-  mainWindow.on('closed', async () => {
-    await cleanupProcesses();
+  mainWindow.on("close", () => {
+    saveWindowState(mainWindow);
+  });
+
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  if (process.argv.includes('--loading')) {
-    mainWindow.loadFile(path.join(__dirname, 'renderer', 'loading.html'));
-  } else {
-    mainWindow.loadURL(`http://127.0.0.1:${FRONTEND_PORT}`);
-  }
+  mainWindow.loadFile(path.join(__dirname, "renderer", "loading.html"));
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (mainWindow && mainWindow.webContents.getURL().includes("loading")) {
+      mainWindow.loadURL(`http://127.0.0.1:${port}/`);
+    }
+  });
 }
 
 function showErrorScreen(message) {
+  log(`Showing error screen: ${message}`);
   if (mainWindow) {
-    mainWindow.webContents.send('show-error', message);
+    mainWindow.loadFile(path.join(__dirname, "renderer", "error.html"));
+    mainWindow.webContents.once("did-finish-load", () => {
+      mainWindow.webContents.send("show-error", message);
+    });
   }
+}
+
+function loadWindowState() {
+  const defaults = { width: 1400, height: 900, maximized: false };
+  try {
+    const stateFile = path.join(userDataPath, "window-state.json");
+    if (fs.existsSync(stateFile)) {
+      return { ...defaults, ...JSON.parse(fs.readFileSync(stateFile, "utf8")) };
+    }
+  } catch (_) {}
+  return defaults;
+}
+
+function saveWindowState(win) {
+  if (!win) return;
+  try {
+    const isMax = win.isMaximized();
+    let bounds;
+    if (!isMax) bounds = win.getBounds();
+    const prev = loadWindowState();
+    const state = {
+      width: isMax ? prev.width : bounds.width,
+      height: isMax ? prev.height : bounds.height,
+      x: isMax ? prev.x : bounds.x,
+      y: isMax ? prev.y : bounds.y,
+      maximized: isMax,
+    };
+    fs.writeFileSync(
+      path.join(userDataPath, "window-state.json"),
+      JSON.stringify(state)
+    );
+  } catch (_) {}
 }
 
 async function startup() {
   try {
-    log('Starting EZOO POS...');
+    log("Starting EZOO POS...");
+    fs.mkdirSync(dbDir, { recursive: true });
+    fs.mkdirSync(logsPath, { recursive: true });
 
-    if (!fs.existsSync(userDataPath)) {
-      fs.mkdirSync(userDataPath, { recursive: true });
-    }
-
-    try {
-      await startBackend();
-    } catch (backendErr) {
-      log(`Backend failed: ${backendErr.message}`);
-      showErrorScreen(`Backend failed to start: ${backendErr.message}`);
-      return;
-    }
-
-    try {
-      await startFrontend();
-    } catch (frontendErr) {
-      log(`Frontend failed: ${frontendErr.message}`);
-      showErrorScreen(`Frontend failed to start: ${frontendErr.message}`);
-      return;
-    }
-
+    await startBackend();
     createWindow();
-    log('EZOO POS started successfully');
+
+    if (app.isPackaged) {
+      try {
+        const { autoUpdater } = require("electron-updater");
+        autoUpdater.logger = { info: log, warn: log, error: log };
+        autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+      } catch (_) {}
+    }
+
+    log("EZOO POS started successfully");
   } catch (err) {
     log(`Startup failed: ${err.message}`);
     showErrorScreen(err.message);
   }
 }
 
-app.on('ready', () => {
-  const gotTheLock = app.requestSingleInstanceLock();
-
-  if (!gotTheLock) {
-    log('Another instance is already running');
+app.on("ready", () => {
+  const gotLock = app.requestSingleInstanceLock();
+  if (!gotLock) {
     app.quit();
     return;
   }
 
-  app.on('second-instance', async () => {
+  app.on("second-instance", () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
   });
 
+  if (!isDev) {
+    Menu.setApplicationMenu(null);
+  }
+
   startup();
 });
 
-app.on('window-all-closed', async () => {
-  await cleanupProcesses();
-  app.quit();
+app.on("before-quit", (e) => {
+  if (backend) {
+    e.preventDefault();
+    killTree(backend.pid).then(() => {
+      backend = null;
+      app.quit();
+    });
+  }
 });
 
-app.on('before-quit', async () => {
-  await cleanupProcesses();
+process.on("exit", () => {
+  if (backend) killTree(backend.pid);
 });
 
-process.on('uncaughtException', async (err) => {
+process.on("uncaughtException", (err) => {
   log(`Uncaught exception: ${err.message}`);
-  await cleanupProcesses();
-  app.quit();
 });
 
-process.on('unhandledRejection', async (err) => {
+process.on("unhandledRejection", (err) => {
   log(`Unhandled rejection: ${err}`);
 });
 
-ipcMain.handle('get-logs', async () => {
+ipcMain.handle("get-logs", () => {
   try {
-    const logDir = logsPath;
-    if (!fs.existsSync(logDir)) {
-      return 'No logs yet';
-    }
-    const files = fs.readdirSync(logDir).filter(f => f.endsWith('.log'));
-    if (files.length === 0) {
-      return 'No logs yet';
-    }
+    if (!fs.existsSync(logsPath)) return "No logs yet";
+    const files = fs
+      .readdirSync(logsPath)
+      .filter((f) => f.endsWith(".log"));
+    if (files.length === 0) return "No logs yet";
     const latest = files.sort().pop();
-    return fs.readFileSync(path.join(logDir, latest), 'utf8');
+    return fs.readFileSync(path.join(logsPath, latest), "utf8");
   } catch (err) {
     return `Error reading logs: ${err.message}`;
   }
 });
 
-ipcMain.handle('retry-startup', async () => {
-  await cleanupProcesses();
+ipcMain.handle("retry-startup", async () => {
+  if (backend) {
+    await killTree(backend.pid);
+    backend = null;
+  }
   setTimeout(startup, 1000);
-  return 'Retrying...';
+  return "Retrying...";
 });

@@ -1,23 +1,38 @@
 appId: com.ezoo.pos
 productName: EZOO POS
+copyright: EZOO POS
 directories:
   output: dist
   buildResources: build
+
 files:
   - src/**/*
+  - package.json
 asar: true
+
+extraResources:
+  - from: ../backend/dist/ezoo-pos
+    to: backend
+    filter:
+      - "**/*"
+
 win:
   target:
-    - target: dir
+    - target: nsis
       arch:
         - x64
-  sign: false
-extraResources:
-  - from: ../frontend/.next/standalone
-    to: frontend/.next/standalone
-    filter:
-      - "**/*"
-  - from: ../backend/dist
-    to: backend/dist
-    filter:
-      - "**/*"
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: EZOO POS
+  deleteAppDataOnUninstall: false
+
+publish:
+  provider: github
+  owner: ezoo-pos
+  repo: ezoo-pos
