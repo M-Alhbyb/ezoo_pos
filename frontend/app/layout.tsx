@@ -17,6 +17,7 @@ import { Inter, Cairo } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import { ARABIC } from "@/lib/constants/arabic";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${inter.variable} ${cairo.variable} font-sans`}>
+        <AuthProvider>
         <div className="flex h-screen bg-slate-50 relative overflow-hidden">
           {isMobileMenuOpen && (
             <div 
@@ -123,6 +125,7 @@ export default function RootLayout({
             </div>
           </main>
         </div>
+        </AuthProvider>
       </body>
     </html>
   );

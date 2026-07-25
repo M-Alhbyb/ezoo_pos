@@ -21,6 +21,7 @@ from app.models.purchase import Purchase
 from app.models.purchase_item import PurchaseItem
 from app.models.supplier_ledger import SupplierLedger
 from app.models.customer import Customer, CustomerLedger
+from app.models.user import User
 
 __all__ = [
     "Product",
@@ -41,4 +42,5 @@ __all__ = [
     "SupplierLedger",
     "Customer",
     "CustomerLedger",
+    "User",
 ]

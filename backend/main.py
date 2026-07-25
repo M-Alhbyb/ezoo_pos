@@ -18,6 +18,7 @@ from app.core.exceptions import setup_exception_handlers
 from app.core.migrations import run_migrations
 from app.core.paths import ensure_data_dir, resource_path
 from app.modules.categories.routes import router as categories_router
+from app.modules.auth.routes import router as auth_router
 from app.modules.customers.routes import router as customers_router
 from app.modules.inventory.routes import router as inventory_router
 from app.modules.partners.routes import router as partners_router
@@ -68,6 +69,7 @@ app.add_middleware(
 )
 
 app.include_router(products_router)
+app.include_router(auth_router)
 app.include_router(categories_router)
 app.include_router(pos_router)
 app.include_router(inventory_router)

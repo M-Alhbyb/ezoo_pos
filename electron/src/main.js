@@ -319,3 +319,44 @@ ipcMain.handle("retry-startup", async () => {
   setTimeout(startup, 1000);
   return "Retrying...";
 });
+
+ipcMain.handle("print-pdf", async (event, base64Data, printerName) => {
+  let printWindow = null;
+  try {
+    printWindow = new BrowserWindow({
+      show: false,
+      webPreferences: { offscreen: true },
+    });
+
+    await printWindow.loadURL(
+      `data:application/pdf;base64,${base64Data}`
+    );
+
+    const printResult = await new Promise((resolve) => {
+      const options = {
+        silent: !!printerName,
+        deviceName: printerName || "",
+        printBackground: true,
+      };
+
+      printWindow.webContents.print(options, (success, failureReason) => {
+        if (!success) {
+          log(`Print failed: ${failureReason}`);
+        }
+        resolve({ success, failureReason });
+      });
+    });
+
+    if (printWindow) {
+      printWindow.close();
+      printWindow = null;
+    }
+    return printResult;
+  } catch (err) {
+    log(`Print error: ${err.message}`);
+    if (printWindow) {
+      printWindow.close();
+    }
+    return { success: false, error: err.message };
+  }
+});

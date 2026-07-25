@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('api', {
   retryStartup: () => ipcRenderer.invoke('retry-startup'),
   onShowError: (callback) => {
     ipcRenderer.on('show-error', (event, message) => callback(message));
-  }
+  },
+  printPDF: (base64Data, printerName) => ipcRenderer.invoke('print-pdf', base64Data, printerName),
 });

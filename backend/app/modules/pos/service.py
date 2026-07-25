@@ -11,7 +11,6 @@ Implements Constitution principles:
 from decimal import Decimal
 from typing import Optional, List, Tuple
 from uuid import UUID
-from datetime import datetime
 
 from sqlalchemy import select, and_, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,27 +20,27 @@ from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.sale_fee import SaleFee
 from app.models.sale_payment import SalePayment
-from app.models.product import Product
 from app.models.payment_method import PaymentMethod
-from app.models.settings import Settings
 from app.schemas.sale import (
     SaleCreate,
     SaleCalculationRequest,
     SaleBreakdown,
-    SaleItemResponse,
-    SaleFeeResponse,
     SaleListFilter,
 )
 from app.core.calculations import (
     calculate_line_total,
-    calculate_fee_amount,
-    calculate_vat,
     round_currency,
 )
 from app.modules.inventory.service import InventoryService
 from app.modules.partners.partner_profit_service import PartnerProfitService
 from app.modules.customers.service import CustomerService
 from app.core.constants import LedgerTransactionType
+
+from .calculations import (
+    get_payment_method,
+    calculate_breakdown,
+)
+from .validators import validate_stock_availability
 
 
 class SaleService:
@@ -69,96 +68,7 @@ class SaleService:
         Raises:
             ValueError: If product not found or inactive
         """
-        items_response = []
-        subtotal = Decimal("0")
-
-        # Calculate line totals
-        for item_req in request.items:
-            # Get product
-            product = await self._get_product(item_req.product_id)
-            if not product:
-                raise ValueError(f"Product {item_req.product_id} not found")
-            if not product.is_active:
-                raise ValueError(f"Product {item_req.product_id} is inactive")
-
-            # Determine unit price
-            unit_price = (
-                item_req.unit_price_override
-                if item_req.unit_price_override is not None
-                else product.selling_price
-            )
-
-            # Calculate line total
-            line_total = calculate_line_total(item_req.quantity, unit_price)
-
-            items_response.append(
-                SaleItemResponse(
-                    product_id=item_req.product_id,
-                    product_name=product.name,
-                    quantity=item_req.quantity,
-                    unit_price=unit_price,
-                    price=unit_price,
-                    base_cost=product.base_price,
-                    vat_rate=None,  # Will be set after global VAT calc
-                    line_total=line_total,
-                )
-            )
-
-            subtotal += line_total
-
-        # Calculate fees
-        fees_response = []
-        fees_total = Decimal("0")
-
-        for fee_req in request.fees:
-            calculated_amount = calculate_fee_amount(
-                fee_value=fee_req.fee_value,
-                fee_value_type=fee_req.fee_value_type,
-                subtotal=subtotal,
-            )
-
-            fees_response.append(
-                SaleFeeResponse(
-                    fee_type=fee_req.fee_type,
-                    fee_label=fee_req.fee_label,
-                    fee_value_type=fee_req.fee_value_type,
-                    fee_value=fee_req.fee_value,
-                    calculated_amount=calculated_amount,
-                )
-            )
-
-            fees_total += calculated_amount
-
-        # Calculate VAT
-        vat_enabled = await self._get_vat_enabled()
-        vat_type = None
-        vat_value = None
-        vat_rate = None
-        vat_amount = None
-
-        if vat_enabled:
-            vat_type = await self._get_vat_type()
-            vat_value = await self._get_vat_rate()
-            vat_amount, vat_rate = calculate_vat(
-                subtotal, fees_total, vat_enabled, vat_type, vat_value
-            )
-
-        # Calculate total
-        total = round_currency(subtotal + fees_total + (vat_amount or Decimal("0")))
-
-        return SaleBreakdown(
-            items=items_response,
-            subtotal=subtotal,
-            fees=fees_response,
-            fees_total=fees_total,
-            vat_enabled=vat_enabled,
-            vat_rate=vat_rate,
-            vat_amount=vat_amount,
-            vat_total=vat_amount,  # Alias for consistency
-            total=total,
-            grand_total=total,  # Alias for consistency
-            vat_percentage=str(int(vat_rate)) if vat_rate is not None else None,
-        )
+        return await calculate_breakdown(self.db, request)
 
     async def create_sale(self, sale_data: SaleCreate) -> Sale:
         """
@@ -204,7 +114,7 @@ class SaleService:
                 await self.db.flush()
             payment_method_id = payment_method.id
         else:
-            payment_method = await self._get_payment_method(payment_method_id)
+            payment_method = await get_payment_method(self.db, payment_method_id)
             if not payment_method:
                 raise ValueError(f"Payment method {payment_method_id} not found")
             if not payment_method.is_active:
@@ -411,24 +321,7 @@ class SaleService:
         Returns:
             List of error messages (empty if all valid)
         """
-        issues = []
-
-        for product_id, quantity in items:
-            product = await self._get_product(product_id)
-            if not product:
-                issues.append(f"Product {product_id} not found")
-                continue
-
-            if not product.is_active:
-                issues.append(f"Product {product.name} is inactive")
-                continue
-
-            if product.stock_quantity < quantity:
-                issues.append(
-                    f"Product {product.name}: requested {quantity}, available {product.stock_quantity}"
-                )
-
-        return issues
+        return await validate_stock_availability(self.db, items)
 
     async def list_sales(self, filters: SaleListFilter) -> Tuple[List[Sale], int]:
         """
@@ -527,53 +420,6 @@ class SaleService:
                 item.remaining_quantity = item.quantity - reversed_qtys.get(item.product_id, 0)
         
         return sale
-
-    async def _get_product(self, product_id: UUID) -> Optional[Product]:
-        """Get product by ID."""
-        query = select(Product).where(Product.id == product_id)
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def _get_payment_method(
-        self, payment_method_id: UUID
-    ) -> Optional[PaymentMethod]:
-        """Get payment method by ID."""
-        query = select(PaymentMethod).where(PaymentMethod.id == payment_method_id)
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def _get_vat_enabled(self) -> bool:
-        """Check if VAT is enabled in settings."""
-        query = select(Settings).where(Settings.key == "vat_enabled")
-        result = await self.db.execute(query)
-        setting = result.scalar_one_or_none()
-
-        if not setting:
-            return False
-
-        return setting.value.lower() in ("true", "1", "yes")
-
-    async def _get_vat_type(self) -> str:
-        """Get VAT type from settings (percent or fixed)."""
-        query = select(Settings).where(Settings.key == "vat_type")
-        result = await self.db.execute(query)
-        setting = result.scalar_one_or_none()
-
-        if not setting:
-            return "percent"  # Default to percentage
-
-        return setting.value.lower()
-
-    async def _get_vat_rate(self) -> Decimal:
-        """Get VAT rate from settings."""
-        query = select(Settings).where(Settings.key == "vat_rate")
-        result = await self.db.execute(query)
-        setting = result.scalar_one_or_none()
-
-        if not setting:
-            return Decimal("16.00")  # Default 16%
-
-        return Decimal(setting.value)
 
     async def reverse_sale(self, sale_id: UUID, reversal_data: "SaleReversalCreate") -> Sale:
         """

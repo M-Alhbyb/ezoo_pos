@@ -25,6 +25,7 @@ import app.models.payment_method
 import app.models.product
 import app.models.sale
 import app.models.sale_item
+import app.models.user
 
 from app.core.config import settings
 
