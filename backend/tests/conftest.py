@@ -1,79 +1,84 @@
 """
 Pytest configuration for EZOO POS backend tests.
 
-This conftest.py provides:
-- Database fixtures for testing
-- Test client fixtures
-- Common test utilities
+Uses per-test temp-file SQLite databases so the suite runs with zero
+external services.  Module-level singletons in database.py are reset
+between tests so each test gets an isolated database.
 """
 
+import os
+from collections.abc import AsyncGenerator
+
 import pytest
-import asyncio
-from typing import AsyncGenerator
+import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import pool
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base, get_db
 from main import app
 
 
-# Test database URL (use PostgreSQL test database)
-TEST_DATABASE_URL = "postgresql+asyncpg://pasha:pshpsh00@localhost:5432/ezoo_pos_test"
+def _install_pragmas(sync_engine) -> None:
+    @event.listens_for(sync_engine, "connect")
+    def _set_pragmas(dbapi_conn, _record):
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.execute("PRAGMA busy_timeout=5000")
+        cur.execute("PRAGMA synchronous=NORMAL")
+        cur.close()
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
+@pytest_asyncio.fixture
+async def engine(tmp_path):
+    """Create a fresh SQLite engine per test, backed by a temp file."""
+    db_path = str(tmp_path / "test_ezoo.db")
+    os.environ["DATABASE_PATH"] = db_path
 
+    import app.core.database as db_mod
+    db_mod._async_engine = None
+    db_mod._async_session_local = None
 
-@pytest.fixture(scope="function")
-async def db_engine():
-    """Create a test database engine."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
+    eng = create_async_engine(
+        f"sqlite+aiosqlite:///{db_path}",
         echo=False,
+        future=True,
+        connect_args={"check_same_thread": False},
     )
-
-    async with engine.begin() as conn:
+    _install_pragmas(eng.sync_engine)
+    async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    yield engine
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
+    yield eng
+    await eng.dispose()
 
 
-@pytest.fixture(scope="function")
-async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a test database session."""
-    async_session_maker = async_sessionmaker(
-        db_engine,
+@pytest_asyncio.fixture
+async def db_session(engine) -> AsyncGenerator[AsyncSession, None]:
+    """Provide an async session bound to the per-test database."""
+    maker = async_sessionmaker(
+        engine,
         class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
         autoflush=False,
     )
-
-    async with async_session_maker() as session:
+    async with maker() as session:
         yield session
         await session.rollback()
 
 
-@pytest.fixture(scope="function")
-async def async_client(db_engine) -> AsyncGenerator[AsyncClient, None]:
-    """Create a test HTTP client with isolated DB sessions per request."""
-    from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+@pytest_asyncio.fixture
+async def db(db_session) -> AsyncGenerator[AsyncSession, None]:
+    """Alias used by unit / integration tests that request ``db``."""
+    yield db_session
 
-    async_session_maker = async_sessionmaker(
-        db_engine,
+
+@pytest_asyncio.fixture
+async def async_client(engine) -> AsyncGenerator[AsyncClient, None]:
+    """HTTP test client wired to the per-test database."""
+    maker = async_sessionmaker(
+        engine,
         class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
@@ -81,7 +86,7 @@ async def async_client(db_engine) -> AsyncGenerator[AsyncClient, None]:
     )
 
     async def override_get_db():
-        async with async_session_maker() as session:
+        async with maker() as session:
             yield session
             await session.rollback()
 
@@ -92,20 +97,24 @@ async def async_client(db_engine) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
 
-@pytest.fixture(scope="function")
+
+@pytest_asyncio.fixture
 async def client(async_client):
     """Alias for async_client fixture."""
     yield async_client
 
 
-# Test utilities
+# ---------------------------------------------------------------------------
+# Shared sample data
+# ---------------------------------------------------------------------------
+
 @pytest.fixture
 def sample_product_data():
-    """Sample product data for testing."""
     return {
         "name": "Test Product",
         "sku": "TEST-001",
@@ -118,7 +127,6 @@ def sample_product_data():
 
 @pytest.fixture
 def sample_sale_data():
-    """Sample sale data for testing."""
     return {
         "items": [
             {"product_id": "test-product-id", "quantity": 2, "unit_price": "150.00"}

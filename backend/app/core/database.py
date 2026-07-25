@@ -1,10 +1,12 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, DateTime, text, create_engine
-from sqlalchemy.pool import StaticPool
-from app.core.db_types import GUID
-import uuid
 import os
+import uuid
+
+from sqlalchemy import Column, DateTime, event, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import StaticPool
+
+from app.core.db_types import GUID
 
 Base = declarative_base()
 
@@ -25,6 +27,17 @@ class BaseModel(Base):
 
     user_id = Column(GUID(), nullable=True)
     branch_id = Column(GUID(), nullable=True)
+
+
+def _install_pragmas(sync_engine) -> None:
+    @event.listens_for(sync_engine, "connect")
+    def _set_pragmas(dbapi_conn, _record):
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.execute("PRAGMA busy_timeout=5000")
+        cur.execute("PRAGMA synchronous=NORMAL")
+        cur.close()
 
 
 def get_database_url():
@@ -52,6 +65,7 @@ def get_engine():
             poolclass=StaticPool,
             connect_args={'check_same_thread': False},
         )
+        _install_pragmas(_async_engine.sync_engine)
     return _async_engine
 
 
@@ -76,29 +90,3 @@ async def get_db() -> AsyncSession:
             yield session
         finally:
             await session.close()
-
-
-def init_db():
-    sync_url = get_sync_database_url()
-    engine = create_engine(sync_url, echo=False, connect_args={'check_same_thread': False})
-    Base.metadata.create_all(bind=engine)
-    seed_data(engine)
-    engine.dispose()
-
-
-def seed_data(engine):
-    from sqlalchemy import text
-
-    with engine.connect() as conn:
-        result = conn.execute(text('SELECT COUNT(*) FROM payment_methods'))
-        count = result.scalar()
-
-        if count == 0:
-            conn.execute(text('''
-                INSERT INTO payment_methods (id, name, is_active, created_at, updated_at)
-                VALUES
-                    (lower(hex(randomblob(16))), 'Cash', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-                    (lower(hex(randomblob(16))), 'M-PESA', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-                    (lower(hex(randomblob(16))), 'Card', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            '''))
-            conn.commit()

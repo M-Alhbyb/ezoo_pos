@@ -1,26 +1,30 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+
+from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.core.database import get_db, init_db
-from app.core.config import settings
-from app.core.exceptions import setup_exception_handlers
-from app.websocket.manager import manager
-from app.modules.products.routes import router as products_router
-from app.modules.categories.routes import router as categories_router
-from app.modules.pos.routes import router as pos_router
-from app.modules.inventory.routes import router as inventory_router
-from app.modules.settings.routes import router as settings_router
-from app.modules.partners.routes import router as partners_router
-from app.modules.reports.routes import router as reports_router
-from app.modules.suppliers.routes import router as suppliers_router
-from app.modules.purchases.routes import router as purchases_router
-from app.modules.customers.routes import router as customers_router
+from slowapi.util import get_remote_address
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.routes.dashboard import router as dashboard_router
-import logging
-import os
+from app.core.backup import backup_database
+from app.core.config import settings
+from app.core.database import get_db
+from app.core.exceptions import setup_exception_handlers
+from app.core.migrations import run_migrations
+from app.core.paths import ensure_data_dir
+from app.modules.categories.routes import router as categories_router
+from app.modules.customers.routes import router as customers_router
+from app.modules.inventory.routes import router as inventory_router
+from app.modules.partners.routes import router as partners_router
+from app.modules.pos.routes import router as pos_router
+from app.modules.products.routes import router as products_router
+from app.modules.purchases.routes import router as purchases_router
+from app.modules.reports.routes import router as reports_router
+from app.modules.settings.routes import router as settings_router
+from app.modules.suppliers.routes import router as suppliers_router
+from app.websocket.manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -75,12 +79,13 @@ app.include_router(dashboard_router)
 
 @app.on_event('startup')
 async def startup_event():
-    db_path = settings.database_path
-    db_dir = os.path.dirname(db_path)
-    if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir, exist_ok=True)
-    init_db()
-    logger.info(f'Database initialized at {db_path}')
+    ensure_data_dir()
+    try:
+        backup_database()
+    except Exception as e:
+        logger.warning('Backup failed: %s', e)
+    run_migrations()
+    logger.info('Database ready at %s', settings.database_path)
 
 
 @app.get('/')
@@ -96,6 +101,7 @@ async def health():
 @app.get('/api/payment-methods')
 async def get_payment_methods(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import select
+
     from app.models.payment_method import PaymentMethod
 
     result = await db.execute(

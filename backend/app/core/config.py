@@ -1,10 +1,7 @@
+
 from pydantic_settings import BaseSettings
-from typing import Optional, List
-import os
 
-
-def get_default_database_path():
-    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'ezoo_pos.db')
+from app.core.paths import default_database_path
 
 
 class Settings(BaseSettings):
@@ -14,7 +11,7 @@ class Settings(BaseSettings):
         'Core POS system with product catalog, inventory tracking, and sale processing'
     )
 
-    database_path: str = get_default_database_path()
+    database_path: str = default_database_path()
 
     cors_origins: str = 'http://localhost:3000'
 
@@ -30,7 +27,7 @@ class Settings(BaseSettings):
     dashboard_timeout_seconds: int = 3
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(',')]
 
     @property
