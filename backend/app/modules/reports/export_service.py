@@ -1,4 +1,5 @@
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from decimal import Decimal
@@ -19,13 +20,14 @@ import xlsxwriter
 
 from app.core.config import settings
 from app.core.arabic_pdf import prepare_cell_value, is_arabic_text
+from app.core.paths import resource_path
 from app.schemas.export import ExportFormat, ExportMetadata, ExportResponse
 
 logger = logging.getLogger(__name__)
 
 
-# Arabic font directory
-FONT_DIR = "/usr/share/fonts/truetype"  # System fonts directory on Linux
+# Arabic font directory — resolved via resource_path so it works in PyInstaller bundles
+FONT_DIR = resource_path("app/static/fonts")
 
 
 def _register_arabic_fonts():
@@ -34,10 +36,7 @@ def _register_arabic_fonts():
     fonts_registered = False
 
     try:
-        # Get path to static fonts directory
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        static_fonts_dir = os.path.join(base_dir, "static", "fonts")
-        
+        static_fonts_dir = resource_path("app/static/fonts")
         cairo_regular = os.path.join(static_fonts_dir, "Cairo-Regular.ttf")
         cairo_bold = os.path.join(static_fonts_dir, "Cairo-Bold.ttf")
 
@@ -107,9 +106,7 @@ STRIPE_COLOR = colors.HexColor("#D9E1F2")  # Light Blue
  
 def get_asset_path(filename: str) -> str:
     """Get absolute path to a static image asset."""
-    import os
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(base_dir, "static", "images", filename)
+    return os.path.join(resource_path("app/static/images"), filename)
  
  
 def draw_report_header(canvas, doc, title: str, meta_data: dict = None):
