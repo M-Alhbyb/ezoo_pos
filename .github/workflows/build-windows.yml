@@ -1,0 +1,109 @@
+name: build-windows
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: "Code-sign the installer"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      PYTHON_VERSION: "3.11"
+      NODE_VERSION: "20"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # ── Frontend ──────────────────────────────────────────────────────
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (static export)
+        working-directory: frontend
+        run: npm run build:export
+
+      # ── Backend ───────────────────────────────────────────────────────
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run backend tests
+        working-directory: backend
+        run: pytest -q --tb=short
+
+      - name: PyInstaller build
+        working-directory: backend
+        run: pyinstaller ezoo-pos.spec --clean --noconfirm
+
+      # ── Electron installer ────────────────────────────────────────────
+      - name: Install Electron dependencies
+        working-directory: electron
+        run: npm ci
+
+      # Code signing — only runs when secrets are configured.
+      # Set these GitHub repository secrets:
+      #   WIN_CERTIFICATE_BASE64   — base64-encoded .pfx file
+      #   WIN_CERTIFICATE_PASSWORD — password for the .pfx
+      - name: Decode code-signing certificate
+        if: >-
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.sign == 'true')
+        shell: pwsh
+        env:
+          CERT_BASE64: ${{ secrets.WIN_CERTIFICATE_BASE64 }}
+        run: |
+          if ($env:CERT_BASE64) {
+            $certBytes = [Convert]::FromBase64String($env:CERT_BASE64)
+            $certPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
+            [IO.File]::WriteAllBytes($certPath, $certBytes)
+            echo "CERTIFICATE_PATH=$certPath" >> $env:GITHUB_ENV
+            echo "Certificate decoded successfully"
+          } else {
+            echo "::warning::No WIN_CERTIFICATE_BASE64 secret — building unsigned"
+          }
+
+      - name: Build Windows installer
+        working-directory: electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIN_CSC_LINK: ${{ env.CERTIFICATE_PATH }}
+          CSC_LINK: ${{ env.CERTIFICATE_PATH }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+        run: npm run build:win
+
+      # ── Publish ───────────────────────────────────────────────────────
+      - name: Publish to GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
+
+      # ── Artifact ──────────────────────────────────────────────────────
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EZOO-POS-Setup
+          path: electron/dist/*.exe
+          if-no-files-found: warn

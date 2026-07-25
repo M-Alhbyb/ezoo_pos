@@ -22,6 +22,16 @@ win:
       arch:
         - x64
   icon: build/icon.ico
+  # Code signing — set via environment variables, not hardcoded here.
+  # electron-builder reads CSC_LINK / CSC_KEY_PASSWORD (or WIN_CSC_LINK /
+  # WIN_CSC_KEY_PASSWORD) at build time.  See CI workflow for the wiring.
+  #
+  # Signing options (pick one):
+  #   1. Azure Trusted Signing — ~$10/mo, cheapest legitimate route.
+  #      Set CSC_LINK to the .pfx path and CSC_KEY_PASSWORD to its password.
+  #   2. OV certificate — $200-400/year, builds SmartScreen reputation.
+  #   3. EV certificate — $400-700/year, immediate SmartScreen trust.
+  #   4. Unsigned — fine for single-shop install you deploy yourself.
 
 nsis:
   oneClick: false
@@ -34,5 +44,5 @@ nsis:
 
 publish:
   provider: github
-  owner: ezoo-pos
-  repo: ezoo-pos
+  owner: m-elhabib-dev
+  repo: ezoo_pos
