@@ -72,7 +72,7 @@ async def test_credit_limit_check(db: AsyncSession):
     is_exceeded, balance, limit = await service.check_credit_limit(
         customer.id, Decimal("150.00")
     )
-    assert not is_exceeded
+    assert is_exceeded
     assert balance == Decimal("0")
     assert limit == Decimal("100.00")
 

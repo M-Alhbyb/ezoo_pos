@@ -86,7 +86,7 @@ export default function SuppliersPage() {
                 {suppliers.map((supplier) => (
                   <tr key={supplier.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4 font-medium text-slate-800">
-                      <Link href={`/suppliers/${supplier.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
+                      <Link href={`/suppliers/detail?id=${supplier.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
                         <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
                           {supplier.name.charAt(0).toUpperCase()}
                         </div>

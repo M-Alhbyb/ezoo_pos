@@ -69,7 +69,7 @@ export default function CustomerSelector({ selectedCustomerId, onSelect, onBalan
             </div>
           </div>
         ) : (
-          <span className="text-slate-400">{ARABIC.customers.selectCustomer || 'اختر عميل...'}</span>
+          <span className="text-slate-400">{'اختر عميل...'}</span>
         )}
         <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>

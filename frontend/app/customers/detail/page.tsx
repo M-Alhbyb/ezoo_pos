@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ARABIC } from '@/lib/constants/arabic';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { getCustomer, getCustomerLedger, recordCustomerPayment, CustomerDetail, LedgerEntry } from '@/lib/api/customers';
@@ -9,10 +9,10 @@ import CustomerPaymentModal from '@/components/customers/PaymentModal';
 import { ExportButtonGroup } from '@/components/reports/ExportButtonGroup';
 import SaleDetailModal from '@/components/pos/SaleDetailModal';
 
-export default function CustomerDetailPage() {
-  const params = useParams();
+function CustomerDetailInner() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const customerId = params.id as string;
+  const customerId = searchParams.get("id");
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -27,10 +27,11 @@ export default function CustomerDetailPage() {
   const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
-    loadCustomer();
+    if (customerId) loadCustomer();
   }, [customerId, startDate, endDate]);
 
   async function loadCustomer() {
+    if (!customerId) return;
     try {
       setLoading(true);
       const [customerData, ledgerData] = await Promise.all([
@@ -47,9 +48,21 @@ export default function CustomerDetailPage() {
   }
 
   async function handlePayment(data: { amount: number; payment_method: string; note?: string }) {
+    if (!customerId) return;
     await recordCustomerPayment(customerId, data);
     await loadCustomer();
     setIsPaymentModalOpen(false);
+  }
+
+  if (!customerId) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-slate-800">{ARABIC.customers.noCustomers}</h2>
+        <button onClick={() => router.back()} className="mt-4 text-blue-600 hover:underline">
+          {ARABIC.common.back}
+        </button>
+      </div>
+    );
   }
 
   if (loading && !customer) {
@@ -146,7 +159,7 @@ export default function CustomerDetailPage() {
             <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 15L12 19L8 15M12 19V5"></path>
             </svg>
-            {ARABIC.pos.returnItems || "إرجاع منتجات"}
+            {"إرجاع منتجات"}
           </button>
 
           <button
@@ -159,7 +172,6 @@ export default function CustomerDetailPage() {
             {ARABIC.customers.recordPayment}
           </button>
 
-          {/* New Dynamic Export Group */}
           <div className="border-s border-slate-200 ps-3 ms-1 hidden md:block">
             <ExportButtonGroup 
               reportType={`customers/${customerId}`}
@@ -332,5 +344,25 @@ export default function CustomerDetailPage() {
         initialReturnMode={isReturnAction}
       />
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+      <svg className="animate-spin w-8 h-8 mb-4 text-indigo-500" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span className="font-medium">{ARABIC.common.loading}</span>
+    </div>
+  );
+}
+
+export default function CustomerDetailPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <CustomerDetailInner />
+    </Suspense>
   );
 }

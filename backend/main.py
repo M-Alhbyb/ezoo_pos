@@ -1,7 +1,10 @@
 import logging
+import os
 
-from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -13,7 +16,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.exceptions import setup_exception_handlers
 from app.core.migrations import run_migrations
-from app.core.paths import ensure_data_dir
+from app.core.paths import ensure_data_dir, resource_path
 from app.modules.categories.routes import router as categories_router
 from app.modules.customers.routes import router as customers_router
 from app.modules.inventory.routes import router as inventory_router
@@ -88,11 +91,6 @@ async def startup_event():
     logger.info('Database ready at %s', settings.database_path)
 
 
-@app.get('/')
-async def root():
-    return {'message': 'EZOO POS API', 'version': settings.app_version}
-
-
 @app.get('/health')
 async def health():
     return {'status': 'healthy'}
@@ -124,6 +122,25 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f'WebSocket error: {e}')
         manager.disconnect(websocket)
+
+
+# --- Frontend static export (Phase 2) ---
+
+_frontend_dir = resource_path('frontend_out')
+if os.path.isdir(_frontend_dir):
+    _404_path = os.path.join(_frontend_dir, '404.html')
+
+    @app.exception_handler(404)
+    async def _frontend_404(request: Request, exc):
+        if request.url.path.startswith('/api/') or request.url.path.startswith('/ws/'):
+            return None
+        if os.path.isfile(_404_path):
+            return HTMLResponse(open(_404_path).read(), status_code=404)
+        return HTMLResponse('<h1>404 — Not Found</h1>', status_code=404)
+
+    app.mount('/', StaticFiles(directory=_frontend_dir, html=True), name='frontend')
+else:
+    logger.warning('No frontend bundle at %s — API-only mode', _frontend_dir)
 
 
 if __name__ == '__main__':

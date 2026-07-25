@@ -2,13 +2,13 @@
  * Partner Wallet Page
  * 
  * Page for viewing partner wallet balance and transaction history.
- * Task: T048 - Phase 7
+ * Uses query parameter instead of dynamic route for static export compatibility.
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import PartnerWalletView from "@/components/partners/PartnerWalletView";
 
 interface Partner {
@@ -18,9 +18,10 @@ interface Partner {
   investment_amount: string;
 }
 
-export default function PartnerWalletPage({ params }: { params: { partnerId: string } }) {
+function PartnerWalletInner() {
   const router = useRouter();
-  const { partnerId } = params;
+  const searchParams = useSearchParams();
+  const partnerId = searchParams.get("partnerId");
   const [partner, setPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,10 +31,11 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
   const [adjusting, setAdjusting] = useState(false);
 
   useEffect(() => {
-    fetchPartner();
+    if (partnerId) fetchPartner();
   }, [partnerId]);
 
   const fetchPartner = async () => {
+    if (!partnerId) return;
     try {
       setLoading(true);
       const response = await fetch(
@@ -56,7 +58,7 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
   const handleAdjustWallet = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!adjustAmount || !adjustDescription) {
+    if (!adjustAmount || !adjustDescription || !partnerId) {
       alert("يرجى ملء جميع الحقول");
       return;
     }
@@ -91,6 +93,16 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
       setAdjusting(false);
     }
   };
+
+  if (!partnerId) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-rose-50 border border-rose-200 text-rose-600 rounded-xl p-4">
+          معرّف الشريك مفقود
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -209,5 +221,21 @@ export default function PartnerWalletPage({ params }: { params: { partnerId: str
         onRefresh={fetchPartner}
       />
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="text-slate-500">جارٍ التحميل...</div>
+    </div>
+  );
+}
+
+export default function PartnerWalletPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <PartnerWalletInner />
+    </Suspense>
   );
 }

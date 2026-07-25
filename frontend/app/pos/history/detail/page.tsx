@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import { ArrowRight, Package, Receipt, AlertTriangle, AlertCircle, Printer } from "lucide-react";
@@ -41,17 +42,19 @@ interface SaleDetail {
   created_at: string;
 }
 
-export default function SaleDetailPage({ params }: { params: { saleId: string } }) {
-  const { saleId } = params;
+function SaleDetailInner() {
+  const searchParams = useSearchParams();
+  const saleId = searchParams.get("saleId");
   const [sale, setSale] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchSaleDetail();
+    if (saleId) fetchSaleDetail();
   }, [saleId]);
 
   const fetchSaleDetail = async () => {
+    if (!saleId) return;
     try {
       setLoading(true);
       const response = await fetch(`/api/sales/${saleId}`);
@@ -72,6 +75,14 @@ export default function SaleDetailPage({ params }: { params: { saleId: string } 
     }
   };
 
+  if (!saleId) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-slate-800">{ARABIC.pos.saleNotFound || 'لم يتم العثور على البيع'}</h2>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
@@ -89,7 +100,7 @@ export default function SaleDetailPage({ params }: { params: { saleId: string } 
             className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all shadow-md active:scale-95 font-semibold"
           >
             <Printer className="w-5 h-5" />
-            <span>{ARABIC.pos.print || 'طباعة الإيصال'}</span>
+            <span>{'طباعة الإيصال'}</span>
           </button>
         )}
       </div>
@@ -216,5 +227,22 @@ export default function SaleDetailPage({ params }: { params: { saleId: string } 
         </div>
       ) : null}
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      <p className="text-slate-500 mt-4">{ARABIC.common.loading}</p>
+    </div>
+  );
+}
+
+export default function SaleDetailPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SaleDetailInner />
+    </Suspense>
   );
 }

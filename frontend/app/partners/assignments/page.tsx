@@ -75,7 +75,7 @@ export default function AssignmentsPage() {
     }
   };
 
-  const handleSubmit = async (data: Partial<Assignment>) => {
+  const handleSubmit = async (data: Partial<import("@/components/partners/ProductAssignmentForm").ProductAssignment>) => {
     const url = editingAssignment
       ? `/api/partners/assignments/${editingAssignment.id}`
       : '/api/partners/assignments';

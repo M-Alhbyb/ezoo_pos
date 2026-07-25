@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ARABIC } from '@/lib/constants/arabic';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { getSupplier, recordPayment, getSupplierStatement } from '@/lib/api/suppliers';
@@ -13,10 +13,10 @@ import ReturnModal from '@/components/suppliers/ReturnModal';
 import LedgerDetailsModal from '@/components/suppliers/LedgerDetailsModal';
 import { ExportButtonGroup } from '@/components/reports/ExportButtonGroup';
 
-export default function SupplierDetailPage() {
-  const params = useParams();
+function SupplierDetailInner() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const supplierId = params.id as string;
+  const supplierId = searchParams.get("id");
   
   const [supplier, setSupplier] = useState<SupplierDetail | null>(null);
   const [statement, setStatement] = useState<SupplierStatement | null>(null);
@@ -33,10 +33,11 @@ export default function SupplierDetailPage() {
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
 
   useEffect(() => {
-    loadSupplier();
+    if (supplierId) loadSupplier();
   }, [supplierId, startDate, endDate]);
 
   async function loadSupplier() {
+    if (!supplierId) return;
     try {
       setLoading(true);
       const [detail, stmt] = await Promise.all([
@@ -53,12 +54,14 @@ export default function SupplierDetailPage() {
   }
 
   async function handlePayment(data: { amount: number; note?: string }) {
+    if (!supplierId) return;
     await recordPayment(supplierId, data);
     await loadSupplier();
     setIsPaymentModalOpen(false);
   }
 
   async function handlePurchase(data: { items: any[] }) {
+    if (!supplierId) return;
     await createPurchase({
       supplier_id: supplierId,
       items: data.items
@@ -68,6 +71,7 @@ export default function SupplierDetailPage() {
   }
 
   async function handleReturn(data: { items: any[], note?: string }) {
+    if (!supplierId) return;
     await returnItems(selectedPurchaseId, data);
     await loadSupplier();
     setIsReturnModalOpen(false);
@@ -82,6 +86,17 @@ export default function SupplierDetailPage() {
     setSelectedEntry(entry);
     setIsDetailsModalOpen(true);
   };
+
+  if (!supplierId) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-slate-800">{ARABIC.suppliers.noSuppliers}</h2>
+        <button onClick={() => router.back()} className="mt-4 text-blue-600 hover:underline">
+          {ARABIC.common.back}
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -165,8 +180,6 @@ export default function SupplierDetailPage() {
 
           <button 
             onClick={() => {
-              // If there are purchases, we could show a list, but for now we'll suggest using the table
-              // Or just show an alert if no purchases exist
               const firstPurchase = statement?.ledger.find(e => e.type === 'PURCHASE');
               if (firstPurchase?.reference_id) {
                 openReturnModal(firstPurchase.reference_id);
@@ -346,5 +359,25 @@ export default function SupplierDetailPage() {
         entry={selectedEntry}
       />
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+      <svg className="animate-spin w-8 h-8 mb-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span className="font-medium">{ARABIC.common.loading}</span>
+    </div>
+  );
+}
+
+export default function SupplierDetailPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SupplierDetailInner />
+    </Suspense>
   );
 }

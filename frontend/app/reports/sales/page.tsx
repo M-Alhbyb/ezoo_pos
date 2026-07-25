@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Calendar, TrendingUp } from 'lucide-react';
-import { ExportPDFButton } from '../../components/reports/ExportPDFButton';
-import { ExportExcelButton } from '../../components/reports/ExportExcelButton';
-import { ExportProgressModal } from '../../components/reports/ExportProgressModal';
+import { ExportPDFButton } from '@/components/reports/ExportPDFButton';
+import { ExportExcelButton } from '@/components/reports/ExportExcelButton';
+import { ExportProgressModal } from '@/components/reports/ExportProgressModal';
 
 export default function SalesReportPage() {
   const [startDate, setStartDate] = useState<string>('');

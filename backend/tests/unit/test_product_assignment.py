@@ -26,6 +26,7 @@ def test_product_assignment_creation():
         assigned_quantity=10,
         remaining_quantity=10,
         share_percentage=Decimal("15.00"),
+        status="active",
     )
 
     assert assignment.partner_id == partner_id
@@ -45,6 +46,7 @@ def test_product_assignment_status_transitions():
         assigned_quantity=10,
         remaining_quantity=10,
         share_percentage=Decimal("20.00"),
+        status="active",
     )
 
     # Initially active

@@ -121,7 +121,7 @@ export default function SaleHistoryPage() {
                       <td className="py-4 px-4 text-slate-500 text-sm">{formatDateTime(sale.created_at)}</td>
                       <td className="py-4 px-4 text-end">
                         <Link
-                          href={`/pos/history/${sale.id}`}
+                          href={`/pos/history/detail?saleId=${sale.id}`}
                           className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80 transition-colors"
                         >
                           {ARABIC.pos.saleDetails || 'التفاصيل'}

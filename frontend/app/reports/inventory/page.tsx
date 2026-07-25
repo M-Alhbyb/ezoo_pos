@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { FileText, Package } from 'lucide-react';
-import { ExportExcelButton } from '../../components/reports/ExportExcelButton';
-import { ExportPDFButton } from '../../components/reports/ExportPDFButton';
-import { ExportProgressModal } from '../../components/reports/ExportProgressModal';
-import { ARABIC } from '../../lib/constants/arabic';
+import { ExportExcelButton } from '@/components/reports/ExportExcelButton';
+import { ExportPDFButton } from '@/components/reports/ExportPDFButton';
+import { ExportProgressModal } from '@/components/reports/ExportProgressModal';
+import { ARABIC } from '@/lib/constants/arabic';
 
 export default function InventoryReportPage() {
   const [startDate, setStartDate] = useState<string>('');

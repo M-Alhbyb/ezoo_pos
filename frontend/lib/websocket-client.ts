@@ -35,7 +35,13 @@ export class WebSocketClient {
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(url?: string) {
-    this.url = url || process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8001/ws/stock-updates";
+    this.url = url || process.env.NEXT_PUBLIC_WS_URL || this.deriveWsUrl();
+  }
+
+  private deriveWsUrl(): string {
+    if (typeof window === "undefined") return "";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}/ws/stock-updates`;
   }
 
   /**

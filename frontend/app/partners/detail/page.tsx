@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ARABIC } from "@/lib/constants/arabic";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import { ArrowRight, User, TrendingUp, Calendar, Info, Receipt, X, ExternalLink, Hash, Package, Tag, CreditCard } from "lucide-react";
@@ -42,26 +43,29 @@ interface Product {
   category_name: string;
 }
 
-export default function PartnerHistoryPage({ params }: { params: { partnerId: string } }) {
-  const { partnerId } = params;
+function PartnerDetailInner() {
+  const searchParams = useSearchParams();
+  const partnerId = searchParams.get("partnerId");
   const [partner, setPartner] = useState<Partner | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Modal states
   const [selectedTransaction, setSelectedTransaction] = useState<WalletTransaction | null>(null);
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchPartner();
-    fetchTransactions();
-    fetchProducts();
+    if (partnerId) {
+      fetchPartner();
+      fetchTransactions();
+      fetchProducts();
+    }
   }, [partnerId]);
 
   const fetchPartner = async () => {
+    if (!partnerId) return;
     try {
       setLoading(true);
       const response = await fetch(`/api/partners/${partnerId}`);
@@ -83,6 +87,7 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
   };
 
   const fetchTransactions = async () => {
+    if (!partnerId) return;
     try {
       const response = await fetch(`/api/partners/${partnerId}/wallet/transactions`);
       if (response.ok) {
@@ -95,6 +100,7 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
   };
 
   const fetchProducts = async () => {
+    if (!partnerId) return;
     try {
       const response = await fetch(`/api/products?partner_id=${partnerId}&page_size=100`);
       if (response.ok) {
@@ -114,6 +120,14 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
       setIsManualModalOpen(true);
     }
   };
+
+  if (!partnerId) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-slate-800">{ARABIC.partners.partnerNotFound || 'الشريك غير موجود'}</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -361,5 +375,22 @@ export default function PartnerHistoryPage({ params }: { params: { partnerId: st
         </div>
       )}
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      <p className="text-slate-500 mt-4">{ARABIC.common.loading}</p>
+    </div>
+  );
+}
+
+export default function PartnerDetailPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <PartnerDetailInner />
+    </Suspense>
   );
 }

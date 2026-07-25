@@ -72,7 +72,7 @@ export default function SaleDetailModal({
 
     const confirmMsg = isReturnMode 
       ? `هل أنت متأكد من إرجاع الكميات المحددة؟`
-      : (ARABIC.pos.confirmReverse || "هل أنت متأكد من إلغاء هذه العملية وإرجاع المنتجات للمخزن؟");
+      : ("هل أنت متأكد من إلغاء هذه العملية وإرجاع المنتجات للمخزن؟");
 
     if (!confirm(confirmMsg)) return;
     
@@ -122,7 +122,7 @@ export default function SaleDetailModal({
       <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-xl animate-scale-up max-h-[90vh] flex flex-col transition-all">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h2 className="text-xl font-semibold text-slate-800">
-            {isReturnMode ? "إرجاع منتجات للعميل" : (ARABIC.pos.saleDetail || "تفاصيل العملية")}
+            {isReturnMode ? "إرجاع منتجات للعميل" : ("تفاصيل العملية")}
           </h2>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -146,7 +146,7 @@ export default function SaleDetailModal({
               {/* Info Header */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
                 <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ARABIC.pos.orderId || "رقم العملية"}</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{"رقم العملية"}</div>
                   <div className="text-blue-600 font-mono font-bold text-lg">#{sale.id.substring(0, 8).toUpperCase()}</div>
                 </div>
                 <div className="text-end">
@@ -205,7 +205,7 @@ export default function SaleDetailModal({
                       <thead className="bg-slate-50">
                         <tr>
                           <th className="px-4 py-3 text-start font-semibold text-slate-600">{ARABIC.pos.product}</th>
-                          <th className="px-4 py-3 text-center font-semibold text-slate-600">{ARABIC.pos.qty}</th>
+                           <th className="px-4 py-3 text-center font-semibold text-slate-600">{ARABIC.pos.quantity}</th>
                           <th className="px-4 py-3 text-end font-semibold text-slate-600">{ARABIC.pos.price}</th>
                           <th className="px-4 py-3 text-end font-semibold text-slate-600">{ARABIC.pos.total}</th>
                         </tr>
@@ -272,7 +272,7 @@ export default function SaleDetailModal({
                 {/* Meta Info (Payments/Notes) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                     <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">{ARABIC.pos.payments || "المدفوعات"}</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">{"المدفوعات"}</label>
                         <div className="flex flex-wrap gap-2">
                             {sale.payments.map((p, idx) => (
                             <div key={idx} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100 flex items-center">
@@ -304,7 +304,7 @@ export default function SaleDetailModal({
                 className="px-5 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-900 transition-all flex items-center shadow-lg shadow-slate-200 disabled:opacity-50"
               >
                 <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2h-2m14 6h.01M5 10H5.01"></path></svg>
-                {ARABIC.common.print || "طباعة"}
+                {"طباعة"}
               </button>
              )}
             
@@ -315,7 +315,7 @@ export default function SaleDetailModal({
                 className="px-8 py-2.5 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-700 transition-all flex items-center shadow-lg shadow-rose-100 disabled:opacity-50"
               >
                 <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                {reversing ? ARABIC.common.saving : (isReturnMode ? "تأكيد الإرجاع" : (ARABIC.pos.returnItems || "إرجاع منتجات"))}
+                {reversing ? ARABIC.common.saving : (isReturnMode ? "تأكيد الإرجاع" : ("إرجاع منتجات"))}
               </button>
             )}
 

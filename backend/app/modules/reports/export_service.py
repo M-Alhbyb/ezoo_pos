@@ -15,7 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-import pandas as pd
+import xlsxwriter
 
 from app.core.config import settings
 from app.core.arabic_pdf import prepare_cell_value, is_arabic_text
@@ -191,87 +191,100 @@ class ExportService:
 
 
     def _generate_xlsx_sync(self, data: list[dict], title: str = "Report", meta_data: dict = None) -> BytesIO:
-        """Synchronous XLSX generation with branded header and Arabic support."""
+        """Synchronous XLSX generation with branded header and Arabic support.
+
+        Uses xlsxwriter directly (no pandas).
+        """
         try:
             import os
             output = BytesIO()
-            df = pd.DataFrame(data)
- 
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                # Start data table at row 7 (index 6) to leave space for branded header (T013)
-                df.to_excel(
-                    writer, index=False, sheet_name="Report", float_format="%.4f", startrow=6
-                )
- 
-                workbook = writer.book
-                worksheet = writer.sheets["Report"]
-                
-                # Set sheet to Right-to-Left (T032)
-                worksheet.right_to_left() 
-                # 1. Logos (T011)
-                new_civ_logo = get_asset_path("new_civilization.png")
-                rayon_logo = get_asset_path("rayon_energy.png")
- 
-                if os.path.exists(new_civ_logo):
-                    worksheet.insert_image("A1", new_civ_logo, {"x_scale": 0.4, "y_scale": 0.4})
-                
-                if os.path.exists(rayon_logo):
-                    # Insert right logo around column F/G
-                    worksheet.insert_image("F1", rayon_logo, {"x_scale": 0.4, "y_scale": 0.4})
- 
-                # 2. Header Info (T012)
-                title_format = workbook.add_format({"bold": True, "font_size": 16, "align": "center"})
-                meta_format = workbook.add_format({"font_size": 10})
-                
-                # Center title across columns
-                num_cols = len(df.columns)
-                end_col = chr(ord('A') + max(0, num_cols - 1))
-                worksheet.merge_range(f"A3:{end_col}3", title, title_format)
-                
-                # Date and dynamic metadata
-                date_str = datetime.now().strftime("%Y-%m-%d")
-                worksheet.write("A5", prepare_cell_value(f"التاريخ: {date_str}", for_pdf=False), meta_format)                
-                if meta_data:
-                    row_idx = 5
-                    col_idx = 0
-                    for label, value in meta_data.items():
-                        if value:
-                            worksheet.write(row_idx, col_idx, prepare_cell_value(f"{label}: {value}", for_pdf=False), meta_format)
-                            col_idx += 2
-                            if col_idx >= num_cols:
-                                col_idx = 0
-                                row_idx += 1
- 
-                # 3. Table Formatting (T009/T013)
-                header_format = workbook.add_format({
-                    "bold": True,
-                    "bg_color": "#2F5597",
-                    "font_color": "white",
-                    "border": 1,
-                    "align": "center"
-                })
- 
-                # Re-apply headers with formatting
-                for col_num, value in enumerate(df.columns.values):
-                    worksheet.write(6, col_num, prepare_cell_value(value, for_pdf=False), header_format)
- 
-                # Configure columns and apply number formats
-                num_format = workbook.add_format({'num_format': '#,##0.00', 'align': 'center', 'border': 1})
-                if not df.empty:
-                    for idx, col in enumerate(df.columns):
-                        # Apply number format if column is numeric
-                        is_numeric = pd.api.types.is_numeric_dtype(df[col])
-                        if is_numeric:
-                            # Rewrite column data with number format
-                            for row_idx, value in enumerate(df[col]):
-                                worksheet.write(row_idx + 7, idx, value, num_format)
-                        
-                        col_data_max = df[col].astype(str).str.len().max()
-                        if pd.isna(col_data_max):
-                            col_data_max = 0
-                        max_len = max(col_data_max, len(str(col))) + 4
-                        worksheet.set_column(idx, idx, max_len)
- 
+            workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+            worksheet = workbook.add_worksheet("Report")
+
+            # Set sheet to Right-to-Left (T032)
+            worksheet.right_to_left()
+
+            # Column names from the first row of data (or empty list)
+            columns: list[str] = list(data[0].keys()) if data else []
+            num_cols = len(columns)
+
+            # 1. Logos (T011)
+            new_civ_logo = get_asset_path("new_civilization.png")
+            rayon_logo = get_asset_path("rayon_energy.png")
+
+            if os.path.exists(new_civ_logo):
+                worksheet.insert_image("A1", new_civ_logo, {"x_scale": 0.4, "y_scale": 0.4})
+
+            if os.path.exists(rayon_logo):
+                worksheet.insert_image("F1", rayon_logo, {"x_scale": 0.4, "y_scale": 0.4})
+
+            # 2. Header Info (T012)
+            title_format = workbook.add_format({"bold": True, "font_size": 16, "align": "center"})
+            meta_format = workbook.add_format({"font_size": 10})
+
+            # Center title across columns
+            end_col = chr(ord('A') + max(0, num_cols - 1))
+            worksheet.merge_range(f"A3:{end_col}3", title, title_format)
+
+            # Date and dynamic metadata
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            worksheet.write("A5", prepare_cell_value(f"التاريخ: {date_str}", for_pdf=False), meta_format)
+            if meta_data:
+                row_idx = 5
+                col_idx = 0
+                for label, value in meta_data.items():
+                    if value:
+                        worksheet.write(row_idx, col_idx, prepare_cell_value(f"{label}: {value}", for_pdf=False), meta_format)
+                        col_idx += 2
+                        if col_idx >= num_cols:
+                            col_idx = 0
+                            row_idx += 1
+
+            # 3. Table Formatting (T009/T013)
+            header_format = workbook.add_format({
+                "bold": True,
+                "bg_color": "#2F5597",
+                "font_color": "white",
+                "border": 1,
+                "align": "center",
+            })
+            num_format = workbook.add_format({"num_format": "#,##0.00", "align": "center", "border": 1})
+            text_format = workbook.add_format({"align": "center", "border": 1})
+
+            # Write column headers at row 6
+            for col_num, col_name in enumerate(columns):
+                worksheet.write(6, col_num, prepare_cell_value(col_name, for_pdf=False), header_format)
+
+            # Determine which columns are numeric by sampling values
+            numeric_cols: set[int] = set()
+            for idx, col_name in enumerate(columns):
+                for row in data:
+                    val = row.get(col_name)
+                    if val is not None and isinstance(val, (int, float, Decimal)):
+                        numeric_cols.add(idx)
+                        break
+
+            # Write data rows starting at row 7
+            for row_num, row_data in enumerate(data):
+                for col_num, col_name in enumerate(columns):
+                    value = row_data.get(col_name)
+                    if value is None:
+                        worksheet.write_blank(row_num + 7, col_num, None, text_format)
+                    elif col_num in numeric_cols:
+                        worksheet.write_number(row_num + 7, col_num, float(value), num_format)
+                    else:
+                        worksheet.write_string(row_num + 7, col_num, str(value), text_format)
+
+            # Auto-size columns
+            for idx, col_name in enumerate(columns):
+                max_len = len(str(col_name))
+                for row in data:
+                    cell_val = row.get(col_name)
+                    if cell_val is not None:
+                        max_len = max(max_len, len(str(cell_val)))
+                worksheet.set_column(idx, idx, max_len + 4)
+
+            workbook.close()
             output.seek(0)
             return output
         except Exception as e:
@@ -288,7 +301,7 @@ class ExportService:
         meta_data: Optional[dict] = None
     ) -> BytesIO:
         """
-        Generate Excel export using pandas with xlsxwriter.
+        Generate Excel export using xlsxwriter.
  
         Args:
             data: List of dictionaries with export data

@@ -173,7 +173,7 @@ export default function PartnersPage() {
                 {partners.map((partner) => (
                   <tr key={partner.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4 font-medium text-slate-800">
-                      <Link href={`/partners/${partner.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
+                      <Link href={`/partners/detail?partnerId=${partner.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
                           {partner.name.charAt(0).toUpperCase()}
                         </div>
