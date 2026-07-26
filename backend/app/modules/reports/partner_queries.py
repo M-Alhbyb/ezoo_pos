@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.partner_wallet_transaction import PartnerWalletTransaction
+from app.models.partner_distribution import PartnerDistribution
 from app.models.partner import Partner
 from app.schemas.report import (
     PartnerReport,
@@ -15,18 +15,16 @@ from app.schemas.report import (
 
 async def get_partners_count(db: AsyncSession, start_date: date, end_date: date) -> int:
     """
-    Count total partner profit transactions in date range for export validation.
+    Count total partner distribution records in date range for export validation.
     """
-    stmt = select(func.count(PartnerWalletTransaction.id)).where(
-        PartnerWalletTransaction.transaction_type == "sale_profit"
-    )
+    stmt = select(func.count(PartnerDistribution.id))
     if start_date:
         stmt = stmt.where(
-            func.date(PartnerWalletTransaction.created_at) >= start_date
+            func.date(PartnerDistribution.created_at) >= start_date
         )
     if end_date:
         stmt = stmt.where(
-            func.date(PartnerWalletTransaction.created_at) <= end_date
+            func.date(PartnerDistribution.created_at) <= end_date
         )
 
     result = await db.execute(stmt)
@@ -43,25 +41,26 @@ async def get_partners_report(
 ) -> PartnerReport:
     """
     Aggregate partner distributions grouped by partner.
+
+    Reads from PartnerDistribution (the authoritative table for payouts).
     """
     payout_stmt = (
         select(
             Partner.id.label("partner_id"),
             Partner.name.label("partner_name"),
-            func.sum(PartnerWalletTransaction.amount).label("total_payout"),
+            func.sum(PartnerDistribution.payout_amount).label("total_payout"),
         )
-        .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
-        .where(PartnerWalletTransaction.transaction_type == "sale_profit")
+        .join(Partner, Partner.id == PartnerDistribution.partner_id)
         .group_by(Partner.id, Partner.name)
     )
 
     if start_date:
         payout_stmt = payout_stmt.where(
-            func.date(PartnerWalletTransaction.created_at) >= start_date
+            func.date(PartnerDistribution.created_at) >= start_date
         )
     if end_date:
         payout_stmt = payout_stmt.where(
-            func.date(PartnerWalletTransaction.created_at) <= end_date
+            func.date(PartnerDistribution.created_at) <= end_date
         )
 
     # Get total for pagination
@@ -83,16 +82,14 @@ async def get_partners_report(
     ]
 
     # Overall total payout (not paginated)
-    total_payout_stmt = select(func.sum(PartnerWalletTransaction.amount)).where(
-        PartnerWalletTransaction.transaction_type == "sale_profit"
-    )
+    total_payout_stmt = select(func.sum(PartnerDistribution.payout_amount))
     if start_date:
         total_payout_stmt = total_payout_stmt.where(
-            func.date(PartnerWalletTransaction.created_at) >= start_date
+            func.date(PartnerDistribution.created_at) >= start_date
         )
     if end_date:
         total_payout_stmt = total_payout_stmt.where(
-            func.date(PartnerWalletTransaction.created_at) <= end_date
+            func.date(PartnerDistribution.created_at) <= end_date
         )
 
     total_payout_res = await db.execute(total_payout_stmt)
@@ -112,35 +109,34 @@ async def get_partners_export_data(
 ) -> List[Dict[str, Any]]:
     stmt = (
         select(
-            PartnerWalletTransaction,
+            PartnerDistribution,
             Partner.name.label("partner_name"),
             Partner.investment_amount.label("invested_amount"),
             Partner.share_percentage.label("profit_percentage"),
         )
-        .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
-        .where(PartnerWalletTransaction.transaction_type == "sale_profit")
-        .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
+        .join(Partner, Partner.id == PartnerDistribution.partner_id)
+        .order_by(PartnerDistribution.created_at.desc(), PartnerDistribution.id.desc())
     )
     if start_date:
         stmt = stmt.where(
-            func.date(PartnerWalletTransaction.created_at) >= start_date
+            func.date(PartnerDistribution.created_at) >= start_date
         )
     if end_date:
         stmt = stmt.where(
-            func.date(PartnerWalletTransaction.created_at) <= end_date
+            func.date(PartnerDistribution.created_at) <= end_date
         )
 
     result = await db.execute(stmt)
     data = []
     for row in result:
-        trans = row.PartnerWalletTransaction
+        dist = row.PartnerDistribution
         data.append(
             {
                 "name": row.partner_name,
                 "invested_amount": row.invested_amount,
                 "profit_percentage": row.profit_percentage,
-                "distributed_amount": trans.amount,
-                "distribution_date": str(trans.created_at),
+                "distributed_amount": dist.payout_amount,
+                "distribution_date": str(dist.created_at),
             }
         )
     return data

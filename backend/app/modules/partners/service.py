@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Dict, Any, Optional
 import json
@@ -6,7 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.partner import Partner
 from app.models.partner_distribution import PartnerDistribution
-from app.models.partner_wallet_transaction import PartnerWalletTransaction
 from app.schemas.partner import PartnerCreate
 
 
@@ -44,7 +42,11 @@ class PartnerService:
 
     async def calculate_distribution(self, total_profit: Decimal = Decimal('0')) -> Dict[str, Any]:
         """
-        Calculates and locks distributions for a given profit amount.
+        Calculates and records distributions for a given profit amount.
+
+        Writes only to PartnerDistribution (the authoritative table for payouts).
+        Does NOT touch PartnerWalletTransaction — that table is for automatic
+        sale-profit accruals and should not be written by manual distributions.
         """
         if total_profit <= 0:
             raise ValueError("Profit must be greater than zero for distribution")
@@ -59,21 +61,6 @@ class PartnerService:
             distributed_total += payout_amount
             
             await self.create_snapshot(p, total_profit, payout_amount)
-
-            # Also create a wallet transaction so the partner report can aggregate it
-            previous_balance = await self._get_wallet_balance(p.id)
-            new_balance = previous_balance + payout_amount
-
-            wallet_txn = PartnerWalletTransaction(
-                partner_id=p.id,
-                amount=payout_amount,
-                transaction_type="sale_profit",
-                reference_type="distribution",
-                description=f"Manual distribution: {p.share_percentage}% of {total_profit}",
-                balance_after=new_balance,
-                created_at=datetime.now(timezone.utc),
-            )
-            self.db.add(wallet_txn)
             
             distributions_responses.append({
                 "partner_id": str(p.id),
@@ -89,21 +76,6 @@ class PartnerService:
             "distributed_total": distributed_total,
             "distributions": distributions_responses
         }
-
-    async def _get_wallet_balance(self, partner_id: int) -> Decimal:
-        """Get current wallet balance from the latest transaction."""
-        query = (
-            select(PartnerWalletTransaction)
-            .where(PartnerWalletTransaction.partner_id == partner_id)
-            .order_by(
-                PartnerWalletTransaction.created_at.desc(),
-                PartnerWalletTransaction.id.desc(),
-            )
-            .limit(1)
-        )
-        result = await self.db.execute(query)
-        latest = result.scalar_one_or_none()
-        return latest.balance_after if latest else Decimal("0.00")
 
     async def create_snapshot(self, partner: Partner, profit: Decimal, payout_amount: Decimal):
         """
