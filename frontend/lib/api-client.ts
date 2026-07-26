@@ -48,7 +48,6 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T 
     if (response.status === 401 || response.status === 403) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("ezoo_token");
-        window.location.href = "/login";
       }
     }
     const errorData = await response.json().catch(() => ({}));
