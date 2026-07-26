@@ -388,19 +388,22 @@ async def generate_sale_invoice_pdf(
         
         title = f"فاتورة مبيعات #{short_id}"
         
+        grand_total = sale_data.get("grand_total", 0)
+        fees_total = sale_data.get("fees_total") or 0
+        vat_total = sale_data.get("vat_total") or 0
+
         meta_data = {
             "رقم الفاتورة": short_id,
             "العميل": customer_name,
             "طريقة الدفع": sale_data.get("payment_method_name", ""),
-            "الإجمالي": sale_data.get("grand_total", 0),
+            "الإجمالي": f"{Decimal(str(grand_total)):.2f}",
         }
 
-        # Add more specific metadata if needed (e.g. fees, VAT)
-        if (sale_data.get("fees_total") or 0) > 0:
-            meta_data["الرسوم"] = sale_data.get("fees_total")
+        if Decimal(str(fees_total)) > 0:
+            meta_data["الرسوم"] = f"{Decimal(str(fees_total)):.2f}"
         
-        if (sale_data.get("vat_total") or 0) > 0:
-            meta_data["ضريبة القيمة المضافة"] = sale_data.get("vat_total")
+        if Decimal(str(vat_total)) > 0:
+            meta_data["ضريبة القيمة المضافة"] = f"{Decimal(str(vat_total)):.2f}"
 
         return await generate_pdf(
             data=formatted_items,
