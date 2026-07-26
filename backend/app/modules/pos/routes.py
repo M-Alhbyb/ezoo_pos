@@ -351,10 +351,7 @@ async def _prepare_sale_response(sale) -> dict:
             )
         )
 
-    # Check for reversal
-    reversed_sale = False
-    reversal_info = None
-    # reversal check would go here when we implement reversal functionality
+    # reversal check placeholder (future implementation)
 
     # Prepare payments
     payments = []
@@ -403,7 +400,6 @@ async def get_sale_invoice(
     Get sale invoice as PDF.
     """
     from fastapi.responses import Response
-    import io
 
     sale = await service.get_sale_detail(sale_id)
     if not sale:

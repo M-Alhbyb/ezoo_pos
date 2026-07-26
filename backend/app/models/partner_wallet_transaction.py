@@ -7,9 +7,6 @@ Constitution compliance:
 - VI (Data Integrity): created_at timestamp, amount CHECK constraint
 """
 
-from datetime import datetime, timezone
-from typing import Optional
-from uuid import UUID
 import uuid
 
 from sqlalchemy import (

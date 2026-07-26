@@ -4,9 +4,7 @@ Settings SQLAlchemy model.
 Defines the Settings entity for the EZOO POS system.
 """
 
-from sqlalchemy import Column, String, Numeric
-from app.core.db_types import GUID
-import uuid
+from sqlalchemy import Column, String
 
 from app.core.database import BaseModel
 

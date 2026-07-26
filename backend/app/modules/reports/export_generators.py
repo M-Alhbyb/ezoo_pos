@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import Optional
 import logging
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.styles import getSampleStyleSheet
@@ -17,7 +16,6 @@ import xlsxwriter
 
 from app.core.config import settings
 from app.core.arabic_pdf import prepare_cell_value, is_arabic_text
-from app.core.paths import resource_path
 from app.schemas.export import ExportFormat, ExportMetadata
 
 from .pdf_styles import (

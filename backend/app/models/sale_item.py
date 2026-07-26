@@ -7,7 +7,6 @@ Defines the SaleItem entity for the EZOO POS system.
 from sqlalchemy import Column, String, Integer, Numeric, ForeignKey, CheckConstraint
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
-import uuid
 
 from app.core.database import BaseModel
 

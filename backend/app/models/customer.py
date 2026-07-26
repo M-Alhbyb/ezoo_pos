@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.core.db_types import GUID
-from app.core.constants import LedgerTransactionType
 
 
 class Customer(Base):
@@ -35,7 +34,7 @@ class Customer(Base):
     ledger_entries: Mapped[List["CustomerLedger"]] = relationship(
         "CustomerLedger", back_populates="customer", cascade="all, delete-orphan"
     )
-    sales: Mapped[List["Sale"]] = relationship("Sale", back_populates="customer")
+    sales: Mapped[List["Sale"]] = relationship("Sale", back_populates="customer")  # noqa: F821
 
 
 class CustomerLedger(Base):

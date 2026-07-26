@@ -2,7 +2,6 @@
 Settings API Routes - REST endpoints for system configuration and payment method management.
 """
 
-from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -254,7 +253,6 @@ async def upsert_fee_presets(
         Manager role check placeholder - currently single-user system.
         Future: Add role-based access control check here.
     """
-    from decimal import Decimal
 
     try:
         # Convert Decimal list to Decimal list (already Decimal from Pydantic)

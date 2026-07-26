@@ -1,10 +1,10 @@
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import Optional
 import logging
 
-from sqlalchemy import select, func, cast, Date, literal
+from sqlalchemy import select, func, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -12,7 +12,6 @@ from app.schemas.dashboard import (
     SalesChartData,
     PartnerChartData,
     InventoryChartData,
-    DashboardFilter,
 )
 from app.models.sale import Sale
 

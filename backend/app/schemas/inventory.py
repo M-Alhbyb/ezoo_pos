@@ -4,7 +4,6 @@ Pydantic schemas for Inventory entity.
 Defines request/response models for inventory management operations.
 """
 
-from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 from datetime import datetime

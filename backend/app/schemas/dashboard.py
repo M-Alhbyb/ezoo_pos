@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Literal
+from pydantic import BaseModel, field_validator
+from typing import Optional
 
 
 class DashboardFilter(BaseModel):

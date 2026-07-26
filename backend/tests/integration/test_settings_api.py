@@ -6,7 +6,6 @@ Tests the complete flow from HTTP request to database and back.
 
 import pytest
 from httpx import AsyncClient
-from decimal import Decimal
 
 
 @pytest.mark.asyncio

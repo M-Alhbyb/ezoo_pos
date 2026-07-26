@@ -421,7 +421,7 @@ class SaleService:
         
         return sale
 
-    async def reverse_sale(self, sale_id: UUID, reversal_data: "SaleReversalCreate") -> Sale:
+    async def reverse_sale(self, sale_id: UUID, reversal_data: "SaleReversalCreate") -> Sale:  # noqa: F821
         """
         Reverse a sale (full or partial) and restore stock.
 
@@ -437,7 +437,6 @@ class SaleService:
         Returns:
             Sale instance representing the reversal
         """
-        from app.schemas.sale import SaleReversalCreate
         
         # Get sale with items
         original_sale = await self.get_sale_detail(sale_id)

@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.customer import Customer, CustomerLedger
+from app.models.customer import Customer
 from app.modules.customers.service import CustomerService
 from app.core.constants import LedgerTransactionType
 

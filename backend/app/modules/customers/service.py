@@ -3,14 +3,12 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 from datetime import date
 
-from sqlalchemy import select, func, case, and_, cast, Date
+from sqlalchemy import select, func, case, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.customer import Customer, CustomerLedger
 from app.schemas.customer import (
     CustomerCreate,
-    CustomerUpdate,
     CustomerSummary,
     CustomerListItem,
 )

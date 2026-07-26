@@ -15,7 +15,6 @@ from app.schemas.customer import (
     LedgerEntryResponse,
 )
 from app.modules.customers.service import CustomerService
-from app.core.constants import LedgerTransactionType
 
 router = APIRouter(prefix="/api/customers", tags=["Customers"])
 
@@ -106,7 +105,6 @@ async def global_customer_report(
     db: AsyncSession = Depends(get_db)
 ):
     """T026: Global customer debt report."""
-    from app.schemas.customer import CustomerListItem
     service = CustomerService(db)
     customers, total = await service.list_customers(page_size=1000)
 
@@ -137,7 +135,6 @@ async def download_customer_statement_pdf(
     """T029: Generate and download PDF statement for a customer."""
     from fastapi.responses import Response
     from app.modules.reports.export_service import ExportService
-    from app.schemas.customer import CustomerResponse
 
     service = CustomerService(db)
     customer = await service.get_customer(customer_id)

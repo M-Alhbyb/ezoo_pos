@@ -14,8 +14,6 @@ from app.schemas.purchase import (
     PurchaseListResponse,
     ReturnCreate,
     ReturnResponse,
-    PaymentCreate,
-    PaymentResponse,
 )
 
 router = APIRouter(prefix="/api/purchases", tags=["purchases"])

@@ -1,9 +1,7 @@
 import asyncio
-import sys
-import os
 from decimal import Decimal
 from sqlalchemy import select
-from app.core.database import engine, AsyncSessionLocal
+from app.core.database import AsyncSessionLocal
 from app.models.category import Category
 from app.models.product import Product
 

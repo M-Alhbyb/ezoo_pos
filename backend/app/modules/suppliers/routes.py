@@ -1,5 +1,3 @@
-from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,7 +11,6 @@ from app.schemas.supplier import (
     SupplierWithBalance,
     SupplierListResponse,
     SupplierDetailResponse,
-    SupplierSummary,
 )
 from app.schemas.purchase import PaymentCreate, PaymentResponse
 

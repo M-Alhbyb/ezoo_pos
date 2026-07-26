@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Numeric, ForeignKey, text
+from sqlalchemy import Column, Integer, Numeric, ForeignKey
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid

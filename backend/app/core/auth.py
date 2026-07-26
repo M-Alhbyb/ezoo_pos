@@ -2,10 +2,8 @@
 Authentication utilities: password hashing, JWT, FastAPI dependencies.
 """
 
-import os
 import secrets
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Optional
 
 import bcrypt as _bcrypt
@@ -15,7 +13,6 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.paths import user_data_dir
 

@@ -1,6 +1,5 @@
 from decimal import Decimal
 from typing import List, Dict, Any, Optional
-from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.partner import Partner

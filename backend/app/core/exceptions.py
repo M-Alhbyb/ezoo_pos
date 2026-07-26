@@ -203,7 +203,6 @@ def _get_status_code(code: str) -> int:
 
 def setup_exception_handlers(app):
     """Setup all exception handlers for the FastAPI app."""
-    from fastapi.exceptions import HTTPException
 
     app.add_exception_handler(EZOOException, ezoo_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)

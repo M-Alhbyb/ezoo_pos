@@ -11,13 +11,11 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
-    CheckConstraint,
     Boolean,
     text,
 )
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
-import uuid
 
 from app.core.database import BaseModel
 

@@ -6,7 +6,6 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
-from uuid import uuid4
 
 from app.models.product import Product
 from app.models.category import Category

@@ -1,6 +1,4 @@
-from decimal import Decimal
 from sqlalchemy import Column, String, Numeric, DateTime, text
-from app.core.db_types import GUID
 from sqlalchemy import Integer
 
 from app.core.database import Base

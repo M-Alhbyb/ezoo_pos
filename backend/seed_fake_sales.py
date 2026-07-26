@@ -1,7 +1,6 @@
 import asyncio
 import random
 from datetime import datetime, timedelta
-from decimal import Decimal
 from sqlalchemy import select, update
 from app.core.database import AsyncSessionLocal
 from app.models.product import Product

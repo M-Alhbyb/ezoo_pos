@@ -1,9 +1,8 @@
 from decimal import Decimal
-from typing import List, Optional
-from uuid import UUID
-from datetime import datetime, date
+from typing import List
+from datetime import date
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class SalesSummaryGroup(BaseModel):

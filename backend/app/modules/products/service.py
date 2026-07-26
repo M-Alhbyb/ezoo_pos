@@ -7,12 +7,10 @@ Implements Constitution principles:
 - IX (Extensibility): user_id, branch_id support
 """
 
-from decimal import Decimal
 from typing import Optional, Tuple
 from uuid import UUID
-from datetime import datetime
 
-from sqlalchemy import select, func, or_, and_
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -21,10 +19,7 @@ from app.models.category import Category
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
-    ProductResponse,
-    ProductListResponse,
 )
-from app.core.calculations import Decimal
 
 
 class ProductService:

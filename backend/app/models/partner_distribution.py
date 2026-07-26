@@ -1,4 +1,3 @@
-from decimal import Decimal
 from sqlalchemy import Column, Numeric, DateTime, text, ForeignKey, Integer, Text
 from app.core.db_types import GUID
 import uuid
