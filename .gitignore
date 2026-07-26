@@ -18,6 +18,7 @@ ENV/
 *.egg
 dist/
 build/
+!electron/build/icon.ico
 sdist/
 wheels/
 
