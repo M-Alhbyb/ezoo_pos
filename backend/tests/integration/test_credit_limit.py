@@ -3,22 +3,19 @@ Integration tests for customer credit limit enforcement.
 Task: T032
 """
 
-import pytest
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.customer import Customer, CustomerLedger
-from app.models.sale import Sale
+from app.models.customer import Customer
 from app.models.payment_method import PaymentMethod
 from app.modules.customers.service import CustomerService
 from app.modules.pos.service import SaleService
-from app.schemas.sale import SaleCreate, SaleItemCreate
-from app.core.constants import LedgerTransactionType
+from app.schemas.sale import SaleCreate, SaleItemCreate, SaleReversalCreate
 
 
-@pytest.mark.skip(reason="Stale test: SaleService API changed since test was written")
 @pytest.mark.asyncio
 async def test_credit_sale_within_limit(db: AsyncSession):
     """Test that credit sales work when within limit."""
@@ -53,11 +50,9 @@ async def test_credit_sale_within_limit(db: AsyncSession):
     assert summary.total_sales == Decimal("50.00")
 
 
-@pytest.mark.skip(reason="Stale test: SaleService API changed since test was written")
 @pytest.mark.asyncio
 async def test_credit_limit_exceeded_raises(db: AsyncSession):
     """Test that sales exceeding credit limit are rejected."""
-    service = CustomerService(db)
 
     customer = Customer(
         name=f"Test Customer {uuid4()}",
@@ -85,7 +80,6 @@ async def test_credit_limit_exceeded_raises(db: AsyncSession):
         await sale_service.create_sale(sale_data)
 
 
-@pytest.mark.skip(reason="Stale test: SaleService API changed since test was written")
 @pytest.mark.asyncio
 async def test_reversal_creates_return_entry(db: AsyncSession):
     """Test that reversing a customer-linked sale creates RETURN entry."""
@@ -115,20 +109,26 @@ async def test_reversal_creates_return_entry(db: AsyncSession):
 
     sale = await sale_service.create_sale(sale_data)
 
-    reversal = await sale_service.reverse_sale(sale.id, "Test reversal")
+    await sale_service.reverse_sale(sale.id, SaleReversalCreate(reason="Test reversal"))
 
     summary = await service.get_customer_summary(customer.id)
     assert summary.total_returns > 0
-    assert summary.balance >= 0
+    assert summary.balance == Decimal("-50.00")
 
 
 async def create_test_product(db: AsyncSession, selling_price: Decimal = Decimal("50.00")):
     """Helper to create a test product."""
+    from app.models.category import Category
     from app.models.product import Product
+
+    category = Category(name=f"Cat {uuid4()}")
+    db.add(category)
+    await db.flush()
 
     product = Product(
         name=f"Test Product {uuid4()}",
         sku=f"SKU-{uuid4()}",
+        category_id=category.id,
         selling_price=selling_price,
         base_price=Decimal("25.00"),
         stock_quantity=100,

@@ -7,25 +7,17 @@ Tests:
 - Validation rules
 """
 
-import pytest
 from decimal import Decimal
-from uuid import uuid4
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.category import Category
 from app.models.partner import Partner
 from app.models.product import Product
-from app.models.category import Category
-from app.models.product_assignment import ProductAssignment
 from app.modules.partners.partner_profit_service import PartnerProfitService
 from app.schemas.product_assignment import (
     ProductAssignmentCreate,
-    ProductAssignmentUpdate,
-)
-
-pytestmark = pytest.mark.skip(
-    reason="PartnerProfitService does not implement create_assignment/get_assignment/list_assignments. "
-           "These tests reference an incomplete API surface."
 )
 
 
@@ -111,14 +103,6 @@ async def test_create_assignment_uses_partner_default_share(db_session: AsyncSes
     await db_session.refresh(product)
 
     # Create assignment without specifying share_percentage
-    service = PartnerProfitService(db_session)
-    assignment_data = ProductAssignmentCreate(
-        partner_id=partner.id,
-        product_id=product.id,
-        assigned_quantity=5,
-        # share_percentage not specified - should use partner default
-    )
-
     # Note: Service should copy partner's share_percentage
     # This test will fail until we implement that logic
     # assignment = await service.create_assignment(assignment_data)
@@ -162,16 +146,9 @@ async def test_prevent_duplicate_active_assignment(db_session: AsyncSession):
         assigned_quantity=10,
         share_percentage=Decimal("15.00"),
     )
-    assignment1 = await service.create_assignment(assignment1_data)
+    await service.create_assignment(assignment1_data)
 
     # Try to create second active assignment for same product
-    assignment2_data = ProductAssignmentCreate(
-        partner_id=partner.id,
-        product_id=product.id,
-        assigned_quantity=5,
-        share_percentage=Decimal("20.00"),
-    )
-
     # Should raise an error or prevent creation
     # This test documents the expected behavior
     # Implementation should check for existing active assignment

@@ -7,13 +7,14 @@ Tests cover:
 - Inventory log retrieval - T107
 """
 
+from decimal import Decimal
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from decimal import Decimal
 
-from app.models.product import Product
 from app.models.category import Category
+from app.models.product import Product
 
 
 @pytest.fixture
@@ -293,7 +294,6 @@ class TestInventoryLog:
         assert data["total"] == 0
         assert len(data["items"]) == 0
 
-    @pytest.mark.skip(reason="Stale test: fails against current inventory log API")
     @pytest.mark.asyncio
     async def test_get_inventory_log_with_entries(
         self, client: AsyncClient, test_product: Product
@@ -339,7 +339,7 @@ class TestInventoryLog:
     ):
         """Test inventory log pagination."""
         # Create multiple log entries
-        for i in range(25):
+        for _i in range(25):
             await client.post(
                 "/api/inventory/restock",
                 json={"product_id": str(test_product.id), "quantity": 1},

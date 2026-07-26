@@ -7,15 +7,16 @@ Tests cover:
 - Reversal record linking - T093
 """
 
-import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 from uuid import uuid4
 
-from app.models.product import Product
+import pytest
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.category import Category
 from app.models.payment_method import PaymentMethod
+from app.models.product import Product
 
 
 @pytest.fixture
@@ -179,7 +180,6 @@ class TestSaleReversal:
 class TestDoubleReversalPrevention:
     """Tests for double reversal prevention (T092)."""
 
-    @pytest.mark.skip(reason="Stale test: API response shape differs from expectations")
     @pytest.mark.asyncio
     async def test_prevent_double_reversal(
         self,
@@ -225,7 +225,7 @@ class TestDoubleReversalPrevention:
         data = second_reversal.json()
         print("SECOND REVERSAL ERROR:", data)
         assert data["detail"]["error"]["code"] == "ALREADY_REVERSED"
-        assert "already reversed" in data["detail"]["error"]["message"].lower()
+        assert "already been fully reversed" in data["detail"]["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_stock_not_double_restored(

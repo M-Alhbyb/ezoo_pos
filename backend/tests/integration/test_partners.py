@@ -1,6 +1,6 @@
 import pytest
 
-@pytest.mark.skip(reason="Stale test: KeyError on API response shape")
+
 @pytest.mark.anyio
 async def test_partner_distribution(async_client):
     # create partner
@@ -8,8 +8,6 @@ async def test_partner_distribution(async_client):
         "name": "Ali",
         "profit_percentage": "10"
     })
-    partner = res.json()
-
     # simulate project profit
     res = await async_client.post("/api/projects", json={
         "name": "proj",

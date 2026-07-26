@@ -8,15 +8,15 @@ Tests:
 - Error handling per FR-014
 """
 
-import pytest
 from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.modules.partners.partner_profit_service import PartnerProfitService
+import pytest
+
 from app.models.partner import Partner
 from app.models.product_assignment import ProductAssignment
-from app.models.partner_wallet_transaction import PartnerWalletTransaction
+from app.modules.partners.partner_profit_service import PartnerProfitService
 
 
 @pytest.mark.asyncio
@@ -162,7 +162,6 @@ async def test_get_partner_for_update_locks_record():
     assert db.execute.called
 
 
-@pytest.mark.skip(reason="get_product_assignment_for_update does not exist in PartnerProfitService")
 @pytest.mark.asyncio
 async def test_get_product_assignment_for_update_locks_record():
     """Test that get_product_assignment_for_update uses SELECT FOR UPDATE."""
@@ -194,7 +193,6 @@ async def test_get_product_assignment_for_update_locks_record():
     assert assignment.status == "active"
 
 
-@pytest.mark.skip(reason="get_product_assignment_for_update does not exist in PartnerProfitService")
 @pytest.mark.asyncio
 async def test_get_product_assignment_for_update_returns_none_when_not_found():
     """Test that get_product_assignment_for_update returns None if no active assignment."""
@@ -257,10 +255,6 @@ async def test_sorted_lock_ordering_prevents_deadlock():
 async def test_concurrent_partner_locking():
     """Test that sorted lock ordering prevents deadlock in concurrent scenarios."""
     db = AsyncMock()
-    service = PartnerProfitService(db=db)
-
-    sale_id = uuid4()
-
     # Mock sale items for multiple products with different partners
     product_id_1 = uuid4()
     product_id_2 = uuid4()
@@ -285,19 +279,6 @@ async def test_concurrent_partner_locking():
         remaining_quantity=8,
         share_percentage=Decimal("20.00"),
         status="active",
-    )
-
-    partner_1 = Partner(
-        id=partner_id_1,
-        name="Partner 1",
-        share_percentage=Decimal("15.00"),
-        investment_amount=Decimal("1000.00"),
-    )
-    partner_2 = Partner(
-        id=partner_id_2,
-        name="Partner 2",
-        share_percentage=Decimal("20.00"),
-        investment_amount=Decimal("2000.00"),
     )
 
     # Mock queries for assignments
@@ -330,7 +311,6 @@ async def test_concurrent_partner_locking():
 async def test_assignment_exhaustion():
     """Test behavior when assignment remaining_quantity reaches zero."""
     db = AsyncMock()
-    service = PartnerProfitService(db=db)
 
     partner_id = uuid4()
     product_id = uuid4()
@@ -359,7 +339,6 @@ async def test_assignment_exhaustion():
 async def test_zero_remaining_prevents_further_sales():
     """Test that selling all assigned quantities prevents further sales."""
     db = AsyncMock()
-    service = PartnerProfitService(db=db)
 
     partner_id = uuid4()
     product_id = uuid4()

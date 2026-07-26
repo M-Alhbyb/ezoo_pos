@@ -1,10 +1,9 @@
-import pytest
-from decimal import Decimal
 from datetime import datetime, timedelta
+
+import pytest
 from httpx import AsyncClient
 
 
-@pytest.mark.skip(reason="Stale test: import/type errors against current code")
 @pytest.mark.anyio
 async def test_sales_report(async_client: AsyncClient):
     # 1. Setup sample data
@@ -12,10 +11,13 @@ async def test_sales_report(async_client: AsyncClient):
     pm_res = await async_client.get("/api/settings/payment-methods")
     pm_data = pm_res.json()
     if not pm_data["items"]:
-        await async_client.post("/api/settings/payment-methods", json={"name": "Cash", "is_active": True})
+        await async_client.post(
+            "/api/settings/payment-methods",
+            json={"name": "Cash", "is_active": True},
+        )
         pm_res = await async_client.get("/api/settings/payment-methods")
         pm_data = pm_res.json()
-    
+
     pm_id = pm_data["items"][0]["id"]
 
     # Create a category
@@ -51,7 +53,6 @@ async def test_sales_report(async_client: AsyncClient):
     assert len(data["daily_breakdown"]) >= 1
 
 
-@pytest.mark.skip(reason="Stale test: import/type errors against current code")
 @pytest.mark.anyio
 async def test_partners_report(async_client: AsyncClient):
     # 1. Setup partner
@@ -94,10 +95,13 @@ async def test_inventory_report(async_client: AsyncClient):
     pm_res = await async_client.get("/api/settings/payment-methods")
     pm_data = pm_res.json()
     if not pm_data["items"]:
-        await async_client.post("/api/settings/payment-methods", json={"name": "Cash", "is_active": True})
+        await async_client.post(
+            "/api/settings/payment-methods",
+            json={"name": "Cash", "is_active": True},
+        )
         pm_res = await async_client.get("/api/settings/payment-methods")
         pm_data = pm_res.json()
-    
+
     pm_id = pm_data["items"][0]["id"]
 
     sale_res = await async_client.post("/api/sales", json={
@@ -105,7 +109,7 @@ async def test_inventory_report(async_client: AsyncClient):
         "payment_method_id": pm_id
     })
     assert sale_res.status_code == 201
-    
+
     # 2. Call report endpoint
     res = await async_client.get("/api/reports/inventory")
     assert res.status_code == 200
@@ -122,7 +126,9 @@ async def test_report_date_filtering(async_client: AsyncClient):
     future_start = (datetime.now() + timedelta(days=10)).date().isoformat()
     future_end = (datetime.now() + timedelta(days=11)).date().isoformat()
 
-    res = await async_client.get(f"/api/reports/sales?start_date={future_start}&end_date={future_end}")
+    res = await async_client.get(
+        f"/api/reports/sales?start_date={future_start}&end_date={future_end}"
+    )
     assert res.status_code == 200
     data = res.json()
 
