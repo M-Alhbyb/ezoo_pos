@@ -168,7 +168,7 @@ async def generate_customer_statement_pdf(
                 # Try to parse iso string
                 try:
                     date_str = datetime.fromisoformat(str(created_at)).strftime("%Y-%m-%d")
-                except:
+                except (ValueError, TypeError, OSError):
                     date_str = str(created_at)
 
             formatted_entries.append({
@@ -229,7 +229,7 @@ async def generate_customer_statement_xlsx(
             else:
                 try:
                     date_str = datetime.fromisoformat(str(created_at)).strftime("%Y-%m-%d")
-                except:
+                except (ValueError, TypeError, OSError):
                     date_str = str(created_at)
 
             formatted_entries.append({
