@@ -15,7 +15,6 @@ from uuid import uuid4
 import pytest
 
 from app.models.partner import Partner
-from app.models.product_assignment import ProductAssignment
 from app.modules.partners.partner_profit_service import PartnerProfitService
 
 
@@ -163,57 +162,6 @@ async def test_get_partner_for_update_locks_record():
 
 
 @pytest.mark.asyncio
-async def test_get_product_assignment_for_update_locks_record():
-    """Test that get_product_assignment_for_update uses SELECT FOR UPDATE."""
-    db = AsyncMock()
-    service = PartnerProfitService(db=db)
-
-    product_id = uuid4()
-
-    # Mock the query result
-    mock_result = MagicMock()
-    mock_assignment = ProductAssignment(
-        id=uuid4(),
-        partner_id=uuid4(),
-        product_id=product_id,
-        assigned_quantity=10,
-        remaining_quantity=7,
-        share_percentage=Decimal("15.00"),
-        status="active",
-    )
-    mock_result.scalar_one_or_none.return_value = mock_assignment
-    db.execute.return_value = mock_result
-
-    # Call the method
-    assignment = await service.get_product_assignment_for_update(product_id)
-
-    # Verify result
-    assert assignment is not None
-    assert assignment.product_id == product_id
-    assert assignment.status == "active"
-
-
-@pytest.mark.asyncio
-async def test_get_product_assignment_for_update_returns_none_when_not_found():
-    """Test that get_product_assignment_for_update returns None if no active assignment."""
-    db = AsyncMock()
-    service = PartnerProfitService(db=db)
-
-    product_id = uuid4()
-
-    # Mock no result
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
-    db.execute.return_value = mock_result
-
-    # Call the method
-    assignment = await service.get_product_assignment_for_update(product_id)
-
-    # Should return None
-    assert assignment is None
-
-
-@pytest.mark.asyncio
 async def test_process_sale_partner_profits_no_assignments():
     """Test process_sale_partner_profits when no products have assignments."""
     db = AsyncMock()
@@ -249,118 +197,6 @@ async def test_sorted_lock_ordering_prevents_deadlock():
 
     # Verify they're in consistent order
     assert sorted_partner_ids == sorted(sorted_partner_ids, key=str)
-
-
-@pytest.mark.asyncio
-async def test_concurrent_partner_locking():
-    """Test that sorted lock ordering prevents deadlock in concurrent scenarios."""
-    db = AsyncMock()
-    # Mock sale items for multiple products with different partners
-    product_id_1 = uuid4()
-    product_id_2 = uuid4()
-    partner_id_1 = uuid4()
-    partner_id_2 = uuid4()
-
-    # Mock assignments and partners
-    assignment_1 = ProductAssignment(
-        id=uuid4(),
-        partner_id=partner_id_1,
-        product_id=product_id_1,
-        assigned_quantity=10,
-        remaining_quantity=10,
-        share_percentage=Decimal("15.00"),
-        status="active",
-    )
-    assignment_2 = ProductAssignment(
-        id=uuid4(),
-        partner_id=partner_id_2,
-        product_id=product_id_2,
-        assigned_quantity=8,
-        remaining_quantity=8,
-        share_percentage=Decimal("20.00"),
-        status="active",
-    )
-
-    # Mock queries for assignments
-    mock_result_assignment = MagicMock()
-    mock_result_partner = MagicMock()
-
-    def execute_side_effect(query):
-        # Determine which query is being executed based on the query object
-        query_str = str(query)
-        if "product_assignments" in query_str:
-            mock_result_assignment.scalar_one_or_none.return_value = (
-                assignment_1
-                if "product_assignments" in str(query) and "product_id" in str(query)
-                else assignment_2
-            )
-            return mock_result_assignment
-        elif "partners" in query_str and "partner_id" in str(query):
-            # Return appropriate partner based on query
-            return mock_result_partner
-        else:
-            return MagicMock()
-
-    db.execute.side_effect = execute_side_effect
-
-    # Verify the method handles concurrent locking by sorting partner IDs
-    # (actual deadlock prevention happens via sorted lock order in process_sale_partner_profits)
-
-
-@pytest.mark.asyncio
-async def test_assignment_exhaustion():
-    """Test behavior when assignment remaining_quantity reaches zero."""
-    db = AsyncMock()
-
-    partner_id = uuid4()
-    product_id = uuid4()
-
-    # Create assignment with 1 remaining
-    assignment = ProductAssignment(
-        id=uuid4(),
-        partner_id=partner_id,
-        product_id=product_id,
-        assigned_quantity=10,
-        remaining_quantity=1,  # Only 1 left
-        share_percentage=Decimal("20.00"),
-        status="active",
-    )
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = assignment
-    db.execute.return_value = mock_result
-
-    # Verify assignment has 1 remaining
-    assert assignment.remaining_quantity == 1
-    assert assignment.status == "active"
-
-
-@pytest.mark.asyncio
-async def test_zero_remaining_prevents_further_sales():
-    """Test that selling all assigned quantities prevents further sales."""
-    db = AsyncMock()
-
-    partner_id = uuid4()
-    product_id = uuid4()
-
-    # Create fulfilled assignment (0 remaining)
-    assignment = ProductAssignment(
-        id=uuid4(),
-        partner_id=partner_id,
-        product_id=product_id,
-        assigned_quantity=10,
-        remaining_quantity=0,  # All sold
-        share_percentage=Decimal("20.00"),
-        status="fulfilled",
-    )
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = assignment
-    db.execute.return_value = mock_result
-
-    # Verify assignment is fulfilled
-    assert assignment.remaining_quantity == 0
-    assert assignment.status == "fulfilled"
 
 
 @pytest.mark.asyncio

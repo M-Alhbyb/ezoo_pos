@@ -4,7 +4,7 @@ Partner Profit Service - Handles partner profit calculation and distribution.
 Implements Constitution principles:
 - I (Financial Accuracy): DECIMAL for all monetary values, immutable transaction records
 - II (Single Source of Truth): All calculations in backend, PostgreSQL only
-- III (Explicit Over Implicit): share_percentage stored per assignment and transaction
+- III (Explicit Over Implicit): share_percentage stored per partner and transaction
 - IV (Immutable Financial Records): PartnerWalletTransaction never updated after creation
 - VI (Data Integrity): Atomic transactions with record locking for concurrent safety
 """
@@ -31,9 +31,8 @@ class PartnerProfitService:
 
     Key responsibilities:
     1. Process partner profit on sales (integrated into SaleService)
-    2. Manage product assignments
-    3. Handle wallet transactions and balance calculations
-    4. Ensure atomic operations with record locking
+    2. Handle wallet transactions and balance calculations
+    3. Ensure atomic operations with record locking
 
     All monetary calculations use DECIMAL for precision.
     All transactions are atomic and use SELECT FOR UPDATE for concurrency safety.
