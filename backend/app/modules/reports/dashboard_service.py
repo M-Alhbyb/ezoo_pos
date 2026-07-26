@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Optional
 import logging
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -48,15 +48,15 @@ class DashboardService:
         try:
             stmt = (
                 select(
-                    cast(Sale.created_at, Date).label("date"),
+                    func.date(Sale.created_at).label("date"),
                     func.sum(Sale.grand_total).label("revenue"),
                     func.sum(Sale.profit).label("profit"),
                     func.coalesce(func.sum(Sale.vat_total), 0).label("vat"),
                 )
-                .where(cast(Sale.created_at, Date) >= start_date)
-                .where(cast(Sale.created_at, Date) <= end_date)
-                .group_by(cast(Sale.created_at, Date))
-                .order_by(cast(Sale.created_at, Date))
+                .where(func.date(Sale.created_at) >= start_date)
+                .where(func.date(Sale.created_at) <= end_date)
+                .group_by(func.date(Sale.created_at))
+                .order_by(func.date(Sale.created_at))
             )
 
             result = await self.db.execute(stmt)
@@ -113,8 +113,8 @@ class DashboardService:
                     ),
                 )
                 .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
-                .where(cast(PartnerWalletTransaction.created_at, Date) >= start_date)
-                .where(cast(PartnerWalletTransaction.created_at, Date) <= end_date)
+                .where(func.date(PartnerWalletTransaction.created_at) >= start_date)
+                .where(func.date(PartnerWalletTransaction.created_at) <= end_date)
                 .where(PartnerWalletTransaction.transaction_type == "sale_profit")
                 .group_by(Partner.id, Partner.name)
             )
@@ -175,16 +175,16 @@ class DashboardService:
         try:
             stmt = (
                 select(
-                    cast(InventoryLog.created_at, Date).label("date"),
+                    func.date(InventoryLog.created_at).label("date"),
                     InventoryLog.reason,
                     func.sum(InventoryLog.delta).label("total_quantity"),
                 )
-                .where(cast(InventoryLog.created_at, Date) >= start_date)
-                .where(cast(InventoryLog.created_at, Date) <= end_date)
+                .where(func.date(InventoryLog.created_at) >= start_date)
+                .where(func.date(InventoryLog.created_at) <= end_date)
                 .group_by(
-                    cast(InventoryLog.created_at, Date), InventoryLog.reason
+                    func.date(InventoryLog.created_at), InventoryLog.reason
                 )
-                .order_by(cast(InventoryLog.created_at, Date))
+                .order_by(func.date(InventoryLog.created_at))
             )
 
             result = await self.db.execute(stmt)

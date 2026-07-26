@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.inventory_log import InventoryLog
@@ -18,9 +18,9 @@ async def get_inventory_count(db: AsyncSession, start_date: date, end_date: date
     """
     stmt = select(func.count(InventoryLog.id))
     if start_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) <= end_date)
 
     result = await db.execute(stmt)
     count = result.scalar()
@@ -44,9 +44,9 @@ async def get_inventory_report(
     ).group_by(InventoryLog.reason)
 
     if start_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) <= end_date)
 
     # Get total for pagination
     count_stmt = select(func.count()).select_from(stmt.alias("subquery"))
@@ -73,11 +73,11 @@ async def get_inventory_report(
     total_mov_stmt = select(func.count(InventoryLog.id))
     if start_date:
         total_mov_stmt = total_mov_stmt.where(
-            cast(InventoryLog.created_at, Date) >= start_date
+            func.date(InventoryLog.created_at) >= start_date
         )
     if end_date:
         total_mov_stmt = total_mov_stmt.where(
-            cast(InventoryLog.created_at, Date) <= end_date
+            func.date(InventoryLog.created_at) <= end_date
         )
     total_mov_res = await db.execute(total_mov_stmt)
     overall_total_movements = total_mov_res.scalar() or 0
@@ -100,9 +100,9 @@ async def get_inventory_export_data(
         .order_by(InventoryLog.created_at.desc(), InventoryLog.id.desc())
     )
     if start_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(InventoryLog.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(InventoryLog.created_at) <= end_date)
 
     result = await db.execute(stmt)
     data = []

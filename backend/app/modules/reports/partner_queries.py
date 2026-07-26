@@ -2,7 +2,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.partner_wallet_transaction import PartnerWalletTransaction
@@ -22,11 +22,11 @@ async def get_partners_count(db: AsyncSession, start_date: date, end_date: date)
     )
     if start_date:
         stmt = stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) >= start_date
+            func.date(PartnerWalletTransaction.created_at) >= start_date
         )
     if end_date:
         stmt = stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) <= end_date
+            func.date(PartnerWalletTransaction.created_at) <= end_date
         )
 
     result = await db.execute(stmt)
@@ -57,11 +57,11 @@ async def get_partners_report(
 
     if start_date:
         payout_stmt = payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) >= start_date
+            func.date(PartnerWalletTransaction.created_at) >= start_date
         )
     if end_date:
         payout_stmt = payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) <= end_date
+            func.date(PartnerWalletTransaction.created_at) <= end_date
         )
 
     # Get total for pagination
@@ -88,11 +88,11 @@ async def get_partners_report(
     )
     if start_date:
         total_payout_stmt = total_payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) >= start_date
+            func.date(PartnerWalletTransaction.created_at) >= start_date
         )
     if end_date:
         total_payout_stmt = total_payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) <= end_date
+            func.date(PartnerWalletTransaction.created_at) <= end_date
         )
 
     total_payout_res = await db.execute(total_payout_stmt)
@@ -123,11 +123,11 @@ async def get_partners_export_data(
     )
     if start_date:
         stmt = stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) >= start_date
+            func.date(PartnerWalletTransaction.created_at) >= start_date
         )
     if end_date:
         stmt = stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) <= end_date
+            func.date(PartnerWalletTransaction.created_at) <= end_date
         )
 
     result = await db.execute(stmt)

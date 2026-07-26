@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Optional, List, Tuple
 from uuid import UUID
 
-from sqlalchemy import select, and_, cast, Date
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -350,10 +350,10 @@ class SaleService:
         conditions = []
 
         if filters.start_date:
-            conditions.append(cast(Sale.created_at, Date) >= filters.start_date)
+            conditions.append(func.date(Sale.created_at) >= filters.start_date)
 
         if filters.end_date:
-            conditions.append(cast(Sale.created_at, Date) <= filters.end_date)
+            conditions.append(func.date(Sale.created_at) <= filters.end_date)
 
         if filters.payment_method_id:
             conditions.append(Sale.payment_method_id == filters.payment_method_id)

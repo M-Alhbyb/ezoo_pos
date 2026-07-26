@@ -2,7 +2,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy import select, func, cast, Date, String
+from sqlalchemy import select, func, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -26,9 +26,9 @@ async def get_sales_count(db: AsyncSession, start_date: date, end_date: date) ->
     """
     stmt = select(func.count(Sale.id))
     if start_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(Sale.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(Sale.created_at) <= end_date)
 
     result = await db.execute(stmt)
     count = result.scalar()
@@ -47,9 +47,9 @@ async def get_sales_report(
     """
     stmt = select(Sale)
     if start_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(Sale.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(Sale.created_at) <= end_date)
 
     # Totals for summary cards (not paginated)
     total_stmt = select(
@@ -59,9 +59,9 @@ async def get_sales_report(
         func.count(Sale.id).label("count"),
     )
     if start_date:
-        total_stmt = total_stmt.where(cast(Sale.created_at, Date) >= start_date)
+        total_stmt = total_stmt.where(func.date(Sale.created_at) >= start_date)
     if end_date:
-        total_stmt = total_stmt.where(cast(Sale.created_at, Date) <= end_date)
+        total_stmt = total_stmt.where(func.date(Sale.created_at) <= end_date)
 
     total_result = await db.execute(total_stmt)
     total_row = total_result.one()
@@ -79,9 +79,9 @@ async def get_sales_report(
         .order_by("day")
     )
     if start_date:
-        group_stmt = group_stmt.where(cast(Sale.created_at, Date) >= start_date)
+        group_stmt = group_stmt.where(func.date(Sale.created_at) >= start_date)
     if end_date:
-        group_stmt = group_stmt.where(cast(Sale.created_at, Date) <= end_date)
+        group_stmt = group_stmt.where(func.date(Sale.created_at) <= end_date)
 
     # Get total count of groups for pagination
     count_stmt = select(func.count()).select_from(group_stmt.alias("subquery"))
@@ -109,11 +109,11 @@ async def get_sales_report(
     )
     if start_date:
         payout_stmt = payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) >= start_date
+            func.date(PartnerWalletTransaction.created_at) >= start_date
         )
     if end_date:
         payout_stmt = payout_stmt.where(
-            cast(PartnerWalletTransaction.created_at, Date) <= end_date
+            func.date(PartnerWalletTransaction.created_at) <= end_date
         )
 
     payout_res = await db.execute(payout_stmt)
@@ -148,9 +148,9 @@ async def get_sales_export_data(
         .order_by(Sale.created_at.desc(), Sale.id.desc())
     )
     if start_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)
+        stmt = stmt.where(func.date(Sale.created_at) >= start_date)
     if end_date:
-        stmt = stmt.where(cast(Sale.created_at, Date) <= end_date)
+        stmt = stmt.where(func.date(Sale.created_at) <= end_date)
 
     result = await db.execute(stmt)
     sales = result.scalars().all()

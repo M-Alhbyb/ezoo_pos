@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 from datetime import date
 
-from sqlalchemy import select, func, case, cast, Date
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.customer import Customer, CustomerLedger
@@ -238,9 +238,9 @@ class CustomerService:
         )
 
         if start_date:
-            query = query.where(cast(CustomerLedger.created_at, Date) >= start_date)
+            query = query.where(func.date(CustomerLedger.created_at) >= start_date)
         if end_date:
-            query = query.where(cast(CustomerLedger.created_at, Date) <= end_date)
+            query = query.where(func.date(CustomerLedger.created_at) <= end_date)
 
         # Count total
         count_query = select(func.count()).select_from(query.subquery())
