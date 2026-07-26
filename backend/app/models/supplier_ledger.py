@@ -3,7 +3,7 @@ from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 import uuid
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 
 
 class SupplierLedger(Base):
@@ -27,7 +27,8 @@ class SupplierLedger(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
     )
 
     supplier = relationship("Supplier", backref="ledger_entries")

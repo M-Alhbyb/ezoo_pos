@@ -2,7 +2,7 @@ from sqlalchemy import Column, Numeric, DateTime, text, ForeignKey, Integer, Tex
 from app.core.db_types import GUID
 import uuid
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 
 
 class PartnerDistribution(Base):
@@ -23,5 +23,5 @@ class PartnerDistribution(Base):
     snapshot_fields = Column(Text, nullable=False, server_default='{}')
 
     created_at = Column(
-        DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+        DateTime(timezone=True), nullable=False, server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"), default=_utcnow
     )

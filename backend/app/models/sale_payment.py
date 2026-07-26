@@ -8,7 +8,7 @@ from sqlalchemy import Column, Numeric, DateTime, ForeignKey, text
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import BaseModel
+from app.core.database import BaseModel, _utcnow
 
 
 class SalePayment(BaseModel):
@@ -31,7 +31,8 @@ class SalePayment(BaseModel):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
     )
 
     # Relationships

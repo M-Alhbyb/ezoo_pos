@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Numeric, DateTime, text
 from sqlalchemy import Integer
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 
 
 class Partner(Base):
@@ -17,5 +17,5 @@ class Partner(Base):
     share_percentage = Column(Numeric(5, 2), nullable=False)
 
     created_at = Column(
-        DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+        DateTime(timezone=True), nullable=False, server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"), default=_utcnow
     )

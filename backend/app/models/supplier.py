@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Text, DateTime, text
 from app.core.db_types import GUID
 import uuid
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 
 
 class Supplier(Base):
@@ -19,5 +19,6 @@ class Supplier(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
     )

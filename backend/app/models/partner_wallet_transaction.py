@@ -24,7 +24,7 @@ from sqlalchemy import (
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 
 
 class PartnerWalletTransaction(Base):
@@ -104,7 +104,8 @@ class PartnerWalletTransaction(Base):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
         comment="Transaction timestamp",
     )
 

@@ -17,7 +17,7 @@ from sqlalchemy import (
 from app.core.db_types import GUID
 from sqlalchemy.orm import relationship
 
-from app.core.database import BaseModel
+from app.core.database import BaseModel, _utcnow
 
 
 class Sale(BaseModel):
@@ -43,7 +43,8 @@ class Sale(BaseModel):
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
         index=True,
     )
     subtotal = Column(Numeric(12, 2), nullable=False)

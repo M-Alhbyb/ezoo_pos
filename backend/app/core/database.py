@@ -1,12 +1,18 @@
 import os
 import uuid
+from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, event, func, text
+from sqlalchemy import Column, DateTime, event, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import StaticPool
 
 from app.core.db_types import GUID
+
+
+def _utcnow():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 
 Base = declarative_base()
 
@@ -17,15 +23,15 @@ class BaseModel(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     created_at = Column(
         DateTime(timezone=True),
-        server_default=text('CURRENT_TIMESTAMP'),
-        default=func.now(),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        server_default=text('CURRENT_TIMESTAMP'),
-        default=func.now(),
-        onupdate=func.now(),
+        server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"),
+        default=_utcnow,
+        onupdate=_utcnow,
         nullable=False,
     )
 

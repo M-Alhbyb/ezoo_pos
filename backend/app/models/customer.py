@@ -6,7 +6,7 @@ import uuid
 from sqlalchemy import String, Text, Numeric, ForeignKey, DateTime, text, event
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, _utcnow
 from app.core.db_types import GUID
 
 
@@ -24,10 +24,10 @@ class Customer(Base):
     credit_limit: Mapped[Decimal] = mapped_column(Numeric(12, 2), server_default="0.00", nullable=False)
     
     created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False
+        DateTime(timezone=True), server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"), default=_utcnow, nullable=False
     )
     updated_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"), nullable=False
+        DateTime(timezone=True), server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"), default=_utcnow, onupdate=_utcnow, nullable=False
     )
 
     # Relationships
@@ -52,7 +52,7 @@ class CustomerLedger(Base):
     note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False, index=True
+        DateTime(timezone=True), server_default=text("(strftime('%Y-%m-%d %H:%M:%f', 'now'))"), default=_utcnow, nullable=False, index=True
     )
 
     # Relationships
