@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import List, Dict, Any, Optional
+import json
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.partner import Partner
@@ -85,7 +86,7 @@ class PartnerService:
         dist_record = PartnerDistribution(
             partner_id=partner.id,
             payout_amount=payout_amount,
-            snapshot_fields=snapshot
+            snapshot_fields=json.dumps(snapshot)
         )
         self.db.add(dist_record)
 

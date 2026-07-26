@@ -2,7 +2,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func, cast, Date, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,6 +13,11 @@ from app.schemas.report import (
     SalesReport,
     SalesSummaryGroup,
 )
+
+
+def _date_col(col):
+    """Extract date from a datetime column, compatible with SQLite."""
+    return func.date(col)
 
 
 async def get_sales_count(db: AsyncSession, start_date: date, end_date: date) -> int:
@@ -64,7 +69,7 @@ async def get_sales_report(
     # Daily breakdown via SQL aggregation for efficiency (Paginated)
     group_stmt = (
         select(
-            cast(Sale.created_at, Date).label("day"),
+            _date_col(Sale.created_at).label("day"),
             func.count(Sale.id).label("count"),
             func.sum(Sale.grand_total).label("revenue"),
             func.sum(Sale.total_cost).label("cost"),
