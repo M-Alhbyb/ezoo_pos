@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from sqlalchemy import Column, DateTime, event, text
+from sqlalchemy import Column, DateTime, event, func, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import StaticPool
@@ -16,12 +16,16 @@ class BaseModel(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     created_at = Column(
-        DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False
+        DateTime(timezone=True),
+        server_default=text('CURRENT_TIMESTAMP'),
+        default=func.now(),
+        nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
         server_default=text('CURRENT_TIMESTAMP'),
-        onupdate=text('CURRENT_TIMESTAMP'),
+        default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 

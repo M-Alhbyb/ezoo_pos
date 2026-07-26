@@ -26,7 +26,7 @@ class SupplierService:
         return supplier
 
     async def get_suppliers(self) -> List[Supplier]:
-        query = select(Supplier).order_by(Supplier.created_at.desc())
+        query = select(Supplier).order_by(Supplier.created_at.desc(), Supplier.id.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
 

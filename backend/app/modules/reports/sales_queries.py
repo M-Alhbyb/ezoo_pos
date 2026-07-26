@@ -140,7 +140,7 @@ async def get_sales_export_data(
         .options(
             selectinload(Sale.payments).selectinload(SalePayment.payment_method)
         )
-        .order_by(Sale.created_at.desc())
+        .order_by(Sale.created_at.desc(), Sale.id.desc())
     )
     if start_date:
         stmt = stmt.where(cast(Sale.created_at, Date) >= start_date)

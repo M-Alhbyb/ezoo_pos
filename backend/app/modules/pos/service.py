@@ -343,7 +343,7 @@ class SaleService:
                 selectinload(Sale.payment_method),
                 selectinload(Sale.payments).joinedload(SalePayment.payment_method),
             )
-            .order_by(Sale.created_at.desc())
+            .order_by(Sale.created_at.desc(), Sale.id.desc())
         )
 
         # Applyfilters

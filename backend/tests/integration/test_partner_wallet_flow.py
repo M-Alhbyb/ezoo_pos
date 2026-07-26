@@ -273,7 +273,7 @@ async def test_balance_after_calculation(db_session: AsyncSession):
     query = (
         select(PartnerWalletTransaction)
         .where(PartnerWalletTransaction.partner_id == partner.id)
-        .order_by(PartnerWalletTransaction.created_at)
+        .order_by(PartnerWalletTransaction.created_at, PartnerWalletTransaction.id)
     )
     result = await db_session.execute(query)
     transactions = result.scalars().all()
@@ -293,7 +293,7 @@ async def test_balance_after_calculation(db_session: AsyncSession):
     query = (
         select(PartnerWalletTransaction)
         .where(PartnerWalletTransaction.partner_id == partner.id)
-        .order_by(PartnerWalletTransaction.created_at.desc())
+        .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
     )
     result = await db_session.execute(query)
     transactions = result.scalars().all()
@@ -340,7 +340,7 @@ async def test_manual_wallet_adjustment(db_session: AsyncSession):
     query = (
         select(PartnerWalletTransaction)
         .where(PartnerWalletTransaction.partner_id == partner.id)
-        .order_by(PartnerWalletTransaction.created_at.desc())
+        .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
     )
     result = await db_session.execute(query)
     transactions = result.scalars().all()
@@ -391,7 +391,7 @@ async def test_manual_wallet_debit_adjustment(db_session: AsyncSession):
     query = (
         select(PartnerWalletTransaction)
         .where(PartnerWalletTransaction.partner_id == partner.id)
-        .order_by(PartnerWalletTransaction.created_at.desc())
+        .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
     )
     result = await db_session.execute(query)
     transactions = result.scalars().all()

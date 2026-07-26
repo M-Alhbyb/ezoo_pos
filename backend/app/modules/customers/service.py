@@ -234,7 +234,7 @@ class CustomerService:
         query = (
             select(CustomerLedger)
             .where(CustomerLedger.customer_id == customer_id)
-            .order_by(CustomerLedger.created_at.desc())
+            .order_by(CustomerLedger.created_at.desc(), CustomerLedger.id.desc())
         )
 
         if start_date:

@@ -35,7 +35,7 @@ class PartnerService:
     async def get_partner_distributions(self, partner_id: int) -> List[PartnerDistribution]:
         query = select(PartnerDistribution).where(
             PartnerDistribution.partner_id == partner_id
-        ).order_by(PartnerDistribution.created_at.desc())
+        ).order_by(PartnerDistribution.created_at.desc(), PartnerDistribution.id.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
 

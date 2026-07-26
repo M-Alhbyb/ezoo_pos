@@ -304,7 +304,7 @@ class PartnerProfitService:
         query = (
             select(PartnerWalletTransaction)
             .where(PartnerWalletTransaction.partner_id == partner_id)
-            .order_by(PartnerWalletTransaction.created_at.desc())
+            .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
             .limit(1)
         )
         result = await self.db.execute(query)
@@ -337,7 +337,7 @@ class PartnerProfitService:
         query = (
             select(PartnerWalletTransaction)
             .where(PartnerWalletTransaction.partner_id == partner_id)
-            .order_by(PartnerWalletTransaction.created_at.desc())
+            .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
             .limit(limit)
             .offset(offset)
         )

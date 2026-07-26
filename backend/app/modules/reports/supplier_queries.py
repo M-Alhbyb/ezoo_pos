@@ -13,7 +13,7 @@ async def get_supplier_summary_report(
     from app.models.supplier import Supplier
     from app.models.supplier_ledger import SupplierLedger
 
-    query = select(Supplier).order_by(Supplier.created_at.desc())
+    query = select(Supplier).order_by(Supplier.created_at.desc(), Supplier.id.desc())
     result = await db.execute(query)
     suppliers = result.scalars().all()
 
@@ -137,7 +137,7 @@ async def get_supplier_statement(
     ledger_query = (
         select(SupplierLedger)
         .where(SupplierLedger.supplier_id == supplier_id)
-        .order_by(SupplierLedger.created_at.desc())
+        .order_by(SupplierLedger.created_at.desc(), SupplierLedger.id.desc())
     )
 
     if start_date:

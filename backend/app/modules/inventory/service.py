@@ -269,7 +269,7 @@ class InventoryService:
         query = (
             select(InventoryLog)
             .where(InventoryLog.product_id == product_id)
-            .order_by(InventoryLog.created_at.desc())
+            .order_by(InventoryLog.created_at.desc(), InventoryLog.id.desc())
             .offset(offset)
             .limit(page_size)
         )

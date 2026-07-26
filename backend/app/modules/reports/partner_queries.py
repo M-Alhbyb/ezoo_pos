@@ -119,7 +119,7 @@ async def get_partners_export_data(
         )
         .join(Partner, Partner.id == PartnerWalletTransaction.partner_id)
         .where(PartnerWalletTransaction.transaction_type == "sale_profit")
-        .order_by(PartnerWalletTransaction.created_at.desc())
+        .order_by(PartnerWalletTransaction.created_at.desc(), PartnerWalletTransaction.id.desc())
     )
     if start_date:
         stmt = stmt.where(

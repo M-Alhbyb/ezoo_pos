@@ -119,7 +119,7 @@ class PurchaseService:
         limit: int = 100,
         offset: int = 0,
     ) -> List[Purchase]:
-        query = select(Purchase).order_by(Purchase.created_at.desc())
+        query = select(Purchase).order_by(Purchase.created_at.desc(), Purchase.id.desc())
 
         if supplier_id:
             query = query.where(Purchase.supplier_id == supplier_id)

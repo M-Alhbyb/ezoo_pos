@@ -101,7 +101,7 @@ class ProductService:
                 selectinload(Product.category),
                 selectinload(Product.partner)
             )
-            .order_by(Product.created_at.desc())
+            .order_by(Product.created_at.desc(), Product.id.desc())
         )
 
         if active_only:

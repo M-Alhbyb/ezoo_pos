@@ -22,7 +22,7 @@ async def check_sales():
         count = result.scalar()
         print(f"Total sales in database: {count}")
         
-        latest_sale_stmt = select(Sale).order_by(Sale.created_at.desc()).limit(1)
+        latest_sale_stmt = select(Sale).order_by(Sale.created_at.desc(), Sale.id.desc()).limit(1)
         result = await session.execute(latest_sale_stmt)
         latest_sale = result.scalar()
         if latest_sale:

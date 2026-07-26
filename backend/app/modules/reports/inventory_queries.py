@@ -97,7 +97,7 @@ async def get_inventory_export_data(
     stmt = (
         select(InventoryLog, Product.name.label("product_name"))
         .join(Product, Product.id == InventoryLog.product_id)
-        .order_by(InventoryLog.created_at.desc())
+        .order_by(InventoryLog.created_at.desc(), InventoryLog.id.desc())
     )
     if start_date:
         stmt = stmt.where(cast(InventoryLog.created_at, Date) >= start_date)
