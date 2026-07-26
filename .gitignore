@@ -125,3 +125,9 @@ temp/
 *.sql
 *.dump
 !migrations/**/*.sql
+
+# ==============================
+# Artifacts (regenerable output)
+# ==============================
+
+artifacts/
