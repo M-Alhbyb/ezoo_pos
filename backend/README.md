@@ -6,7 +6,7 @@ Core POS system with product catalog, inventory tracking, and sale processing.
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - PostgreSQL 15+
 - pip
 
