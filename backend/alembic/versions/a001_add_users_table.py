@@ -35,6 +35,7 @@ def upgrade() -> None:
 
     # Seed default admin user
     # password: password123  bcrypt hash
+    # NOTE: dormant — no endpoint currently authenticates; auth code is kept for future use.
     admin_hash = '$2b$12$neBwOJG32Kg.3ebYBFtp/ObxyARXAjjN7xKXSC6SOMoZVYIKm8ybO'
     if is_postgres:
         op.execute(f"""

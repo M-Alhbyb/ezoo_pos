@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import require_admin
 from app.core.database import get_db
 from app.modules.partners.service import PartnerService
 from app.modules.partners.partner_profit_service import PartnerProfitService
@@ -100,7 +99,6 @@ async def distribute_profits(
 async def get_partner_wallet(
     partner_id: int,
     db: AsyncSession = Depends(get_db),
-    _admin=Depends(require_admin),
 ):
     """
     Get partner wallet balance.
@@ -148,7 +146,6 @@ async def get_partner_wallet_transactions(
     limit: int = Query(100, ge=1, le=1000, description="Max transactions to return"),
     offset: int = Query(0, ge=0, description="Number of transactions to skip"),
     db: AsyncSession = Depends(get_db),
-    _admin=Depends(require_admin),
 ):
     """
     Get partner wallet transaction history.
@@ -198,7 +195,6 @@ async def adjust_partner_wallet(
     partner_id: int,
     data: ManualWalletAdjustmentRequest,
     db: AsyncSession = Depends(get_db),
-    _admin=Depends(require_admin),
 ):
     """
     Make manual adjustment to partner wallet balance.
