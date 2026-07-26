@@ -4,6 +4,12 @@ import pytest
 
 @pytest.mark.anyio
 async def test_sale_price_snapshot(async_client):
+    # create payment method
+    res = await async_client.post("/api/settings/payment-methods", json={
+        "name": "Cash", "is_active": True
+    })
+    pm_id = res.json()["id"]
+
     # create product
     res = await async_client.post("/api/products", json={
         "name": "panel",
@@ -15,8 +21,10 @@ async def test_sale_price_snapshot(async_client):
 
     # create sale
     res = await async_client.post("/api/sales", json={
-        "items": [{"product_id": product["id"], "quantity": 1}]
+        "items": [{"product_id": product["id"], "quantity": 1}],
+        "payment_method_id": pm_id,
     })
+    assert res.status_code == 201, res.text
     sale = res.json()
 
     # change product price
@@ -39,6 +47,12 @@ async def test_vat_snapshot(async_client):
         "value": "10"
     })
 
+    # create payment method
+    res = await async_client.post("/api/settings/payment-methods", json={
+        "name": "Cash", "is_active": True
+    })
+    pm_id = res.json()["id"]
+
     # create product
     res = await async_client.post("/api/products", json={
         "name": "battery",
@@ -50,8 +64,10 @@ async def test_vat_snapshot(async_client):
 
     # create sale
     res = await async_client.post("/api/sales", json={
-        "items": [{"product_id": product["id"], "quantity": 1}]
+        "items": [{"product_id": product["id"], "quantity": 1}],
+        "payment_method_id": pm_id,
     })
+    assert res.status_code == 201, res.text
     sale = res.json()
 
     # change VAT
